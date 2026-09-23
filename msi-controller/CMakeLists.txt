@@ -9,6 +9,12 @@ set(MSI_CONTROLLER_GUI_SOURCES
     mainwindow.ui
     backendclient.cpp
     backendclient.h
+    hardwaremonitor.cpp
+    hardwaremonitor.h
+    fanspeedmonitor.cpp
+    fanspeedmonitor.h
+    featuregroupbox.cpp
+    featuregroupbox.h
 )
 
 qt_add_dbus_interface(
