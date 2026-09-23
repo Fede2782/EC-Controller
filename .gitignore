@@ -1,0 +1,7 @@
+build/**
+msi-controller-service/build/**
+msi-controller/build/**
+msi-controller-lib/build/**
+CMakeLists.txt.user
+**/CMakeLists.txt.user
+*.kdev4
