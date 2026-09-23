@@ -8,45 +8,50 @@ const QString BackendClient::objectPath = QStringLiteral("/MsiController");
 
 BackendClient::BackendClient(QObject *parent)
     : QObject(parent)
+    , m_watcher(new QDBusServiceWatcher(serviceName, QDBusConnection::systemBus(),
+                                         QDBusServiceWatcher::WatchForOwnerChange, this))
+    , m_interface(new OrgFedelabsMsiControllerAPIInterface(serviceName, objectPath,
+                                                             QDBusConnection::systemBus(), this))
 {
+    connect(m_watcher, &QDBusServiceWatcher::serviceRegistered, this, &BackendClient::setConnected);
+    connect(m_watcher, &QDBusServiceWatcher::serviceUnregistered, this, [this]() {
+        setDisconnected(tr("The msi-controller-service backend disconnected."));
+    });
+
+    connectToBackend();
 }
 
 void BackendClient::connectToBackend()
 {
-    delete m_interface;
-    m_interface = nullptr;
+    if (!QDBusConnection::systemBus().isConnected()) {
+        setDisconnected(tr("Cannot connect to the system D-Bus."));
+        return;
+    }
+
+    if (QDBusConnection::systemBus().interface()->isServiceRegistered(serviceName)) {
+        setConnected();
+    } else {
+        setDisconnected(tr("The msi-controller-service backend isn't running."));
+    }
+}
+
+void BackendClient::setConnected()
+{
     m_lastError.clear();
-
-    QDBusConnection systemBus = QDBusConnection::systemBus();
-
-    if (!systemBus.isConnected()) {
-        m_lastError = tr("Cannot connect to the system D-Bus.");
-        emit connectionStateChanged(false);
-        return;
-    }
-
-    if (!systemBus.interface()->isServiceRegistered(serviceName)) {
-        m_lastError = tr("The msi-controller-service backend isn't running.");
-        emit connectionStateChanged(false);
-        return;
-    }
-
-    m_interface = new OrgFedelabsMsiControllerAPIInterface(serviceName, objectPath, systemBus, this);
-
-    if (!m_interface->isValid()) {
-        m_lastError = m_interface->lastError().message();
-        delete m_interface;
-        m_interface = nullptr;
-        emit connectionStateChanged(false);
-        return;
-    }
-
+    m_connected = true;
     emit connectionStateChanged(true);
+}
+
+void BackendClient::setDisconnected(const QString &reason)
+{
+    m_lastError = reason;
+    m_connected = false;
+    emit connectionStateChanged(false);
 }
 
 bool BackendClient::isConnected() const
 {
-    return m_interface != nullptr && m_interface->isValid();
+    return m_connected;
 }
 
 QString BackendClient::lastError() const
