@@ -2,6 +2,7 @@
 
 #include <QDBusConnection>
 #include <QDBusConnectionInterface>
+#include <QDBusPendingCallWatcher>
 
 const QString BackendClient::serviceName = QStringLiteral("org.fedelabs.MsiController");
 const QString BackendClient::objectPath = QStringLiteral("/MsiController");
@@ -33,6 +34,21 @@ void BackendClient::connectToBackend()
     } else {
         setDisconnected(tr("The msi-controller-service backend isn't running."));
     }
+}
+
+void BackendClient::setMode(const QString &modeKey)
+{
+    watchReply(m_interface->setMode(modeKey));
+}
+
+void BackendClient::watchReply(const QDBusPendingReply<bool> &reply)
+{
+    auto *watcher = new QDBusPendingCallWatcher(reply, this);
+    connect(watcher, &QDBusPendingCallWatcher::finished, this, [this](QDBusPendingCallWatcher *watcher) {
+        const QDBusPendingReply<bool> reply = *watcher;
+        emit commandFinished(!reply.isError() && reply.value());
+        watcher->deleteLater();
+    });
 }
 
 void BackendClient::setConnected()
