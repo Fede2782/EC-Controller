@@ -8,6 +8,7 @@
 #include "backendclient.h"
 #include "hardwaremonitor.h"
 #include "fanspeedmonitor.h"
+#include "msicontrollerlib.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -32,6 +33,8 @@ private slots:
 private:
     void updateConnectionStatus();
     void setupHardwareOverview();
+    void setupFanMode();
+    QString fanModeLabel(MsiControllerLib::MsiEcMode mode) const;
 
     Ui::MainWindow *ui;
     BackendClient *backend;
