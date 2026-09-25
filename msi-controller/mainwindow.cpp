@@ -3,7 +3,6 @@
 #include "featuregroupbox.h"
 
 #include <QMessageBox>
-#include <QComboBox>
 
 using namespace MsiControllerLib;
 
@@ -20,14 +19,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->actionEsci, &QAction::triggered, this, &MainWindow::onExitTriggered);
     connect(ui->actionAbout_MSI_Controller, &QAction::triggered, this, &MainWindow::onAboutTriggered);
     connect(backend, &BackendClient::connectionStateChanged, this, &MainWindow::onBackendConnectionStateChanged);
-    connect(backend, &BackendClient::commandFinished, this, [this](bool success) {
-        if (!success) {
-            ui->statusbar->showMessage(
-                tr("Couldn't apply the change — check that the msi-ec driver is loaded and up to date, "
-                   "and check the service logs for details."),
-                5000);
-        }
-    });
+    connect(backend, &BackendClient::commandFinished, this, &MainWindow::onCommandFinished);
 
     setupHardwareOverview();
     setupFanMode();
@@ -59,8 +51,29 @@ void MainWindow::onAboutTriggered()
 
 void MainWindow::onBackendConnectionStateChanged(bool connected)
 {
-    Q_UNUSED(connected);
     updateConnectionStatus();
+
+    for (QWidget *widget : writeControls) {
+        widget->setEnabled(connected);
+    }
+}
+
+void MainWindow::onCommandFinished(bool success)
+{
+    if (success) {
+        return;
+    }
+
+    // The control the user just touched (and, harmlessly, every other
+    // registered one) goes back to whatever the hardware actually reports,
+    // so nothing is left showing a change that didn't happen.
+    for (const auto &resync : resyncCallbacks) {
+        resync();
+    }
+
+    QMessageBox::warning(this, tr("Couldn't Apply Change"),
+        tr("The change couldn't be applied. Check that the msi-ec driver is loaded and up to date, "
+           "and check the service logs for details."));
 }
 
 void MainWindow::updateConnectionStatus()
@@ -70,6 +83,13 @@ void MainWindow::updateConnectionStatus()
     } else {
         ui->connectionStatusLabel->setText(tr("Not connected: %1").arg(backend->lastError()));
     }
+}
+
+void MainWindow::registerWriteControl(QWidget *widget, std::function<void()> resync)
+{
+    writeControls.append(widget);
+    resyncCallbacks.append(std::move(resync));
+    widget->setEnabled(backend->isConnected());
 }
 
 void MainWindow::setupHardwareOverview()
@@ -134,7 +154,7 @@ void MainWindow::setupFanMode()
         MsiEcMode::BasicFan,
     };
 
-    auto *fanModeCombo = new QComboBox(this);
+    fanModeCombo = new QComboBox(this);
     for (MsiEcMode mode : fanModes) {
         if (isModeSupported(mode)) {
             fanModeCombo->addItem(fanModeLabel(mode), getModeKey(mode));
@@ -143,9 +163,28 @@ void MainWindow::setupFanMode()
 
     if (fanModeCombo->count() == 0) {
         delete fanModeCombo;
+        fanModeCombo = nullptr;
         return;
     }
 
+    syncFanModeSelection();
+
+    auto *fanModeBox = new FeatureGroupBox(tr("Fan Mode"), this);
+    fanModeBox->addRow(tr("Mode"), fanModeCombo);
+    ui->verticalLayout->addWidget(fanModeBox);
+
+    // activated() only fires on direct user interaction, unlike
+    // currentIndexChanged() - so syncing the selection never triggers a
+    // write on its own, whether at startup or after a failed command.
+    connect(fanModeCombo, &QComboBox::activated, this, [this](int index) {
+        backend->setMode(fanModeCombo->itemData(index).toString());
+    });
+
+    registerWriteControl(fanModeCombo, [this]() { syncFanModeSelection(); });
+}
+
+void MainWindow::syncFanModeSelection()
+{
     QString currentModeName;
     if (getAttrValue(MsiEcAttribute::FanMode, &currentModeName)) {
         const int index = fanModeCombo->findData(getModeKey(parseModeName(currentModeName)));
@@ -153,17 +192,6 @@ void MainWindow::setupFanMode()
             fanModeCombo->setCurrentIndex(index);
         }
     }
-
-    auto *fanModeBox = new FeatureGroupBox(tr("Fan Mode"), this);
-    fanModeBox->addRow(tr("Mode"), fanModeCombo);
-    ui->verticalLayout->addWidget(fanModeBox);
-
-    // activated() only fires on direct user interaction, unlike
-    // currentIndexChanged() - so preselecting the current mode above
-    // doesn't itself trigger a write.
-    connect(fanModeCombo, &QComboBox::activated, this, [this, fanModeCombo](int index) {
-        backend->setMode(fanModeCombo->itemData(index).toString());
-    });
 }
 
 QString MainWindow::fanModeLabel(MsiEcMode mode) const
