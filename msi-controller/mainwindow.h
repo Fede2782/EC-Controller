@@ -38,14 +38,23 @@ private:
     void updateConnectionStatus();
     void setupHardwareOverview();
     void setupFanMode();
-    void syncFanModeSelection();
-    QString fanModeLabel(MsiControllerLib::MsiEcMode mode) const;
+    void setupShiftMode();
+    void setupBattery();
+
+    // Shared by every msi-ec "mode" attribute (fan mode, shift mode, and
+    // kbd backlight mode once Milestone 5 adds it): builds a combo box with
+    // only the supported modes, preselected from the attribute's current
+    // value, wired to setMode and registered as a write control. Returns
+    // nullptr if none of the given modes turned out to be supported.
+    QComboBox *setupModeDropdown(const QString &boxTitle, MsiControllerLib::MsiEcAttribute attr,
+                                  const QList<MsiControllerLib::MsiEcMode> &modes);
+    void syncModeSelection(QComboBox *combo, MsiControllerLib::MsiEcAttribute attr);
+    QString modeLabel(MsiControllerLib::MsiEcMode mode) const;
 
     // Registers a widget that triggers backend writes: disabled whenever the
     // backend is disconnected, and re-synced to actual hardware state
-    // whenever any command fails. Every future write-capable control (shift
-    // mode, the toggles, backlight, the fan curve) goes through this too, so
-    // the disconnect/failure handling only has to exist once.
+    // whenever any command fails. Every write-capable control goes through
+    // this, so the disconnect/failure handling only has to exist once.
     void registerWriteControl(QWidget *widget, std::function<void()> resync);
 
     Ui::MainWindow *ui;
@@ -62,8 +71,6 @@ private:
     // Only holds the fans shown by default; the rest join here once the
     // Edit-mode option to reveal them exists (Milestone 7).
     QMap<int, QLabel *> fanSpeedLabels;
-
-    QComboBox *fanModeCombo = nullptr;
 
     QList<QWidget *> writeControls;
     QList<std::function<void()>> resyncCallbacks;

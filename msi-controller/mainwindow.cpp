@@ -3,6 +3,7 @@
 #include "featuregroupbox.h"
 
 #include <QMessageBox>
+#include <QSpinBox>
 
 using namespace MsiControllerLib;
 
@@ -23,6 +24,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     setupHardwareOverview();
     setupFanMode();
+    setupShiftMode();
+    setupBattery();
     ui->verticalLayout->addStretch();
 
     backend->connectToBackend();
@@ -153,54 +156,124 @@ void MainWindow::setupFanMode()
         MsiEcMode::SilentFan,
         MsiEcMode::BasicFan,
     };
+    setupModeDropdown(tr("Fan Mode"), MsiEcAttribute::FanMode, fanModes);
+}
 
-    fanModeCombo = new QComboBox(this);
-    for (MsiEcMode mode : fanModes) {
+void MainWindow::setupShiftMode()
+{
+    static const QList<MsiEcMode> shiftModes = {
+        MsiEcMode::ComfortShift,
+        MsiEcMode::TurboShift,
+        MsiEcMode::EcoShift,
+        MsiEcMode::SportShift,
+    };
+    setupModeDropdown(tr("Performance Mode"), MsiEcAttribute::ShiftMode, shiftModes);
+}
+
+QComboBox *MainWindow::setupModeDropdown(const QString &boxTitle, MsiEcAttribute attr, const QList<MsiEcMode> &modes)
+{
+    auto *combo = new QComboBox(this);
+    for (MsiEcMode mode : modes) {
         if (isModeSupported(mode)) {
-            fanModeCombo->addItem(fanModeLabel(mode), getModeKey(mode));
+            combo->addItem(modeLabel(mode), getModeKey(mode));
         }
     }
 
-    if (fanModeCombo->count() == 0) {
-        delete fanModeCombo;
-        fanModeCombo = nullptr;
-        return;
+    if (combo->count() == 0) {
+        delete combo;
+        return nullptr;
     }
 
-    syncFanModeSelection();
+    syncModeSelection(combo, attr);
 
-    auto *fanModeBox = new FeatureGroupBox(tr("Fan Mode"), this);
-    fanModeBox->addRow(tr("Mode"), fanModeCombo);
-    ui->verticalLayout->addWidget(fanModeBox);
+    auto *box = new FeatureGroupBox(boxTitle, this);
+    box->addRow(tr("Mode"), combo);
+    ui->verticalLayout->addWidget(box);
 
     // activated() only fires on direct user interaction, unlike
     // currentIndexChanged() - so syncing the selection never triggers a
     // write on its own, whether at startup or after a failed command.
-    connect(fanModeCombo, &QComboBox::activated, this, [this](int index) {
-        backend->setMode(fanModeCombo->itemData(index).toString());
+    connect(combo, &QComboBox::activated, this, [this, combo](int index) {
+        backend->setMode(combo->itemData(index).toString());
     });
 
-    registerWriteControl(fanModeCombo, [this]() { syncFanModeSelection(); });
+    registerWriteControl(combo, [this, combo, attr]() { syncModeSelection(combo, attr); });
+
+    return combo;
 }
 
-void MainWindow::syncFanModeSelection()
+void MainWindow::syncModeSelection(QComboBox *combo, MsiEcAttribute attr)
 {
     QString currentModeName;
-    if (getAttrValue(MsiEcAttribute::FanMode, &currentModeName)) {
-        const int index = fanModeCombo->findData(getModeKey(parseModeName(currentModeName)));
+    if (getAttrValue(attr, &currentModeName)) {
+        const int index = combo->findData(getModeKey(parseModeName(currentModeName)));
         if (index >= 0) {
-            fanModeCombo->setCurrentIndex(index);
+            combo->setCurrentIndex(index);
         }
     }
 }
 
-QString MainWindow::fanModeLabel(MsiEcMode mode) const
+QString MainWindow::modeLabel(MsiEcMode mode) const
 {
     switch (mode) {
     case MsiEcMode::AutoFan: return tr("Auto");
     case MsiEcMode::AdvancedFan: return tr("Advanced");
     case MsiEcMode::SilentFan: return tr("Silent");
     case MsiEcMode::BasicFan: return tr("Basic");
+    case MsiEcMode::ComfortShift: return tr("Comfort");
+    case MsiEcMode::TurboShift: return tr("Turbo");
+    case MsiEcMode::EcoShift: return tr("Eco");
+    case MsiEcMode::SportShift: return tr("Sport");
     default: return getModeName(mode);
     }
+}
+
+void MainWindow::setupBattery()
+{
+    if (!isAttrSupported(MsiEcAttribute::ChargeStart)) {
+        return;
+    }
+
+    auto *spinBox = new QSpinBox(this);
+    spinBox->setRange(20, 90); // mirrors ChargeStart's valid range in msi-controller-lib
+    spinBox->setSuffix(tr("%"));
+
+    auto *stopsAtLabel = new QLabel(this);
+    auto updateStopsAtLabel = [stopsAtLabel](int chargeStart) {
+        stopsAtLabel->setText(tr("Charging stops around %1%").arg(chargeStart - batteryModeChargeStartEndDelta));
+    };
+
+    // Reads the actual ChargeStart value from sysfs and applies it to the
+    // spin box - used both for the initial state and to resync after a
+    // failed write, so there is exactly one place that does this.
+    auto syncChargeStart = [spinBox, updateStopsAtLabel]() {
+        QString value;
+        if (!getAttrValue(MsiEcAttribute::ChargeStart, &value)) {
+            return;
+        }
+        bool ok = false;
+        const int chargeStart = value.toInt(&ok);
+        if (ok) {
+            spinBox->setValue(chargeStart);
+            updateStopsAtLabel(chargeStart);
+        }
+    };
+
+    syncChargeStart();
+
+    connect(spinBox, &QSpinBox::valueChanged, this, updateStopsAtLabel);
+
+    auto *box = new FeatureGroupBox(tr("Battery"), this);
+    box->addRow(tr("Charge Start Threshold"), spinBox);
+    box->addRow(QString(), stopsAtLabel);
+    ui->verticalLayout->addWidget(box);
+
+    // editingFinished() fires on Enter or on losing focus, not on every
+    // increment while the user is still adjusting the value - so dragging
+    // the spin box doesn't send a write per step.
+    connect(spinBox, &QSpinBox::editingFinished, this, [this, spinBox]() {
+        backend->setAttrValue(getAttrKey(MsiEcAttribute::ChargeStart), spinBox->value());
+    });
+
+    registerWriteControl(spinBox, syncChargeStart);
 }
