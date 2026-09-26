@@ -244,7 +244,8 @@ void MainWindow::setupBattery()
     combo->addItem(tr("Low — stop at %1%").arg(batteryModeMinChargeEnd), batteryModeMinChargeEnd);
     combo->addItem(tr("Custom…"), customChargeEndSentinel);
 
-    auto *currentValueLabel = new QLabel(this);
+    auto *startsChargingLabel = new QLabel(this);
+    auto *stopsAtLabel = new QLabel(this);
 
     auto currentChargeEnd = []() -> std::optional<int> {
         QString value;
@@ -256,25 +257,36 @@ void MainWindow::setupBattery()
         return ok ? std::optional<int>(parsed) : std::nullopt;
     };
 
-    // Reflects the actual hardware value: preselects the matching preset (or
-    // "Custom…" if the current value isn't one of the three) and updates
-    // the label. Used for the initial state and to resync after a failed
-    // write - the one place that reads ChargeEnd back from sysfs.
-    auto syncBattery = [combo, currentValueLabel, currentChargeEnd, customChargeEndSentinel]() {
+    // Reflects the actual hardware value: preselects the matching preset
+    // (or "Custom…" if the current value isn't one of the three), always
+    // shows the derived charge-start estimate, and shows the exact stop
+    // percentage only for a custom value - the presets already say where
+    // charging stops in their own label, so repeating it there would be
+    // redundant, but a custom value isn't shown anywhere else. Used for the
+    // initial state and to resync after every command, successful or not.
+    auto syncBattery = [combo, startsChargingLabel, stopsAtLabel, currentChargeEnd, customChargeEndSentinel]() {
         const auto chargeEnd = currentChargeEnd();
         if (!chargeEnd) {
             return;
         }
-        currentValueLabel->setText(tr("Currently stops at %1%").arg(*chargeEnd));
+
+        startsChargingLabel->setText(
+            tr("Starts charging around %1%").arg(*chargeEnd - batteryModeChargeStartEndDelta));
+
         const int index = combo->findData(*chargeEnd);
-        combo->setCurrentIndex(index >= 0 ? index : combo->findData(customChargeEndSentinel));
+        const bool isCustomValue = index < 0;
+        combo->setCurrentIndex(isCustomValue ? combo->findData(customChargeEndSentinel) : index);
+
+        stopsAtLabel->setText(tr("Stops at %1%").arg(*chargeEnd));
+        stopsAtLabel->setVisible(isCustomValue);
     };
 
     syncBattery();
 
     auto *box = new FeatureGroupBox(tr("Battery"), this);
     box->addRow(tr("Charge Limit"), combo);
-    box->addRow(QString(), currentValueLabel);
+    box->addRow(QString(), startsChargingLabel);
+    box->addRow(QString(), stopsAtLabel);
     ui->verticalLayout->addWidget(box);
 
     // Every entry applies immediately on selection - no separate "apply"
