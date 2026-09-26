@@ -3,7 +3,8 @@
 #include "featuregroupbox.h"
 
 #include <QMessageBox>
-#include <QSpinBox>
+#include <QInputDialog>
+#include <optional>
 
 using namespace MsiControllerLib;
 
@@ -230,50 +231,72 @@ QString MainWindow::modeLabel(MsiEcMode mode) const
 
 void MainWindow::setupBattery()
 {
-    if (!isAttrSupported(MsiEcAttribute::ChargeStart)) {
+    if (!isAttrSupported(MsiEcAttribute::ChargeEnd)) {
         return;
     }
 
-    auto *spinBox = new QSpinBox(this);
-    spinBox->setRange(20, 90); // mirrors ChargeStart's valid range in msi-controller-lib
-    spinBox->setSuffix(tr("%"));
+    constexpr int customChargeEndSentinel = -1;
 
-    auto *stopsAtLabel = new QLabel(this);
-    auto updateStopsAtLabel = [stopsAtLabel](int chargeStart) {
-        stopsAtLabel->setText(tr("Charging stops around %1%").arg(chargeStart - batteryModeChargeStartEndDelta));
-    };
+    auto *combo = new QComboBox(this);
+    combo->addItem(tr("Max — stop at %1%").arg(batteryModeMaxChargeEnd), batteryModeMaxChargeEnd);
+    combo->addItem(tr("Medium — stop at %1%").arg(batteryModeMediumChargeEnd), batteryModeMediumChargeEnd);
+    combo->addItem(tr("Low — stop at %1%").arg(batteryModeMinChargeEnd), batteryModeMinChargeEnd);
+    combo->addItem(tr("Custom…"), customChargeEndSentinel);
 
-    // Reads the actual ChargeStart value from sysfs and applies it to the
-    // spin box - used both for the initial state and to resync after a
-    // failed write, so there is exactly one place that does this.
-    auto syncChargeStart = [spinBox, updateStopsAtLabel]() {
+    auto *currentValueLabel = new QLabel(this);
+
+    auto currentChargeEnd = []() -> std::optional<int> {
         QString value;
-        if (!getAttrValue(MsiEcAttribute::ChargeStart, &value)) {
-            return;
+        if (!getAttrValue(MsiEcAttribute::ChargeEnd, &value)) {
+            return std::nullopt;
         }
         bool ok = false;
-        const int chargeStart = value.toInt(&ok);
-        if (ok) {
-            spinBox->setValue(chargeStart);
-            updateStopsAtLabel(chargeStart);
-        }
+        const int parsed = value.toInt(&ok);
+        return ok ? std::optional<int>(parsed) : std::nullopt;
     };
 
-    syncChargeStart();
+    // Reflects the actual hardware value: preselects the matching preset (or
+    // "Custom…" if the current value isn't one of the three) and updates
+    // the label. Used for the initial state and to resync after a failed
+    // write - the one place that reads ChargeEnd back from sysfs.
+    auto syncBattery = [combo, currentValueLabel, currentChargeEnd, customChargeEndSentinel]() {
+        const auto chargeEnd = currentChargeEnd();
+        if (!chargeEnd) {
+            return;
+        }
+        currentValueLabel->setText(tr("Currently stops at %1%").arg(*chargeEnd));
+        const int index = combo->findData(*chargeEnd);
+        combo->setCurrentIndex(index >= 0 ? index : combo->findData(customChargeEndSentinel));
+    };
 
-    connect(spinBox, &QSpinBox::valueChanged, this, updateStopsAtLabel);
+    syncBattery();
 
     auto *box = new FeatureGroupBox(tr("Battery"), this);
-    box->addRow(tr("Charge Start Threshold"), spinBox);
-    box->addRow(QString(), stopsAtLabel);
+    box->addRow(tr("Charge Limit"), combo);
+    box->addRow(QString(), currentValueLabel);
     ui->verticalLayout->addWidget(box);
 
-    // editingFinished() fires on Enter or on losing focus, not on every
-    // increment while the user is still adjusting the value - so dragging
-    // the spin box doesn't send a write per step.
-    connect(spinBox, &QSpinBox::editingFinished, this, [this, spinBox]() {
-        backend->setAttrValue(getAttrKey(MsiEcAttribute::ChargeStart), spinBox->value());
+    // Every entry applies immediately on selection - no separate "apply"
+    // step to get stuck on. "Custom..." opens a modal dialog instead of a
+    // free-form field precisely because a dialog has an explicit OK button;
+    // cancelling it restores the combo to whatever is actually set.
+    connect(combo, &QComboBox::activated, this,
+            [this, combo, syncBattery, currentChargeEnd, customChargeEndSentinel](int index) {
+        const int value = combo->itemData(index).toInt();
+        if (value == customChargeEndSentinel) {
+            bool ok = false;
+            const int chosen = QInputDialog::getInt(this, tr("Custom Battery Threshold"),
+                tr("Stop charging at (%):"), currentChargeEnd().value_or(batteryModeMediumChargeEnd),
+                batteryModeMinChargeEnd, batteryModeMaxChargeEnd, 1, &ok);
+            if (ok) {
+                backend->setAttrValue(getAttrKey(MsiEcAttribute::ChargeEnd), chosen);
+            } else {
+                syncBattery();
+            }
+            return;
+        }
+        backend->setAttrValue(getAttrKey(MsiEcAttribute::ChargeEnd), value);
     });
 
-    registerWriteControl(spinBox, syncChargeStart);
+    registerWriteControl(combo, syncBattery);
 }
