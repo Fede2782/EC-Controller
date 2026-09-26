@@ -41,6 +41,11 @@ void BackendClient::setMode(const QString &modeKey)
     watchReply(m_interface->setMode(modeKey));
 }
 
+void BackendClient::setAttrValue(const QString &attrKey, bool value)
+{
+    watchReply(m_interface->setAttrValue(attrKey, value));
+}
+
 void BackendClient::setAttrValue(const QString &attrKey, int value)
 {
     watchReply(m_interface->setAttrValue(attrKey, value));

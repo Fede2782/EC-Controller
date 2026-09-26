@@ -5,6 +5,7 @@
 #include <QLabel>
 #include <QMap>
 #include <QComboBox>
+#include <QCheckBox>
 #include <QList>
 #include <functional>
 
@@ -18,6 +19,8 @@ namespace Ui {
 class MainWindow;
 }
 QT_END_NAMESPACE
+
+class FeatureGroupBox;
 
 class MainWindow : public QMainWindow
 {
@@ -40,6 +43,7 @@ private:
     void setupFanMode();
     void setupShiftMode();
     void setupBattery();
+    void setupToggles();
 
     // Shared by every msi-ec "mode" attribute (fan mode, shift mode, and
     // kbd backlight mode once Milestone 5 adds it): builds a combo box with
@@ -51,10 +55,16 @@ private:
     void syncModeSelection(QComboBox *combo, MsiControllerLib::MsiEcAttribute attr);
     QString modeLabel(MsiControllerLib::MsiEcMode mode) const;
 
+    // Adds one "label: checkbox" row for a boolean attribute to an existing
+    // box: preselected from its current value, wired to setAttrValue(bool)
+    // and registered as a write control.
+    QCheckBox *setupToggle(FeatureGroupBox *box, const QString &label, MsiControllerLib::MsiEcAttribute attr);
+
     // Registers a widget that triggers backend writes: disabled whenever the
-    // backend is disconnected, and re-synced to actual hardware state
-    // whenever any command fails. Every write-capable control goes through
-    // this, so the disconnect/failure handling only has to exist once.
+    // backend is disconnected, and re-synced to actual hardware state on
+    // every command completion, successful or not. Every write-capable
+    // control goes through this, so the disconnect/failure handling only
+    // has to exist once.
     void registerWriteControl(QWidget *widget, std::function<void()> resync);
 
     Ui::MainWindow *ui;

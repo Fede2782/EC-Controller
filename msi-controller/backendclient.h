@@ -26,6 +26,7 @@ public:
     QString lastError() const;
 
     void setMode(const QString &modeKey);
+    void setAttrValue(const QString &attrKey, bool value);
     void setAttrValue(const QString &attrKey, int value);
 
 signals:

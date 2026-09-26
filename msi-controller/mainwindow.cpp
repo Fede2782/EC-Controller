@@ -27,6 +27,7 @@ MainWindow::MainWindow(QWidget *parent)
     setupFanMode();
     setupShiftMode();
     setupBattery();
+    setupToggles();
     ui->verticalLayout->addStretch();
 
     backend->connectToBackend();
@@ -312,4 +313,64 @@ void MainWindow::setupBattery()
     });
 
     registerWriteControl(combo, syncBattery);
+}
+
+void MainWindow::setupToggles()
+{
+    struct ToggleSpec {
+        QString label;
+        MsiEcAttribute attr;
+    };
+    // Super Battery deliberately isn't here (deprecated). Webcam is its own
+    // boolean besides WebcamBlock, but only "Block Webcam" was ever asked
+    // for, so Webcam itself stays unused.
+    const QList<ToggleSpec> toggles = {
+        { tr("Cooler Boost"), MsiEcAttribute::CoolerBoost },
+        { tr("Swap Fn/Win Keys"), MsiEcAttribute::FnWinSwap },
+        { tr("Block Webcam"), MsiEcAttribute::WebcamBlock },
+        { tr("USB PowerShare"), MsiEcAttribute::UsbPowershare },
+    };
+
+    FeatureGroupBox *box = nullptr;
+    for (const ToggleSpec &toggle : toggles) {
+        if (!isAttrSupported(toggle.attr)) {
+            continue;
+        }
+        if (!box) {
+            box = new FeatureGroupBox(tr("Hardware Toggles"), this);
+        }
+        setupToggle(box, toggle.label, toggle.attr);
+    }
+
+    if (box) {
+        ui->verticalLayout->addWidget(box);
+    }
+}
+
+QCheckBox *MainWindow::setupToggle(FeatureGroupBox *box, const QString &label, MsiEcAttribute attr)
+{
+    auto *checkBox = new QCheckBox(this);
+
+    // Reads the actual value back from sysfs and applies it - used for the
+    // initial state and to resync on every command completion.
+    auto syncToggle = [checkBox, attr]() {
+        bool value = false;
+        if (getAttrValue(attr, &value)) {
+            checkBox->setChecked(value);
+        }
+    };
+
+    syncToggle();
+    box->addRow(label, checkBox);
+
+    // clicked() only fires on direct user interaction, unlike toggled() -
+    // so syncToggle()'s setChecked() calls never trigger a write on their
+    // own, whether at startup or after any command completes.
+    connect(checkBox, &QCheckBox::clicked, this, [this, attr](bool checked) {
+        backend->setAttrValue(getAttrKey(attr), checked);
+    });
+
+    registerWriteControl(checkBox, syncToggle);
+
+    return checkBox;
 }
