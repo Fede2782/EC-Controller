@@ -13,6 +13,8 @@ set(MSI_CONTROLLER_GUI_SOURCES
     hardwaremonitor.h
     fanspeedmonitor.cpp
     fanspeedmonitor.h
+    kbdbacklightbrightnessclient.cpp
+    kbdbacklightbrightnessclient.h
     featuregroupbox.cpp
     featuregroupbox.h
 )

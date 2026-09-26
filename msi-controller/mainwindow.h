@@ -6,12 +6,14 @@
 #include <QMap>
 #include <QComboBox>
 #include <QCheckBox>
+#include <QSlider>
 #include <QList>
 #include <functional>
 
 #include "backendclient.h"
 #include "hardwaremonitor.h"
 #include "fanspeedmonitor.h"
+#include "kbdbacklightbrightnessclient.h"
 #include "msicontrollerlib.h"
 
 QT_BEGIN_NAMESPACE
@@ -44,6 +46,7 @@ private:
     void setupShiftMode();
     void setupBattery();
     void setupToggles();
+    void setupKeyboardBacklight();
 
     // Shared by every msi-ec "mode" attribute (fan mode, shift mode, and
     // kbd backlight mode once Milestone 5 adds it): builds a combo box with
@@ -74,6 +77,7 @@ private:
     BackendClient *backend;
     HardwareMonitor *hardwareMonitor;
     FanSpeedMonitor *fanSpeedMonitor;
+    KbdBacklightBrightnessClient *kbdBacklightBrightness;
 
     // Null when the matching attribute isn't supported on this machine, in
     // which case its row was never added to the UI in the first place.

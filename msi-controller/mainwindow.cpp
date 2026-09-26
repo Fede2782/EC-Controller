@@ -14,6 +14,7 @@ MainWindow::MainWindow(QWidget *parent)
     , backend(new BackendClient(this))
     , hardwareMonitor(new HardwareMonitor(this))
     , fanSpeedMonitor(new FanSpeedMonitor(this))
+    , kbdBacklightBrightness(new KbdBacklightBrightnessClient(this))
 {
     ui->setupUi(this);
 
@@ -28,6 +29,7 @@ MainWindow::MainWindow(QWidget *parent)
     setupShiftMode();
     setupBattery();
     setupToggles();
+    setupKeyboardBacklight();
     ui->verticalLayout->addStretch();
 
     backend->connectToBackend();
@@ -227,6 +229,8 @@ QString MainWindow::modeLabel(MsiEcMode mode) const
     case MsiEcMode::TurboShift: return tr("Turbo");
     case MsiEcMode::EcoShift: return tr("Eco");
     case MsiEcMode::SportShift: return tr("Sport");
+    case MsiEcMode::TimeoutKbdBacklight: return tr("Timeout");
+    case MsiEcMode::AlwaysOnKbdBacklight: return tr("Always On");
     default: return getModeName(mode);
     }
 }
@@ -388,4 +392,46 @@ QCheckBox *MainWindow::setupToggle(FeatureGroupBox *box, const QString &label, M
     registerWriteControl(checkBox, syncToggle);
 
     return checkBox;
+}
+
+void MainWindow::setupKeyboardBacklight()
+{
+    static const QList<MsiEcMode> kbdBacklightModes = {
+        MsiEcMode::TimeoutKbdBacklight,
+        MsiEcMode::AlwaysOnKbdBacklight,
+    };
+    setupModeDropdown(tr("Keyboard Backlight Mode"), MsiEcAttribute::KbdBacklightMode, kbdBacklightModes);
+
+    if (!kbdBacklightBrightness->isAvailable()) {
+        return;
+    }
+
+    auto *slider = new QSlider(Qt::Horizontal, this);
+    slider->setRange(0, kbdBacklightBrightness->maxBrightness());
+    slider->setValue(kbdBacklightBrightness->brightness());
+
+    // Connected only after the initial setValue() above, so that one
+    // doesn't itself send a write to UPower. valueChanged() (rather than
+    // sliderMoved()) so this also works from the keyboard, not just a
+    // mouse drag - the loop back from an external change is broken with
+    // QSignalBlocker below instead of relying on a user-interaction-only
+    // signal, since UPower's brightnessChanged can arrive at any time, not
+    // just right after our own calls.
+    connect(slider, &QSlider::valueChanged, this, [this](int value) {
+        kbdBacklightBrightness->setBrightness(value);
+    });
+
+    connect(kbdBacklightBrightness, &KbdBacklightBrightnessClient::brightnessChanged, this, [slider](int value) {
+        const QSignalBlocker blocker(slider);
+        slider->setValue(value);
+    });
+
+    auto *box = new FeatureGroupBox(tr("Keyboard Backlight Brightness"), this);
+    box->addRow(tr("Brightness"), slider);
+    ui->verticalLayout->addWidget(box);
+
+    // Deliberately not registerWriteControl()'d: this control talks
+    // directly to UPower, not msi-controller-service, so it has nothing to
+    // do with BackendClient's connection state and shouldn't be disabled
+    // by it.
 }
