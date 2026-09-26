@@ -15,6 +15,8 @@ set(MSI_CONTROLLER_GUI_SOURCES
     fanspeedmonitor.h
     kbdbacklightbrightnessclient.cpp
     kbdbacklightbrightnessclient.h
+    kdepowermanagementwatcher.cpp
+    kdepowermanagementwatcher.h
     featuregroupbox.cpp
     featuregroupbox.h
 )

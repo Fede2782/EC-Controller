@@ -15,6 +15,7 @@ MainWindow::MainWindow(QWidget *parent)
     , hardwareMonitor(new HardwareMonitor(this))
     , fanSpeedMonitor(new FanSpeedMonitor(this))
     , kbdBacklightBrightness(new KbdBacklightBrightnessClient(this))
+    , kdePowerManagementWatcher(new KdePowerManagementWatcher(this))
 {
     ui->setupUi(this);
 
@@ -317,6 +318,11 @@ void MainWindow::setupBattery()
     });
 
     registerWriteControl(combo, syncBattery);
+
+    // An external change made through KDE's own Power Management settings
+    // comes back through here - reuses the same sync function as startup,
+    // our own writes, and the custom-dialog cancel path.
+    connect(kdePowerManagementWatcher, &KdePowerManagementWatcher::batteryThresholdChanged, this, syncBattery);
 }
 
 void MainWindow::setupToggles()

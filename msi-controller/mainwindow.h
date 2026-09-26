@@ -14,6 +14,7 @@
 #include "hardwaremonitor.h"
 #include "fanspeedmonitor.h"
 #include "kbdbacklightbrightnessclient.h"
+#include "kdepowermanagementwatcher.h"
 #include "msicontrollerlib.h"
 
 QT_BEGIN_NAMESPACE
@@ -78,6 +79,7 @@ private:
     HardwareMonitor *hardwareMonitor;
     FanSpeedMonitor *fanSpeedMonitor;
     KbdBacklightBrightnessClient *kbdBacklightBrightness;
+    KdePowerManagementWatcher *kdePowerManagementWatcher;
 
     // Null when the matching attribute isn't supported on this machine, in
     // which case its row was never added to the UI in the first place.
