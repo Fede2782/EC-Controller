@@ -320,12 +320,20 @@ void MainWindow::setupToggles()
     struct ToggleSpec {
         QString label;
         MsiEcAttribute attr;
+        std::function<bool(bool checked)> confirmChange = nullptr;
     };
     // Super Battery deliberately isn't here (deprecated). Webcam is its own
     // boolean besides WebcamBlock, but only "Block Webcam" was ever asked
     // for, so Webcam itself stays unused.
     const QList<ToggleSpec> toggles = {
-        { tr("Cooler Boost"), MsiEcAttribute::CoolerBoost },
+        { tr("Cooler Boost"), MsiEcAttribute::CoolerBoost, [this](bool checked) {
+              if (!checked) {
+                  return true; // no confirmation needed when turning it off
+              }
+              return QMessageBox::question(this, tr("Enable Cooler Boost?"),
+                  tr("Cooler Boost will spin the fans up to their maximum speed. Continue?"),
+                  QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes;
+          } },
         { tr("Swap Fn/Win Keys"), MsiEcAttribute::FnWinSwap },
         { tr("Block Webcam"), MsiEcAttribute::WebcamBlock },
         { tr("USB PowerShare"), MsiEcAttribute::UsbPowershare },
@@ -339,7 +347,7 @@ void MainWindow::setupToggles()
         if (!box) {
             box = new FeatureGroupBox(tr("Hardware Toggles"), this);
         }
-        setupToggle(box, toggle.label, toggle.attr);
+        setupToggle(box, toggle.label, toggle.attr, toggle.confirmChange);
     }
 
     if (box) {
@@ -347,7 +355,8 @@ void MainWindow::setupToggles()
     }
 }
 
-QCheckBox *MainWindow::setupToggle(FeatureGroupBox *box, const QString &label, MsiEcAttribute attr)
+QCheckBox *MainWindow::setupToggle(FeatureGroupBox *box, const QString &label, MsiEcAttribute attr,
+                                    std::function<bool(bool)> confirmChange)
 {
     auto *checkBox = new QCheckBox(this);
 
@@ -364,9 +373,15 @@ QCheckBox *MainWindow::setupToggle(FeatureGroupBox *box, const QString &label, M
     box->addRow(label, checkBox);
 
     // clicked() only fires on direct user interaction, unlike toggled() -
-    // so syncToggle()'s setChecked() calls never trigger a write on their
-    // own, whether at startup or after any command completes.
-    connect(checkBox, &QCheckBox::clicked, this, [this, attr](bool checked) {
+    // so syncToggle()'s setChecked() calls never trigger a write or a
+    // confirmation prompt on their own, whether at startup or after any
+    // command completes. The check state has already flipped by the time
+    // clicked() fires, so declining puts it back.
+    connect(checkBox, &QCheckBox::clicked, this, [this, attr, checkBox, confirmChange](bool checked) {
+        if (confirmChange && !confirmChange(checked)) {
+            checkBox->setChecked(!checked);
+            return;
+        }
         backend->setAttrValue(getAttrKey(attr), checked);
     });
 

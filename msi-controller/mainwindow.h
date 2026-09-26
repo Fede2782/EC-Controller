@@ -57,8 +57,11 @@ private:
 
     // Adds one "label: checkbox" row for a boolean attribute to an existing
     // box: preselected from its current value, wired to setAttrValue(bool)
-    // and registered as a write control.
-    QCheckBox *setupToggle(FeatureGroupBox *box, const QString &label, MsiControllerLib::MsiEcAttribute attr);
+    // and registered as a write control. If confirmChange is given, it's
+    // asked before the write goes out (with the new checked state) and can
+    // veto the change - the checkbox then reverts to its previous state.
+    QCheckBox *setupToggle(FeatureGroupBox *box, const QString &label, MsiControllerLib::MsiEcAttribute attr,
+                            std::function<bool(bool checked)> confirmChange = nullptr);
 
     // Registers a widget that triggers backend writes: disabled whenever the
     // backend is disconnected, and re-synced to actual hardware state on
