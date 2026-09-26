@@ -64,20 +64,21 @@ void MainWindow::onBackendConnectionStateChanged(bool connected)
 
 void MainWindow::onCommandFinished(bool success)
 {
-    if (success) {
-        return;
-    }
-
-    // The control the user just touched (and, harmlessly, every other
-    // registered one) goes back to whatever the hardware actually reports,
-    // so nothing is left showing a change that didn't happen.
+    // Every registered control is resynced to whatever the hardware
+    // actually reports, regardless of outcome: on success this confirms it
+    // and refreshes any derived display (e.g. the battery box's "currently
+    // stops at" label, which nothing else was updating on success); on
+    // failure it reverts the control instead of leaving it showing a
+    // change that didn't happen.
     for (const auto &resync : resyncCallbacks) {
         resync();
     }
 
-    QMessageBox::warning(this, tr("Couldn't Apply Change"),
-        tr("The change couldn't be applied. Check that the msi-ec driver is loaded and up to date, "
-           "and check the service logs for details."));
+    if (!success) {
+        QMessageBox::warning(this, tr("Couldn't Apply Change"),
+            tr("The change couldn't be applied. Check that the msi-ec driver is loaded and up to date, "
+               "and check the service logs for details."));
+    }
 }
 
 void MainWindow::updateConnectionStatus()
