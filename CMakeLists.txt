@@ -58,7 +58,7 @@ add_subdirectory(msi-controller)
 set(MSI_CONTROLLER_DBUS_SYSTEM_DIR "${CMAKE_INSTALL_DATAROOTDIR}/dbus-1/system.d")
 set(MSI_CONTROLLER_POLKIT_ACTIONS_DIR "${CMAKE_INSTALL_DATAROOTDIR}/polkit-1/actions")
 set(MSI_CONTROLLER_POLKIT_RULES_DIR "${CMAKE_INSTALL_DATAROOTDIR}/polkit-1/rules.d")
-set(MSI_CONTROLLER_SYSTEMD_UNIT_DIR "${CMAKE_INSTALL_DATAROOTDIR}/systemd/system")
+set(MSI_CONTROLLER_SYSTEMD_UNIT_DIR "${CMAKE_INSTALL_PREFIX}/lib/systemd/system")
 
 # The systemd unit needs the real install-time path to the backend executable,
 # so we configure it once from the source template.
