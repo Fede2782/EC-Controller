@@ -8,6 +8,7 @@
 #include <QCheckBox>
 #include <QSlider>
 #include <QList>
+#include <QElapsedTimer>
 #include <functional>
 
 #include "backendclient.h"
@@ -25,6 +26,7 @@ QT_END_NAMESPACE
 
 class FeatureGroupBox;
 class TopicBoxArea;
+class TrayIcon;
 
 class MainWindow : public QMainWindow
 {
@@ -34,8 +36,21 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+public slots:
+    // Brings the window back from wherever it is - hidden in the tray,
+    // minimized, or buried under other windows - and gives it focus. Also
+    // what a second launch of the application ends up calling.
+    void showAndActivate();
+
 protected:
     void showEvent(QShowEvent *event) override;
+
+    // Closing the window hides it into the tray when there is one; the
+    // tray's Quit (or Help -> Exit) is the complete exit.
+    void closeEvent(QCloseEvent *event) override;
+
+    // Tracks when the window last lost focus - see toggleFromTray().
+    void changeEvent(QEvent *event) override;
 
 private slots:
     void onReloadTriggered();
@@ -60,6 +75,18 @@ private:
     void setupBattery();
     void setupToggles();
     void setupKeyboardBacklight();
+
+    // Creates the tray entry and wires its clicks and menu.
+    void setupTray();
+
+    // Left click on the tray icon: hide the window into the tray if the
+    // user was just looking at it, otherwise bring it forward.
+    void toggleFromTray();
+    void hideToTray();
+
+    // The one complete exit. Every quit path goes through here, so anything
+    // that must happen on the way out has a single place to live.
+    void quitApplication();
 
     // Wires up the Edit menu, builds the Apply/Discard bar, and applies
     // what they remember from the last session (box order, revealed fan
@@ -119,6 +146,20 @@ private:
 
     // Holds every topic box and owns their ordering.
     TopicBoxArea *topicBoxes;
+
+    TrayIcon *trayIcon;
+
+    // Restarted whenever the window loses focus, invalid while it has it.
+    // Clicking the tray icon itself takes focus away from the window (to
+    // the panel) before the click arrives, so "is the window active?" is
+    // always false by then; "was it active a moment ago?" is the question
+    // that actually tells a user looking at the window apart from one
+    // whose window is buried.
+    QElapsedTimer lastDeactivated;
+
+    // Set once a complete exit has begun, so closeEvent() lets the window
+    // actually close instead of hiding it.
+    bool quitting = false;
 
     // The backend connection indicator in the status bar: a style-drawn
     // icon (so it never comes out blank on an incomplete icon theme) and

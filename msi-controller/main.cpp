@@ -1,8 +1,11 @@
 #include "mainwindow.h"
+#include "appactivationservice.h"
 
 #include <QApplication>
 #include <QDBusConnection>
 #include <QDBusConnectionInterface>
+#include <QDebug>
+#include <QIcon>
 
 int main(int argc, char *argv[])
 {
@@ -13,30 +16,60 @@ int main(int argc, char *argv[])
     a.setApplicationDisplayName("MSI Controller");
     a.setApplicationVersion("0.1");
 
+    // On Wayland the window is identified by its desktop file, which is
+    // also where the taskbar and window switcher take its icon from. Must
+    // match the installed msi-controller.desktop.
+    a.setDesktopFileName(QStringLiteral("msi-controller"));
+    a.setWindowIcon(QIcon::fromTheme(QStringLiteral("msicontroller"),
+                                     QIcon(QStringLiteral(":/icons/apps/msicontroller.svg"))));
+
+    // The window hides into the tray instead of closing, so "no windows
+    // left" no longer means "done". Worse, with the main window hidden, a
+    // dialog (e.g. a failed-command warning) closing would count as the
+    // last window closing and end the application. Quitting is explicit
+    // from here on: the tray's Quit, Help -> Exit, or closing the window
+    // when there's no tray to hide into.
+    a.setQuitOnLastWindowClosed(false);
+
     // A single running instance is enforced on the session bus. Reachability
     // of the system-bus backend is no longer checked here: MainWindow starts
     // regardless and shows its own connection status, so "Reload GUI &
     // Backend Connection" has something to actually recover from without
     // restarting the whole application.
     QDBusConnection sessionBus = QDBusConnection::sessionBus();
-    const QString sessionBusServiceName = "org.fedelabs.MsiController.App";
 
     if (!sessionBus.isConnected()) {
         qCritical() << "Cannot connect to Session Bus. Aborting initialization";
         return 1;
     }
 
-    if (sessionBus.interface()->isServiceRegistered(sessionBusServiceName)) {
-        qCritical() << "Another instance of the application is already running. Aborting initialization";
+    if (sessionBus.interface()->isServiceRegistered(AppActivationService::serviceName)) {
+        // Most likely the other instance is hidden in the tray, and this
+        // launch is how the user is trying to get it back - so bring it
+        // forward rather than just refusing to start.
+        if (AppActivationService::activateRunningInstance(sessionBus)) {
+            return 0;
+        }
+        qCritical() << "Another instance is already running but didn't respond. Aborting initialization";
         return 1;
     }
 
-    if (!sessionBus.registerService(sessionBusServiceName)) {
+    if (!sessionBus.registerService(AppActivationService::serviceName)) {
         qCritical() << "Unable to register the service on the Session Bus. Aborting initialization";
         return 1;
     }
 
     MainWindow w;
+
+    AppActivationService activationService;
+    QObject::connect(&activationService, &AppActivationService::activationRequested, &w,
+                     &MainWindow::showAndActivate);
+    if (!activationService.registerOn(sessionBus)) {
+        // Not fatal: this instance works fine, a second launch just can't
+        // bring it forward.
+        qWarning() << "Unable to export the activation interface on the Session Bus";
+    }
+
     w.show();
 
     return a.exec();

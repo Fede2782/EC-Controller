@@ -2,7 +2,10 @@
 #include "ui_mainwindow.h"
 #include "featuregroupbox.h"
 #include "topicboxarea.h"
+#include "trayicon.h"
 
+#include <QApplication>
+#include <QCloseEvent>
 #include <QDialogButtonBox>
 #include <QGuiApplication>
 #include <QHBoxLayout>
@@ -22,6 +25,16 @@ namespace {
 // Companion to TopicBoxArea's own key: both live under the same QSettings
 // group so everything the Edit menu remembers sits together in the file.
 const QString showAllFanSlotsSettingsKey = QStringLiteral("GUI/showAllFanSlots");
+
+// Whether the "still running in the tray" notice has been shown. It's
+// shown once, ever: after that, closing into the tray is expected.
+const QString trayHintShownSettingsKey = QStringLiteral("GUI/trayHintShown");
+
+// How recently the window may have lost focus for a tray click to count as
+// "the user was just looking at it". Generous on purpose - a slow click is
+// still well under a second, while deliberately switching away and then
+// reaching for the tray within that window is rare.
+constexpr int trayClickFocusGraceMs = 1000;
 }
 
 MainWindow::MainWindow(QWidget *parent)
@@ -33,9 +46,11 @@ MainWindow::MainWindow(QWidget *parent)
     , kbdBacklightBrightness(new KbdBacklightBrightnessClient(this))
     , kdePowerManagementWatcher(new KdePowerManagementWatcher(this))
     , topicBoxes(new TopicBoxArea(this))
+    , trayIcon(new TrayIcon(this))
 {
     ui->setupUi(this);
     setupStatusBar();
+    setupTray();
 
     connect(ui->actionReload, &QAction::triggered, this, &MainWindow::onReloadTriggered);
     connect(ui->actionEsci, &QAction::triggered, this, &MainWindow::onExitTriggered);
@@ -77,7 +92,9 @@ void MainWindow::onReloadTriggered()
 
 void MainWindow::onExitTriggered()
 {
-    close();
+    // A complete exit, like the tray's Quit - close() would now only hide
+    // the window into the tray.
+    quitApplication();
 }
 
 void MainWindow::onAboutTriggered()
@@ -203,6 +220,7 @@ void MainWindow::updateConnectionStatus()
         ? tr("Connected to the backend")
         : tr("Not connected: %1").arg(backend->lastError());
     connectionTextLabel->setText(text);
+    trayIcon->setStatusText(text);
     connectionTextLabel->setToolTip(connected
         ? text
         : tr("%1\nUse Help → Reload to try again once the service is running.").arg(text));
@@ -225,6 +243,94 @@ void MainWindow::updateWriteControlsEnabled()
     for (QWidget *widget : writeControls) {
         widget->setEnabled(usable);
     }
+}
+
+void MainWindow::setupTray()
+{
+    connect(trayIcon, &TrayIcon::toggleWindowRequested, this, &MainWindow::toggleFromTray);
+    connect(trayIcon, &TrayIcon::showWindowRequested, this, &MainWindow::showAndActivate);
+    connect(trayIcon, &TrayIcon::quitRequested, this, &MainWindow::quitApplication);
+}
+
+void MainWindow::toggleFromTray()
+{
+    const bool wasJustActive = isActiveWindow()
+        || (lastDeactivated.isValid() && lastDeactivated.elapsed() < trayClickFocusGraceMs);
+
+    if (isVisible() && !isMinimized() && wasJustActive) {
+        hideToTray();
+    } else {
+        showAndActivate();
+    }
+}
+
+void MainWindow::showAndActivate()
+{
+    // Clearing only the minimized bit, rather than showNormal(), keeps a
+    // maximized window maximized.
+    if (isMinimized()) {
+        setWindowState(windowState() & ~Qt::WindowMinimized);
+    }
+    show();
+    raise();
+    activateWindow();
+}
+
+void MainWindow::hideToTray()
+{
+    hide();
+}
+
+void MainWindow::quitApplication()
+{
+    quitting = true;
+
+    // Leaves the event loop; main() returns and everything is torn down in
+    // order. Anything that has to happen on exit (M10's display-rotation
+    // restore, for one) belongs on QCoreApplication::aboutToQuit, which
+    // every quit path passes through.
+    QCoreApplication::quit();
+}
+
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    // Logging out must never be held up by an application refusing to
+    // close - the session manager treats that as "cancel logout".
+    if (quitting || qApp->isSavingSession()) {
+        event->accept();
+        return;
+    }
+
+    if (!trayIcon->isUsable()) {
+        // Nowhere to hide: closing the window is the only way the user can
+        // tell us to exit, so treat it as one.
+        event->accept();
+        quitApplication();
+        return;
+    }
+
+    event->ignore();
+    hideToTray();
+
+    QSettings settings;
+    if (!settings.value(trayHintShownSettingsKey, false).toBool()) {
+        settings.setValue(trayHintShownSettingsKey, true);
+        trayIcon->showMessage(tr("MSI Controller is still running"),
+            tr("It keeps running in the system tray. Click the tray icon to bring it back, "
+               "or choose Quit from its menu to exit completely."));
+    }
+}
+
+void MainWindow::changeEvent(QEvent *event)
+{
+    if (event->type() == QEvent::ActivationChange) {
+        if (isActiveWindow()) {
+            lastDeactivated.invalidate();
+        } else {
+            lastDeactivated.restart();
+        }
+    }
+    QMainWindow::changeEvent(event);
 }
 
 void MainWindow::setupEditMode()

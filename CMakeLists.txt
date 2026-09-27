@@ -96,5 +96,24 @@ install(FILES
     DESTINATION "${MSI_CONTROLLER_SYSTEMD_UNIT_DIR}"
 )
 
+# Application and tray icons. Only the hicolor set is installed: it's the
+# fallback theme every desktop searches, and the tray SVGs style their
+# paths with Plasma's ColorScheme-Text class, so Plasma recolours them to
+# suit light and dark panels on its own. The breeze/breeze-dark copies
+# gen.sh also produces aren't installed - those directories belong to the
+# breeze-icons package.
+install(DIRECTORY
+    "${CMAKE_CURRENT_SOURCE_DIR}/icons/icons/hicolor"
+    DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/icons"
+)
+
+# The desktop entry gives the application its menu entry and, on Wayland,
+# its window identity (QGuiApplication::desktopFileName in main.cpp must
+# keep matching this file's name).
+install(FILES
+    "${CMAKE_CURRENT_SOURCE_DIR}/msi-controller.desktop"
+    DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/applications"
+)
+
 # Show a short summary of discovered packages and configuration status.
 feature_summary(WHAT ALL INCLUDE_QUIET_PACKAGES FATAL_ON_MISSING_REQUIRED_PACKAGES)
