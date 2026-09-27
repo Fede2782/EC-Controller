@@ -3,9 +3,16 @@
 #include "featuregroupbox.h"
 #include "topicboxarea.h"
 
-#include <QMessageBox>
+#include <QGuiApplication>
+#include <QHBoxLayout>
 #include <QInputDialog>
+#include <QMessageBox>
+#include <QPushButton>
+#include <QScreen>
+#include <QScrollArea>
 #include <QSettings>
+#include <QStyle>
+#include <QTimer>
 #include <optional>
 
 using namespace MsiControllerLib;
@@ -27,6 +34,7 @@ MainWindow::MainWindow(QWidget *parent)
     , topicBoxes(new TopicBoxArea(this))
 {
     ui->setupUi(this);
+    setupStatusBar();
 
     connect(ui->actionReload, &QAction::triggered, this, &MainWindow::onReloadTriggered);
     connect(ui->actionEsci, &QAction::triggered, this, &MainWindow::onExitTriggered);
@@ -79,23 +87,49 @@ void MainWindow::onAboutTriggered()
 
 void MainWindow::onEditModeToggled(bool editing)
 {
-    topicBoxes->setEditMode(editing);
+    if (editing) {
+        topicBoxes->beginEdit();
+    }
+
+    editActionBar->setVisible(editing);
+
+    // While a session is open the menu entry is not the way out - Apply and
+    // Discard are - so it is left checked but disabled rather than offering
+    // a third, ambiguous exit that neither keeps nor reverts explicitly.
+    ui->actionEditMode->setEnabled(!editing);
+    ui->actionResetLayout->setEnabled(editing);
 
     // Hardware safety: no EC writes while the layout is being rearranged.
     updateWriteControlsEnabled();
 
-    if (editing) {
-        ui->statusbar->showMessage(
-            tr("Edit mode: reorder the boxes with the arrow buttons. The layout is saved as you go."));
-    } else {
-        ui->statusbar->clearMessage();
-    }
+    // The bar appearing or disappearing changes how much height the window
+    // needs, which is exactly the growth that used to be permanent.
+    fitWindowToContents();
+}
+
+void MainWindow::onEditApplyClicked()
+{
+    topicBoxes->commitEdit();
+
+    // Unchecking runs onEditModeToggled(false), which does the teardown -
+    // one path out for both buttons.
+    ui->actionEditMode->setChecked(false);
+}
+
+void MainWindow::onEditDiscardClicked()
+{
+    topicBoxes->cancelEdit();
+    ui->actionEditMode->setChecked(false);
 }
 
 void MainWindow::onShowAllFanSlotsToggled(bool showAll)
 {
     QSettings().setValue(showAllFanSlotsSettingsKey, showAll);
     updateFanSlotVisibility();
+
+    // Revealing rows makes the window taller; hiding them again has to make
+    // it shorter, or the reveal is a one-way door.
+    fitWindowToContents();
 }
 
 void MainWindow::onBackendConnectionStateChanged(bool connected)
@@ -125,25 +159,57 @@ void MainWindow::onCommandFinished(bool success)
     }
 }
 
+void MainWindow::setupStatusBar()
+{
+    auto *indicator = new QWidget(this);
+    auto *indicatorLayout = new QHBoxLayout(indicator);
+    indicatorLayout->setContentsMargins(4, 0, 4, 0);
+
+    connectionIconLabel = new QLabel(indicator);
+    connectionTextLabel = new QLabel(tr("Connecting to the backend…"), indicator);
+
+    // Ignored horizontally: a long (or long-translated) reason must never
+    // force the whole window wider. The tooltip always has the full text.
+    connectionTextLabel->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
+
+    indicatorLayout->addWidget(connectionIconLabel);
+    indicatorLayout->addWidget(connectionTextLabel, 1);
+
+    // A normal (left-hand) status bar widget rather than a permanent one:
+    // it reads first, where status is expected. The catch is that a
+    // temporary QStatusBar::showMessage() would cover it while shown - fine
+    // for now, since nothing calls showMessage(); if a later milestone
+    // does, this should move to addPermanentWidget().
+    ui->statusbar->addWidget(indicator, 1);
+}
+
 void MainWindow::updateConnectionStatus()
 {
-    if (backend->isConnected()) {
-        ui->connectionStatusLabel->setText(tr("Connected to the backend."));
-    } else {
-        ui->connectionStatusLabel->setText(tr("Not connected: %1").arg(backend->lastError()));
-    }
+    const bool connected = backend->isConnected();
+
+    const QString text = connected
+        ? tr("Connected to the backend")
+        : tr("Not connected: %1").arg(backend->lastError());
+    connectionTextLabel->setText(text);
+    connectionTextLabel->setToolTip(connected
+        ? text
+        : tr("%1\nUse Help → Reload to try again once the service is running.").arg(text));
+
+    const QIcon icon = style()->standardIcon(connected ? QStyle::SP_DialogApplyButton : QStyle::SP_MessageBoxWarning);
+    const int iconSize = style()->pixelMetric(QStyle::PM_SmallIconSize);
+    connectionIconLabel->setPixmap(icon.pixmap(QSize(iconSize, iconSize), devicePixelRatioF()));
 }
 
 void MainWindow::registerWriteControl(QWidget *widget, std::function<void()> resync)
 {
     writeControls.append(widget);
     resyncCallbacks.append(std::move(resync));
-    widget->setEnabled(backend->isConnected() && !topicBoxes->isEditMode());
+    widget->setEnabled(backend->isConnected() && !topicBoxes->isEditing());
 }
 
 void MainWindow::updateWriteControlsEnabled()
 {
-    const bool usable = backend->isConnected() && !topicBoxes->isEditMode();
+    const bool usable = backend->isConnected() && !topicBoxes->isEditing();
     for (QWidget *widget : writeControls) {
         widget->setEnabled(usable);
     }
@@ -151,9 +217,38 @@ void MainWindow::updateWriteControlsEnabled()
 
 void MainWindow::setupEditMode()
 {
+    // Pinned below the scrolling box area, so it stays reachable no matter
+    // how far down the boxes run.
+    editActionBar = new QWidget(this);
+    auto *editActionLayout = new QHBoxLayout(editActionBar);
+    editActionLayout->setContentsMargins(0, 0, 0, 0);
+
+    auto *editHintLabel = new QLabel(tr("Move the boxes with the arrows on the right."), editActionBar);
+    auto *discardButton = new QPushButton(tr("Discard"), editActionBar);
+    auto *applyButton = new QPushButton(tr("Apply"), editActionBar);
+    applyButton->setDefault(true);
+
+    // Escape discards, which is what Escape means everywhere else.
+    discardButton->setShortcut(QKeySequence::Cancel);
+
+    editActionLayout->addWidget(editHintLabel);
+    editActionLayout->addStretch();
+    editActionLayout->addWidget(discardButton);
+    editActionLayout->addWidget(applyButton);
+
+    editActionBar->setVisible(false);
+    ui->centralLayout->addWidget(editActionBar);
+
+    connect(applyButton, &QPushButton::clicked, this, &MainWindow::onEditApplyClicked);
+    connect(discardButton, &QPushButton::clicked, this, &MainWindow::onEditDiscardClicked);
+
     connect(ui->actionEditMode, &QAction::toggled, this, &MainWindow::onEditModeToggled);
     connect(ui->actionResetLayout, &QAction::triggered, topicBoxes, &TopicBoxArea::resetOrder);
     connect(ui->actionShowAllFanSlots, &QAction::toggled, this, &MainWindow::onShowAllFanSlotsToggled);
+
+    // Resetting the order is a staged move like any other, so it only makes
+    // sense inside a session.
+    ui->actionResetLayout->setEnabled(false);
 
     // Nothing to reveal on a machine that reports no fans at all.
     ui->actionShowAllFanSlots->setEnabled(fanSpeedsBox != nullptr);
@@ -169,6 +264,56 @@ void MainWindow::setupEditMode()
     updateFanSlotVisibility();
 
     topicBoxes->applySavedOrder();
+}
+
+void MainWindow::showEvent(QShowEvent *event)
+{
+    QMainWindow::showEvent(event);
+
+    // The .ui geometry is only a starting point; the real height depends on
+    // how many features this machine actually supports.
+    if (!initialFitDone) {
+        initialFitDone = true;
+        fitWindowToContents();
+    }
+}
+
+void MainWindow::fitWindowToContents()
+{
+    if (!isVisible() || isMaximized() || isFullScreen()) {
+        return;
+    }
+
+    // Deferred by one event-loop pass: widgets that were just shown or
+    // hidden only report their real size hints after the pending layout
+    // pass has run.
+    QTimer::singleShot(0, this, [this]() {
+        if (!isVisible() || isMaximized() || isFullScreen()) {
+            return;
+        }
+
+        if (QLayout *contentsLayout = ui->scrollAreaContents->layout()) {
+            contentsLayout->activate();
+        }
+
+        // Everything that is not the scroll area's viewport - menu bar,
+        // status bar, margins, and the Apply/Discard bar when it is showing.
+        const int chrome = height() - ui->scrollArea->viewport()->height();
+        // Growing to fit can only remove the vertical scrollbar, which gives
+        // the boxes more width and makes them shorter - so sizing from the
+        // current hint never comes out short.
+        int wanted = ui->scrollAreaContents->sizeHint().height() + chrome;
+
+        // Never taller than the screen can show - the scroll area takes over
+        // from there, which is the point of having one.
+        const QScreen *activeScreen = screen() ? screen() : QGuiApplication::primaryScreen();
+        if (activeScreen) {
+            const int frameOverhead = frameGeometry().height() - height();
+            wanted = qMin(wanted, activeScreen->availableGeometry().height() - frameOverhead);
+        }
+
+        resize(width(), qMax(wanted, minimumSizeHint().height()));
+    });
 }
 
 void MainWindow::updateFanSlotVisibility()

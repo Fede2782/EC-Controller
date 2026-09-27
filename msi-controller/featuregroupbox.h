@@ -4,8 +4,6 @@
 #include <QGroupBox>
 #include <QFormLayout>
 
-class QToolButton;
-
 // A titled box holding a simple list of label/value rows. Every topic box
 // in the main window (temperatures, fan speeds, and whatever later
 // milestones add) is one of these, so they all look and behave the same
@@ -15,6 +13,10 @@ class QToolButton;
 // to QSettings to remember the user's ordering, so it must never change
 // once released - the title is translated and can be reworded freely, the
 // id can't.
+//
+// The box knows nothing about Edit mode. Its reorder buttons live outside
+// it, in the row TopicBoxArea wraps it in, precisely so that entering Edit
+// mode doesn't change any box's height.
 class FeatureGroupBox : public QGroupBox
 {
     Q_OBJECT
@@ -30,27 +32,12 @@ public:
 
     // Hides or shows a whole row - both the label and the value widget -
     // identified by the value widget addRow() returned. Used for the fan
-    // slots that only appear once Edit mode reveals them.
+    // slots that only appear once the Edit menu reveals them.
     void setRowVisible(QWidget *valueWidget, bool visible);
-
-    // Shows or hides the in-box reorder controls. The box's contents are
-    // left alone: Edit mode only adds a small row of buttons above them.
-    void setEditMode(bool editing);
-
-    // Grays out the moves that would go nowhere, so the first box has no
-    // "up" and the last one no "down".
-    void setMoveEnabled(bool canMoveUp, bool canMoveDown);
-
-signals:
-    void moveUpRequested();
-    void moveDownRequested();
 
 private:
     QString m_boxId;
-    QFormLayout *m_formLayout;
-    QWidget *m_editBar;
-    QToolButton *m_moveUpButton;
-    QToolButton *m_moveDownButton;
+    QFormLayout *m_layout;
 };
 
 #endif // FEATUREGROUPBOX_H

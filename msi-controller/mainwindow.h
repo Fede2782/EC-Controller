@@ -34,16 +34,24 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+protected:
+    void showEvent(QShowEvent *event) override;
+
 private slots:
     void onReloadTriggered();
     void onExitTriggered();
     void onAboutTriggered();
     void onEditModeToggled(bool editing);
+    void onEditApplyClicked();
+    void onEditDiscardClicked();
     void onShowAllFanSlotsToggled(bool showAll);
     void onBackendConnectionStateChanged(bool connected);
     void onCommandFinished(bool success);
 
 private:
+    // Builds the backend connection indicator in the status bar. Called
+    // right after setupUi(), before anything can report a connection state.
+    void setupStatusBar();
     void updateConnectionStatus();
     void setupHardwareOverview();
     void setupFanMode();
@@ -52,14 +60,22 @@ private:
     void setupToggles();
     void setupKeyboardBacklight();
 
-    // Wires up the Edit menu and applies what it remembers from the last
-    // session (box order, revealed fan slots). Called once every topic box
-    // exists, since restoring an order needs all of them registered.
+    // Wires up the Edit menu, builds the Apply/Discard bar, and applies
+    // what they remember from the last session (box order, revealed fan
+    // slots). Called once every topic box exists, since restoring an order
+    // needs all of them registered.
     void setupEditMode();
 
     // Shows or hides the fan rows that aren't part of the default set,
     // according to the Edit menu's "Show All Fan Slots" option.
     void updateFanSlotVisibility();
+
+    // Resizes the window's height to exactly what its contents need,
+    // capped by the screen. Qt grows a window when its contents grow but
+    // never shrinks it again, so anything that reveals or hides a row (Edit
+    // mode's bar, the extra fan slots) has to ask for this explicitly or
+    // the window stays permanently stretched.
+    void fitWindowToContents();
 
     // Shared by every msi-ec "mode" attribute (fan mode, shift mode, and
     // kbd backlight mode): builds a combo box with only the supported
@@ -102,6 +118,19 @@ private:
 
     // Holds every topic box and owns their ordering.
     TopicBoxArea *topicBoxes;
+
+    // The backend connection indicator in the status bar: a style-drawn
+    // icon (so it never comes out blank on an incomplete icon theme) and
+    // the state in words, with the full reason in the tooltip.
+    QLabel *connectionIconLabel = nullptr;
+    QLabel *connectionTextLabel = nullptr;
+
+    // Pinned under the scroll area while an editing session is open: the
+    // only way out of Edit mode is one of its two buttons.
+    QWidget *editActionBar = nullptr;
+
+    // The window is sized to its contents once, the first time it's shown.
+    bool initialFitDone = false;
 
     // Null when the matching attribute isn't supported on this machine, in
     // which case its row was never added to the UI in the first place.
