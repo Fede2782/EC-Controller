@@ -25,6 +25,7 @@ class MainWindow;
 QT_END_NAMESPACE
 
 class FeatureGroupBox;
+class QPushButton;
 class TopicBoxArea;
 class TrayIcon;
 
@@ -59,7 +60,6 @@ private slots:
     void onEditModeToggled(bool editing);
     void onEditApplyClicked();
     void onEditDiscardClicked();
-    void onResetOrderRequested();
     void onShowAllFanSlotsToggled(bool showAll);
     void onBackendConnectionStateChanged(bool connected);
     void onCommandFinished(bool success);
@@ -93,6 +93,11 @@ private:
     // slots). Called once every topic box exists, since restoring an order
     // needs all of them registered.
     void setupEditMode();
+
+    // Reset is only offered when it would change something: the Edit bar's
+    // button is disabled while the boxes are already in their default
+    // order.
+    void updateResetOrderEnabled();
 
     // Shows or hides the fan rows that aren't part of the default set,
     // according to the Edit menu's "Show All Fan Slots" option.
@@ -170,6 +175,10 @@ private:
     // Pinned under the scroll area while an editing session is open: the
     // only way out of Edit mode is one of its two buttons.
     QWidget *editActionBar = nullptr;
+
+    // The Edit bar's "Reset to Default", kept to enable and disable it as
+    // the order changes.
+    QPushButton *resetOrderButton = nullptr;
 
     // The window is sized to its contents once, the first time it's shown.
     bool initialFitDone = false;

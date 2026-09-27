@@ -98,6 +98,11 @@ bool TopicBoxArea::isEditing() const
     return m_editing;
 }
 
+bool TopicBoxArea::isDefaultOrder() const
+{
+    return currentOrder() == m_registrationOrder;
+}
+
 void TopicBoxArea::beginEdit()
 {
     if (m_editing) {
@@ -150,7 +155,6 @@ void TopicBoxArea::cancelEdit()
 void TopicBoxArea::resetOrder()
 {
     applyOrder(m_registrationOrder);
-    emit orderChanged();
 }
 
 int TopicBoxArea::indexOfBox(const FeatureGroupBox *box) const
@@ -183,7 +187,6 @@ void TopicBoxArea::moveBox(FeatureGroupBox *box, int offset)
 
     m_rows.move(from, to);
     rebuildLayout();
-    emit orderChanged();
 }
 
 void TopicBoxArea::applyOrder(const QList<FeatureGroupBox *> &order)
@@ -224,6 +227,11 @@ void TopicBoxArea::rebuildLayout()
         m_layout->addWidget(entry.row);
     }
     updateMoveButtons();
+
+    // Every order change funnels through here, so this is the one place
+    // that has to announce it - including the ones that previously went
+    // unannounced (restoring the saved order at startup, discarding).
+    emit orderChanged();
 }
 
 void TopicBoxArea::updateMoveButtons()

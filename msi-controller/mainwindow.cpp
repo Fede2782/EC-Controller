@@ -107,6 +107,13 @@ void MainWindow::onEditModeToggled(bool editing)
 {
     if (editing) {
         topicBoxes->beginEdit();
+    } else if (topicBoxes->isEditing()) {
+        // Apply and Discard close the session before unchecking the action,
+        // so reaching here with it still open means the action was
+        // unchecked some other way - e.g. from a menu that didn't pick up
+        // the entry being disabled. Treat it as the safe choice, Discard,
+        // rather than leaving a session open with no bar to close it.
+        topicBoxes->cancelEdit();
     }
 
     editActionBar->setVisible(editing);
@@ -137,18 +144,6 @@ void MainWindow::onEditDiscardClicked()
 {
     topicBoxes->cancelEdit();
     ui->actionEditMode->setChecked(false);
-}
-
-void MainWindow::onResetOrderRequested()
-{
-    // Reset is always available, but never takes effect on its own: outside
-    // a session it opens one first, so the default order is shown staged
-    // and still has to be confirmed with Apply (or thrown away with
-    // Discard) like any other layout change.
-    if (!topicBoxes->isEditing()) {
-        ui->actionEditMode->setChecked(true);
-    }
-    topicBoxes->resetOrder();
 }
 
 void MainWindow::onShowAllFanSlotsToggled(bool showAll)
@@ -356,12 +351,12 @@ void MainWindow::setupEditMode()
     auto *editButtons = new QDialogButtonBox(
         QDialogButtonBox::RestoreDefaults | QDialogButtonBox::Discard | QDialogButtonBox::Apply, editActionBar);
 
-    QPushButton *resetButton = editButtons->button(QDialogButtonBox::RestoreDefaults);
+    resetOrderButton = editButtons->button(QDialogButtonBox::RestoreDefaults);
     QPushButton *discardButton = editButtons->button(QDialogButtonBox::Discard);
     QPushButton *applyButton = editButtons->button(QDialogButtonBox::Apply);
 
-    resetButton->setText(tr("Reset to Default"));
-    resetButton->setToolTip(tr("Put the boxes back in their default order. Apply to keep it."));
+    resetOrderButton->setText(tr("Reset to Default"));
+    resetOrderButton->setToolTip(tr("Put the boxes back in their default order. Apply to keep it."));
     discardButton->setText(tr("Discard"));
     discardButton->setToolTip(tr("Leave Edit mode and put the boxes back as they were."));
     applyButton->setText(tr("Apply"));
@@ -379,10 +374,10 @@ void MainWindow::setupEditMode()
 
     connect(applyButton, &QPushButton::clicked, this, &MainWindow::onEditApplyClicked);
     connect(discardButton, &QPushButton::clicked, this, &MainWindow::onEditDiscardClicked);
-    connect(resetButton, &QPushButton::clicked, this, &MainWindow::onResetOrderRequested);
+    connect(resetOrderButton, &QPushButton::clicked, topicBoxes, &TopicBoxArea::resetOrder);
+    connect(topicBoxes, &TopicBoxArea::orderChanged, this, &MainWindow::updateResetOrderEnabled);
 
     connect(ui->actionEditMode, &QAction::toggled, this, &MainWindow::onEditModeToggled);
-    connect(ui->actionResetLayout, &QAction::triggered, this, &MainWindow::onResetOrderRequested);
     connect(ui->actionShowAllFanSlots, &QAction::toggled, this, &MainWindow::onShowAllFanSlotsToggled);
 
     // Nothing to reveal on a machine that reports no fans at all.
@@ -399,6 +394,16 @@ void MainWindow::setupEditMode()
     updateFanSlotVisibility();
 
     topicBoxes->applySavedOrder();
+
+    // applySavedOrder() announces the order it restores, but only when
+    // there are boxes to reorder - set the initial state explicitly too.
+    updateResetOrderEnabled();
+}
+
+void MainWindow::updateResetOrderEnabled()
+{
+    const bool canReset = !topicBoxes->isDefaultOrder();
+    resetOrderButton->setEnabled(canReset);
 }
 
 void MainWindow::showEvent(QShowEvent *event)

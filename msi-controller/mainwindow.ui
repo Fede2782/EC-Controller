@@ -68,7 +68,6 @@
      <string>Edit</string>
     </property>
     <addaction name="actionEditMode"/>
-    <addaction name="actionResetLayout"/>
     <addaction name="separator"/>
     <addaction name="actionShowAllFanSlots"/>
    </widget>
@@ -116,17 +115,6 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+E</string>
-   </property>
-  </action>
-  <action name="actionResetLayout">
-   <property name="icon">
-    <iconset theme="QIcon::ThemeIcon::EditUndo"/>
-   </property>
-   <property name="text">
-    <string>Reset Box Order</string>
-   </property>
-   <property name="toolTip">
-    <string>Put the topic boxes back in their default order. Opens Edit mode so you can review it before applying.</string>
    </property>
   </action>
   <action name="actionShowAllFanSlots">

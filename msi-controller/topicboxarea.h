@@ -46,6 +46,10 @@ public:
 
     bool isEditing() const;
 
+    // Whether the boxes are currently shown in their registration order -
+    // i.e. whether resetting would change anything.
+    bool isDefaultOrder() const;
+
 public slots:
     // Starts an editing session: shows the move buttons and remembers the
     // current order so cancelEdit() can put it back.
@@ -62,6 +66,8 @@ public slots:
     void resetOrder();
 
 signals:
+    // Emitted after every change to the displayed order, whatever caused
+    // it: a move, a reset, restoring the saved order, or a discard.
     void orderChanged();
 
 private:
