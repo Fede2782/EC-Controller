@@ -23,6 +23,12 @@ public:
     // How many of the 4 possible fanN_input files actually exist.
     int fanCount() const;
 
+    // Whether this particular 1-based slot has a fanN_input file. The GUI
+    // needs the per-slot answer, not just the count: hwmon numbers its
+    // channels from 1 with no guarantee they are contiguous, so "3 fans"
+    // does not have to mean fans 1, 2 and 3.
+    bool isFanPopulated(int fanIndex) const;
+
 signals:
     // fanIndex is 1-based, matching fanN_input.
     void fanSpeedRead(int fanIndex, int rpm);

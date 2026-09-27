@@ -24,6 +24,7 @@ class MainWindow;
 QT_END_NAMESPACE
 
 class FeatureGroupBox;
+class TopicBoxArea;
 
 class MainWindow : public QMainWindow
 {
@@ -37,6 +38,8 @@ private slots:
     void onReloadTriggered();
     void onExitTriggered();
     void onAboutTriggered();
+    void onEditModeToggled(bool editing);
+    void onShowAllFanSlotsToggled(bool showAll);
     void onBackendConnectionStateChanged(bool connected);
     void onCommandFinished(bool success);
 
@@ -49,12 +52,23 @@ private:
     void setupToggles();
     void setupKeyboardBacklight();
 
+    // Wires up the Edit menu and applies what it remembers from the last
+    // session (box order, revealed fan slots). Called once every topic box
+    // exists, since restoring an order needs all of them registered.
+    void setupEditMode();
+
+    // Shows or hides the fan rows that aren't part of the default set,
+    // according to the Edit menu's "Show All Fan Slots" option.
+    void updateFanSlotVisibility();
+
     // Shared by every msi-ec "mode" attribute (fan mode, shift mode, and
-    // kbd backlight mode once Milestone 5 adds it): builds a combo box with
-    // only the supported modes, preselected from the attribute's current
-    // value, wired to setMode and registered as a write control. Returns
-    // nullptr if none of the given modes turned out to be supported.
-    QComboBox *setupModeDropdown(const QString &boxTitle, MsiControllerLib::MsiEcAttribute attr,
+    // kbd backlight mode): builds a combo box with only the supported
+    // modes, preselected from the attribute's current value, wired to
+    // setMode and registered as a write control. Returns nullptr if none of
+    // the given modes turned out to be supported. boxId is the stable
+    // identifier its topic box is remembered under in the saved layout.
+    QComboBox *setupModeDropdown(const QString &boxId, const QString &boxTitle,
+                                  MsiControllerLib::MsiEcAttribute attr,
                                   const QList<MsiControllerLib::MsiEcMode> &modes);
     void syncModeSelection(QComboBox *combo, MsiControllerLib::MsiEcAttribute attr);
     QString modeLabel(MsiControllerLib::MsiEcMode mode) const;
@@ -74,6 +88,11 @@ private:
     // has to exist once.
     void registerWriteControl(QWidget *widget, std::function<void()> resync);
 
+    // A write control is usable only while the backend is reachable and the
+    // window isn't in Edit mode - clicking around a layout being rearranged
+    // shouldn't be able to reach the EC.
+    void updateWriteControlsEnabled();
+
     Ui::MainWindow *ui;
     BackendClient *backend;
     HardwareMonitor *hardwareMonitor;
@@ -81,15 +100,27 @@ private:
     KbdBacklightBrightnessClient *kbdBacklightBrightness;
     KdePowerManagementWatcher *kdePowerManagementWatcher;
 
+    // Holds every topic box and owns their ordering.
+    TopicBoxArea *topicBoxes;
+
     // Null when the matching attribute isn't supported on this machine, in
     // which case its row was never added to the UI in the first place.
     QLabel *cpuTemperatureLabel = nullptr;
     QLabel *gpuTemperatureLabel = nullptr;
 
+    // Null when this machine reports no fans at all through hwmon.
+    FeatureGroupBox *fanSpeedsBox = nullptr;
+
     // Keyed by 1-based fan index, matching FanSpeedMonitor::fanSpeedRead().
-    // Only holds the fans shown by default; the rest join here once the
-    // Edit-mode option to reveal them exists (Milestone 7).
+    // Holds a label for every one of the 4 possible slots, including the
+    // ones hidden by default and the ones the hardware doesn't report -
+    // hiding a row is a layout concern, so the labels always exist.
     QMap<int, QLabel *> fanSpeedLabels;
+
+    // The fan slots shown without "Show All Fan Slots" - the first few
+    // populated ones, by slot number. Kept as the actual set rather than a
+    // count because hwmon channel numbers need not be contiguous.
+    QList<int> defaultFanSlots;
 
     QList<QWidget *> writeControls;
     QList<std::function<void()>> resyncCallbacks;

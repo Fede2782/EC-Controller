@@ -32,6 +32,11 @@ int FanSpeedMonitor::fanCount() const
     return m_populatedFans.size();
 }
 
+bool FanSpeedMonitor::isFanPopulated(int fanIndex) const
+{
+    return m_populatedFans.contains(fanIndex);
+}
+
 QString FanSpeedMonitor::findFanHwmonPath() const
 {
     QDir hwmonRoot(QStringLiteral("/sys/class/hwmon"));

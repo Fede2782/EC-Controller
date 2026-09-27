@@ -19,6 +19,8 @@ set(MSI_CONTROLLER_GUI_SOURCES
     kdepowermanagementwatcher.h
     featuregroupbox.cpp
     featuregroupbox.h
+    topicboxarea.cpp
+    topicboxarea.h
 )
 
 qt_add_dbus_interface(

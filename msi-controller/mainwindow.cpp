@@ -1,12 +1,20 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "featuregroupbox.h"
+#include "topicboxarea.h"
 
 #include <QMessageBox>
 #include <QInputDialog>
+#include <QSettings>
 #include <optional>
 
 using namespace MsiControllerLib;
+
+namespace {
+// Companion to TopicBoxArea's own key: both live under the same QSettings
+// group so everything the Edit menu remembers sits together in the file.
+const QString showAllFanSlotsSettingsKey = QStringLiteral("GUI/showAllFanSlots");
+}
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -16,6 +24,7 @@ MainWindow::MainWindow(QWidget *parent)
     , fanSpeedMonitor(new FanSpeedMonitor(this))
     , kbdBacklightBrightness(new KbdBacklightBrightnessClient(this))
     , kdePowerManagementWatcher(new KdePowerManagementWatcher(this))
+    , topicBoxes(new TopicBoxArea(this))
 {
     ui->setupUi(this);
 
@@ -25,12 +34,23 @@ MainWindow::MainWindow(QWidget *parent)
     connect(backend, &BackendClient::connectionStateChanged, this, &MainWindow::onBackendConnectionStateChanged);
     connect(backend, &BackendClient::commandFinished, this, &MainWindow::onCommandFinished);
 
+    // Every topic box goes into this one container from here on, so the
+    // setup functions below no longer touch the window's layout directly -
+    // the order the boxes end up in is TopicBoxArea's business.
+    ui->verticalLayout->addWidget(topicBoxes);
+
+    // The call order here is the default top-to-bottom layout of the boxes,
+    // and what "Reset Box Order" goes back to.
     setupHardwareOverview();
     setupFanMode();
     setupShiftMode();
     setupBattery();
     setupToggles();
     setupKeyboardBacklight();
+
+    // After the boxes exist, so the saved order can be matched against them.
+    setupEditMode();
+
     ui->verticalLayout->addStretch();
 
     backend->connectToBackend();
@@ -57,13 +77,33 @@ void MainWindow::onAboutTriggered()
         tr("MSI Controller\nA GUI for controlling MSI laptop hardware via the msi-ec kernel driver."));
 }
 
+void MainWindow::onEditModeToggled(bool editing)
+{
+    topicBoxes->setEditMode(editing);
+
+    // Hardware safety: no EC writes while the layout is being rearranged.
+    updateWriteControlsEnabled();
+
+    if (editing) {
+        ui->statusbar->showMessage(
+            tr("Edit mode: reorder the boxes with the arrow buttons. The layout is saved as you go."));
+    } else {
+        ui->statusbar->clearMessage();
+    }
+}
+
+void MainWindow::onShowAllFanSlotsToggled(bool showAll)
+{
+    QSettings().setValue(showAllFanSlotsSettingsKey, showAll);
+    updateFanSlotVisibility();
+}
+
 void MainWindow::onBackendConnectionStateChanged(bool connected)
 {
-    updateConnectionStatus();
+    Q_UNUSED(connected)
 
-    for (QWidget *widget : writeControls) {
-        widget->setEnabled(connected);
-    }
+    updateConnectionStatus();
+    updateWriteControlsEnabled();
 }
 
 void MainWindow::onCommandFinished(bool success)
@@ -98,7 +138,52 @@ void MainWindow::registerWriteControl(QWidget *widget, std::function<void()> res
 {
     writeControls.append(widget);
     resyncCallbacks.append(std::move(resync));
-    widget->setEnabled(backend->isConnected());
+    widget->setEnabled(backend->isConnected() && !topicBoxes->isEditMode());
+}
+
+void MainWindow::updateWriteControlsEnabled()
+{
+    const bool usable = backend->isConnected() && !topicBoxes->isEditMode();
+    for (QWidget *widget : writeControls) {
+        widget->setEnabled(usable);
+    }
+}
+
+void MainWindow::setupEditMode()
+{
+    connect(ui->actionEditMode, &QAction::toggled, this, &MainWindow::onEditModeToggled);
+    connect(ui->actionResetLayout, &QAction::triggered, topicBoxes, &TopicBoxArea::resetOrder);
+    connect(ui->actionShowAllFanSlots, &QAction::toggled, this, &MainWindow::onShowAllFanSlotsToggled);
+
+    // Nothing to reveal on a machine that reports no fans at all.
+    ui->actionShowAllFanSlots->setEnabled(fanSpeedsBox != nullptr);
+
+    // setChecked() before the connect() above would leave the setting
+    // unapplied, so the initial visibility pass is done explicitly instead
+    // of relying on the toggled() signal (which doesn't fire when the value
+    // matches the default anyway).
+    {
+        const QSignalBlocker blocker(ui->actionShowAllFanSlots);
+        ui->actionShowAllFanSlots->setChecked(QSettings().value(showAllFanSlotsSettingsKey, false).toBool());
+    }
+    updateFanSlotVisibility();
+
+    topicBoxes->applySavedOrder();
+}
+
+void MainWindow::updateFanSlotVisibility()
+{
+    if (!fanSpeedsBox) {
+        return;
+    }
+
+    const bool showAll = ui->actionShowAllFanSlots->isChecked();
+
+    for (auto it = fanSpeedLabels.cbegin(); it != fanSpeedLabels.cend(); ++it) {
+        const int fan = it.key();
+        const bool shownByDefault = defaultFanSlots.contains(fan);
+        fanSpeedsBox->setRowVisible(it.value(), showAll || shownByDefault);
+    }
 }
 
 void MainWindow::setupHardwareOverview()
@@ -106,7 +191,7 @@ void MainWindow::setupHardwareOverview()
     // Each box is only added to the window if at least one of its rows
     // turned out to be supported - an empty box would just be clutter.
 
-    auto *temperatures = new FeatureGroupBox(tr("Temperatures"), this);
+    auto *temperatures = new FeatureGroupBox(QStringLiteral("temperatures"), tr("Temperatures"), this);
     if (hardwareMonitor->hasCpuTemperature()) {
         cpuTemperatureLabel = static_cast<QLabel *>(temperatures->addRow(tr("CPU"), new QLabel(tr("—"))));
     }
@@ -114,27 +199,37 @@ void MainWindow::setupHardwareOverview()
         gpuTemperatureLabel = static_cast<QLabel *>(temperatures->addRow(tr("GPU"), new QLabel(tr("—"))));
     }
     if (cpuTemperatureLabel || gpuTemperatureLabel) {
-        ui->verticalLayout->addWidget(temperatures);
+        topicBoxes->addBox(temperatures);
     } else {
         delete temperatures;
     }
 
     // A machine with a dedicated GPU has its own fan for it, so default to
     // showing 2 fans; on machines without one, the second hwmon reading
-    // typically just mirrors the first, so default to 1. Any further fans
-    // a 4-fan EC reports stay hidden until Edit mode can reveal them
-    // (Milestone 7).
+    // typically just mirrors the first, so default to 1. Any further fan a
+    // 4-channel EC reports stays hidden until Edit mode reveals it.
     const int defaultFanCount = hardwareMonitor->hasGpuTemperature() ? 2 : 1;
-    const int shownFanCount = qMin(defaultFanCount, fanSpeedMonitor->fanCount());
-
-    auto *fanSpeeds = new FeatureGroupBox(tr("Fan Speeds"), this);
-    for (int fan = 1; fan <= shownFanCount; ++fan) {
-        fanSpeedLabels[fan] = static_cast<QLabel *>(fanSpeeds->addRow(tr("Fan %1").arg(fan), new QLabel(tr("—"))));
+    for (int fan = 1; fan <= FanSpeedMonitor::maxFans && defaultFanSlots.size() < defaultFanCount; ++fan) {
+        if (fanSpeedMonitor->isFanPopulated(fan)) {
+            defaultFanSlots.append(fan);
+        }
     }
-    if (!fanSpeedLabels.isEmpty()) {
-        ui->verticalLayout->addWidget(fanSpeeds);
-    } else {
-        delete fanSpeeds;
+
+    // Every one of the 4 possible slots gets a row here, even the ones the
+    // hardware doesn't report: which of them are visible is decided by
+    // updateFanSlotVisibility() from the Edit menu's option, and hiding a
+    // form row is cheaper and less error-prone than creating and destroying
+    // labels when the option is flipped. A machine with no fan readings at
+    // all still gets no box, exactly as before - there'd be nothing to
+    // reveal.
+    if (fanSpeedMonitor->fanCount() > 0) {
+        fanSpeedsBox = new FeatureGroupBox(QStringLiteral("fanSpeeds"), tr("Fan Speeds"), this);
+        for (int fan = 1; fan <= FanSpeedMonitor::maxFans; ++fan) {
+            const QString initialText = fanSpeedMonitor->isFanPopulated(fan) ? tr("—") : tr("Not reported");
+            fanSpeedLabels[fan] =
+                static_cast<QLabel *>(fanSpeedsBox->addRow(tr("Fan %1").arg(fan), new QLabel(initialText)));
+        }
+        topicBoxes->addBox(fanSpeedsBox);
     }
 
     connect(hardwareMonitor, &HardwareMonitor::cpuTemperatureRead, this, [this](const QString &value) {
@@ -162,7 +257,7 @@ void MainWindow::setupFanMode()
         MsiEcMode::SilentFan,
         MsiEcMode::BasicFan,
     };
-    setupModeDropdown(tr("Fan Mode"), MsiEcAttribute::FanMode, fanModes);
+    setupModeDropdown(QStringLiteral("fanMode"), tr("Fan Mode"), MsiEcAttribute::FanMode, fanModes);
 }
 
 void MainWindow::setupShiftMode()
@@ -173,10 +268,12 @@ void MainWindow::setupShiftMode()
         MsiEcMode::EcoShift,
         MsiEcMode::SportShift,
     };
-    setupModeDropdown(tr("Performance Mode"), MsiEcAttribute::ShiftMode, shiftModes);
+    setupModeDropdown(QStringLiteral("performanceMode"), tr("Performance Mode"), MsiEcAttribute::ShiftMode,
+                      shiftModes);
 }
 
-QComboBox *MainWindow::setupModeDropdown(const QString &boxTitle, MsiEcAttribute attr, const QList<MsiEcMode> &modes)
+QComboBox *MainWindow::setupModeDropdown(const QString &boxId, const QString &boxTitle, MsiEcAttribute attr,
+                                         const QList<MsiEcMode> &modes)
 {
     auto *combo = new QComboBox(this);
     for (MsiEcMode mode : modes) {
@@ -192,9 +289,9 @@ QComboBox *MainWindow::setupModeDropdown(const QString &boxTitle, MsiEcAttribute
 
     syncModeSelection(combo, attr);
 
-    auto *box = new FeatureGroupBox(boxTitle, this);
+    auto *box = new FeatureGroupBox(boxId, boxTitle, this);
     box->addRow(tr("Mode"), combo);
-    ui->verticalLayout->addWidget(box);
+    topicBoxes->addBox(box);
 
     // activated() only fires on direct user interaction, unlike
     // currentIndexChanged() - so syncing the selection never triggers a
@@ -289,11 +386,11 @@ void MainWindow::setupBattery()
 
     syncBattery();
 
-    auto *box = new FeatureGroupBox(tr("Battery"), this);
+    auto *box = new FeatureGroupBox(QStringLiteral("battery"), tr("Battery"), this);
     box->addRow(tr("Charge Limit"), combo);
     box->addRow(QString(), startsChargingLabel);
     box->addRow(QString(), stopsAtLabel);
-    ui->verticalLayout->addWidget(box);
+    topicBoxes->addBox(box);
 
     // Every entry applies immediately on selection - no separate "apply"
     // step to get stuck on. "Custom..." opens a modal dialog instead of a
@@ -355,13 +452,13 @@ void MainWindow::setupToggles()
             continue;
         }
         if (!box) {
-            box = new FeatureGroupBox(tr("Hardware Toggles"), this);
+            box = new FeatureGroupBox(QStringLiteral("hardwareToggles"), tr("Hardware Toggles"), this);
         }
         setupToggle(box, toggle.label, toggle.attr, toggle.confirmChange);
     }
 
     if (box) {
-        ui->verticalLayout->addWidget(box);
+        topicBoxes->addBox(box);
     }
 }
 
@@ -406,7 +503,8 @@ void MainWindow::setupKeyboardBacklight()
         MsiEcMode::TimeoutKbdBacklight,
         MsiEcMode::AlwaysOnKbdBacklight,
     };
-    setupModeDropdown(tr("Keyboard Backlight Mode"), MsiEcAttribute::KbdBacklightMode, kbdBacklightModes);
+    setupModeDropdown(QStringLiteral("keyboardBacklightMode"), tr("Keyboard Backlight Mode"),
+                      MsiEcAttribute::KbdBacklightMode, kbdBacklightModes);
 
     if (!kbdBacklightBrightness->isAvailable()) {
         return;
@@ -432,9 +530,10 @@ void MainWindow::setupKeyboardBacklight()
         slider->setValue(value);
     });
 
-    auto *box = new FeatureGroupBox(tr("Keyboard Backlight Brightness"), this);
+    auto *box = new FeatureGroupBox(QStringLiteral("keyboardBacklightBrightness"),
+                                    tr("Keyboard Backlight Brightness"), this);
     box->addRow(tr("Brightness"), slider);
-    ui->verticalLayout->addWidget(box);
+    topicBoxes->addBox(box);
 
     // Deliberately not registerWriteControl()'d: this control talks
     // directly to UPower, not msi-controller-service, so it has nothing to

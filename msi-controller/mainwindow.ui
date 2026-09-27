@@ -36,6 +36,18 @@
      <height>30</height>
     </rect>
    </property>
+   <widget class="QMenu" name="menuEdit">
+    <property name="tearOffEnabled">
+     <bool>false</bool>
+    </property>
+    <property name="title">
+     <string>Edit</string>
+    </property>
+    <addaction name="actionEditMode"/>
+    <addaction name="actionResetLayout"/>
+    <addaction name="separator"/>
+    <addaction name="actionShowAllFanSlots"/>
+   </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="tearOffEnabled">
      <bool>false</bool>
@@ -48,6 +60,7 @@
     <addaction name="actionAbout_MSI_Controller"/>
     <addaction name="actionEsci"/>
    </widget>
+   <addaction name="menuEdit"/>
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusbar">
@@ -64,6 +77,45 @@
     </size>
    </property>
   </widget>
+  <action name="actionEditMode">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::DocumentProperties"/>
+   </property>
+   <property name="text">
+    <string>GUI Edit Mode</string>
+   </property>
+   <property name="toolTip">
+    <string>Rearrange the topic boxes. The layout is saved automatically.</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+E</string>
+   </property>
+  </action>
+  <action name="actionResetLayout">
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::EditUndo"/>
+   </property>
+   <property name="text">
+    <string>Reset Box Order</string>
+   </property>
+   <property name="toolTip">
+    <string>Put the topic boxes back in their default order.</string>
+   </property>
+  </action>
+  <action name="actionShowAllFanSlots">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Show All Fan Slots</string>
+   </property>
+   <property name="toolTip">
+    <string>Also show the fan slots that are hidden by default, including any the hardware does not report.</string>
+   </property>
+  </action>
   <action name="actionEsci">
    <property name="icon">
     <iconset theme="QIcon::ThemeIcon::ApplicationExit"/>
