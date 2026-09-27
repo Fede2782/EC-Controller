@@ -5,8 +5,8 @@
 #include <QSystemTrayIcon>
 
 namespace {
-// The installed theme icon (see the hicolor install rule in the top-level
-// CMakeLists.txt). Loading it by name matters on Plasma: Qt then hands the
+// The installed theme icon (icons/gen.sh generates it for hicolor, breeze
+// and breeze-dark; the top-level CMakeLists.txt installs all three). Loading it by name matters on Plasma: Qt then hands the
 // tray the icon *name*, and Plasma recolours the SVG's ColorScheme-Text
 // class to match light and dark panels.
 const QString trayIconName = QStringLiteral("msicontroller-tray");

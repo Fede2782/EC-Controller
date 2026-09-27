@@ -96,16 +96,62 @@ install(FILES
     DESTINATION "${MSI_CONTROLLER_SYSTEMD_UNIT_DIR}"
 )
 
-# Application and tray icons. Only the hicolor set is installed: it's the
-# fallback theme every desktop searches, and the tray SVGs style their
-# paths with Plasma's ColorScheme-Text class, so Plasma recolours them to
-# suit light and dark panels on its own. The breeze/breeze-dark copies
-# gen.sh also produces aren't installed - those directories belong to the
-# breeze-icons package.
+# Application and tray icons: the whole set icons/gen.sh generates. The
+# generated tree is committed, so installing never needs an SVG renderer -
+# only regenerating it does.
+#
+# - hicolor: the fallback theme every desktop searches.
+# - breeze / breeze-dark: KDE's themes, with the tray glyph in the colour
+#   that suits each (dark on Breeze, light on Breeze Dark). Only icon files
+#   are added; each theme's index.theme comes from breeze-icons, and icon
+#   lookup merges a theme's directories across every data dir, so this
+#   also works under a /usr/local prefix.
+# - pixmaps: the legacy location some launchers still read.
+set(MSI_CONTROLLER_GENERATED_ICONS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/icons/icons")
+
+foreach(MSI_CONTROLLER_ICON_THEME hicolor breeze breeze-dark)
+    install(DIRECTORY
+        "${MSI_CONTROLLER_GENERATED_ICONS_DIR}/${MSI_CONTROLLER_ICON_THEME}"
+        DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/icons"
+    )
+endforeach()
+
 install(DIRECTORY
-    "${CMAKE_CURRENT_SOURCE_DIR}/icons/icons/hicolor"
-    DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/icons"
+    "${MSI_CONTROLLER_GENERATED_ICONS_DIR}/pixmaps/"
+    DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/pixmaps"
 )
+
+# An existing GTK icon cache that's now older than the icons it indexes can
+# hide them from applications that trust it, so refresh any cache this
+# install just made stale. Only caches that already exist are touched - one
+# is never created - and nothing happens when installing into a staging
+# area (DESTDIR): there the package manager's icon-cache triggers are
+# responsible, and a cache written into the package would clash with the
+# ones breeze-icons and hicolor-icon-theme already own.
+#
+# The data dir is fixed at configure time; the prefix is read at install
+# time, so "cmake --install --prefix" is honoured. An absolute data dir is
+# used as given.
+install(CODE "set(MSI_CONTROLLER_ICONS_DATA_DIR \"${CMAKE_INSTALL_DATAROOTDIR}/icons\")")
+install(CODE [[
+    if("$ENV{DESTDIR}" STREQUAL "")
+        find_program(MSI_CONTROLLER_ICON_CACHE_TOOL NAMES gtk-update-icon-cache gtk4-update-icon-cache)
+        if(MSI_CONTROLLER_ICON_CACHE_TOOL)
+            foreach(theme hicolor breeze breeze-dark)
+                if(IS_ABSOLUTE "${MSI_CONTROLLER_ICONS_DATA_DIR}")
+                    set(theme_dir "${MSI_CONTROLLER_ICONS_DATA_DIR}/${theme}")
+                else()
+                    set(theme_dir "${CMAKE_INSTALL_PREFIX}/${MSI_CONTROLLER_ICONS_DATA_DIR}/${theme}")
+                endif()
+                if(EXISTS "${theme_dir}/icon-theme.cache")
+                    message(STATUS "Refreshing icon cache: ${theme_dir}")
+                    execute_process(COMMAND "${MSI_CONTROLLER_ICON_CACHE_TOOL}"
+                        --quiet --force --ignore-theme-index "${theme_dir}")
+                endif()
+            endforeach()
+        endif()
+    endif()
+]])
 
 # The desktop entry gives the application its menu entry and, on Wayland,
 # its window identity (QGuiApplication::desktopFileName in main.cpp must

@@ -1,315 +1,255 @@
 #!/usr/bin/env bash
-set -euo pipefail
-
 #
-# generate-icons.sh
-#
-# Generates Linux app icons from:
-#
-#   msicontroller.svg
-#   msicontroller-tray-dark.svg
-#   msicontroller-tray-light.svg
-#
-# Requires:
-#   inkscape OR rsvg-convert
+# gen.sh - regenerate the installable icon set from the source SVGs.
 #
 # Usage:
-#   ./generate-icons.sh
+#   icons/gen.sh                          (works from any directory)
+#   ICON_RENDERER=rsvg-convert icons/gen.sh
 #
+# Sources, next to this script:
+#   msicontroller.svg                   full-colour application icon
+#   msicontroller-tray-breeze.svg       tray glyph for LIGHT panels (dark, #232629)
+#   msicontroller-tray-breeze-dark.svg  tray glyph for DARK panels (light, #eff0f1)
+#
+# The file names follow the Breeze theme they're installed into: Breeze is
+# the light theme, so its tray icon is the dark glyph, and vice versa. Both
+# tray SVGs style their path with Plasma's ColorScheme-Text class, so
+# Plasma recolours them to the panel anyway; the fixed colours matter for
+# everything else.
+#
+# msicontroller-flattened.svg is not used. Its path carries the
+# ColorScheme-Text class but a hardcoded fill (#0d8773), so it would not
+# recolour the way a symbolic icon should.
+#
+# Output: icons/icons/{hicolor,breeze,breeze-dark,pixmaps}, rebuilt from
+# scratch on every run so no stale file survives a layout change. That tree
+# is committed and installed as-is by the top-level CMakeLists.txt, so
+# building and installing the project never needs an SVG renderer - only
+# running this script does.
+#
+# Requires one of: inkscape (1.x), rsvg-convert (librsvg), resvg.
+#   ICON_RENDERER=<name> forces one; otherwise the first found in that order.
+# Optional:
+#   ImageMagick (magick, or IM6's convert) -> pixmaps/msicontroller.ico
+#   png2icns (libicns)                      -> pixmaps/msicontroller.icns
+# When an optional tool is missing, the previous run's file is kept rather
+# than silently dropped from the committed tree.
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 APP_NAME="msicontroller"
 
-MAIN_SVG="msicontroller.svg"
-TRAY_DARK_SVG="msicontroller-tray-breeze.svg" # the one with dark wallpaper
-TRAY_LIGHT_SVG="msicontroller-tray-breeze-dark.svg" # the one with light wallpaper
+APP_SVG="$SCRIPT_DIR/msicontroller.svg"
+TRAY_FOR_LIGHT_PANELS_SVG="$SCRIPT_DIR/msicontroller-tray-breeze.svg"
+TRAY_FOR_DARK_PANELS_SVG="$SCRIPT_DIR/msicontroller-tray-breeze-dark.svg"
 
+OUT_DIR="$SCRIPT_DIR/icons"
 
-
-# -------------------------------------------------------------------
-# Output structure
-# -------------------------------------------------------------------
-
-OUT_DIR="icons"
-
-# Standard app icon sizes
-PNG_SIZES=(16 22 24 32 48 64 128 256 512)
-
-# Breeze symbolic sizes
-SYM_SIZES=(16 22 24 32)
-
-# Tray icon sizes
-TRAY_SIZES=(16 22 24)
+APP_PNG_SIZES=(16 22 24 32 48 64 128 256 512)   # hicolor/<N>x<N>/apps
+BREEZE_APP_SIZES=(16 22 24 32)                   # breeze*/apps/<N>
+TRAY_SIZES=(16 22 24)                            # tray icons, every theme
+ICO_SIZES=(16 24 32 48 64 128 256)
+ICNS_SIZES=(16 32 64 128 256 512)
 
 # -------------------------------------------------------------------
-# Detect renderer
+# Helpers
 # -------------------------------------------------------------------
 
-render_svg() {
-    local input="$1"
-    local output="$2"
-    local size="$3"
+die()  { echo "gen.sh: error: $*" >&2; exit 1; }
+note() { echo "gen.sh: $*"; }
 
-    if command -v inkscape >/dev/null 2>&1; then
-        inkscape \
-            "$input" \
-            --export-type=png \
-            --export-filename="$output" \
-            -w "$size" \
-            -h "$size" \
-            >/dev/null 2>&1
+have() { command -v "$1" >/dev/null 2>&1; }
 
-    elif command -v rsvg-convert >/dev/null 2>&1; then
-        rsvg-convert \
-            -w "$size" \
-            -h "$size" \
-            "$input" \
-            -o "$output"
+pick_renderer() {
+    if [[ -n "${ICON_RENDERER:-}" ]]; then
+        case "$ICON_RENDERER" in
+            inkscape|rsvg-convert|resvg) ;;
+            *) die "ICON_RENDERER must be inkscape, rsvg-convert or resvg (got '$ICON_RENDERER')" ;;
+        esac
+        have "$ICON_RENDERER" || die "ICON_RENDERER=$ICON_RENDERER is not installed"
+        echo "$ICON_RENDERER"
+        return
+    fi
 
+    local candidate
+    for candidate in inkscape rsvg-convert resvg; do
+        if have "$candidate"; then
+            echo "$candidate"
+            return
+        fi
+    done
+    die "no SVG renderer found - install inkscape, librsvg (rsvg-convert) or resvg"
+}
+
+# place <source> <destination>: copy an SVG into the tree as-is.
+place() {
+    mkdir -p "$(dirname "$2")"
+    cp "$1" "$2"
+}
+
+# render <source.svg> <size> <destination.png>
+render() {
+    local src="$1" size="$2" dest="$3"
+    mkdir -p "$(dirname "$dest")"
+
+    case "$RENDERER" in
+        inkscape)
+            inkscape "$src" --export-type=png --export-filename="$dest" \
+                -w "$size" -h "$size" >/dev/null 2>&1 \
+                || die "inkscape failed rendering $src at ${size}px"
+            ;;
+        rsvg-convert)
+            rsvg-convert -w "$size" -h "$size" "$src" -o "$dest" \
+                || die "rsvg-convert failed rendering $src at ${size}px"
+            ;;
+        resvg)
+            resvg -w "$size" -h "$size" "$src" "$dest" \
+                || die "resvg failed rendering $src at ${size}px"
+            ;;
+    esac
+
+    # A renderer that exits 0 without writing anything would otherwise
+    # leave a hole in the committed tree that nobody notices.
+    [[ -s "$dest" ]] || die "$RENDERER produced no output for $dest"
+}
+
+# keep_previous <path relative to the output tree> <missing tool>
+keep_previous() {
+    local rel="$1" tool="$2"
+    if [[ -f "$OUT_DIR/$rel" ]]; then
+        mkdir -p "$(dirname "$STAGE/$rel")"
+        cp "$OUT_DIR/$rel" "$STAGE/$rel"
+        note "$tool not found - kept the existing $rel"
     else
-        echo "ERROR: install inkscape or librsvg (rsvg-convert)"
-        exit 1
+        note "$tool not found - skipped $rel"
     fi
 }
 
-mkdir -p "$OUT_DIR"
-
 # -------------------------------------------------------------------
-# Hicolor tray/status icons
+# Setup
 # -------------------------------------------------------------------
 
-echo "Generating hicolor tray icons..."
-
-mkdir -p "$OUT_DIR/hicolor/scalable/status"
-
-# scalable SVG tray icons
-cp "$TRAY_LIGHT_SVG" \
-   "$OUT_DIR/hicolor/scalable/status/${APP_NAME}-tray.svg"
-
-cp "$TRAY_LIGHT_SVG" \
-   "$OUT_DIR/hicolor/scalable/status/${APP_NAME}-tray-symbolic.svg"
-
-# raster tray PNGs
-for size in "${TRAY_SIZES[@]}"; do
-
-    dir="$OUT_DIR/hicolor/${size}x${size}/status"
-    mkdir -p "$dir"
-
-    render_svg \
-        "$TRAY_LIGHT_SVG" \
-        "$dir/${APP_NAME}-tray.png" \
-        "$size"
-
-    render_svg \
-        "$TRAY_LIGHT_SVG" \
-        "$dir/${APP_NAME}-tray-symbolic.png" \
-        "$size"
-
+for src in "$APP_SVG" "$TRAY_FOR_LIGHT_PANELS_SVG" "$TRAY_FOR_DARK_PANELS_SVG"; do
+    [[ -f "$src" ]] || die "missing source SVG: $src"
 done
 
-# -------------------------------------------------------------------
-# Hicolor scalable SVGs
-# -------------------------------------------------------------------
+RENDERER="$(pick_renderer)"
+note "rendering with $RENDERER"
 
-echo "Generating scalable SVG icons..."
-
-mkdir -p "$OUT_DIR/hicolor/scalable/apps"
-
-cp "$MAIN_SVG" \
-   "$OUT_DIR/hicolor/scalable/apps/${APP_NAME}.svg"
-
-cp "$TRAY_LIGHT_SVG" \
-   "$OUT_DIR/hicolor/scalable/apps/${APP_NAME}indicator.svg"
-
-cp "$TRAY_DARK_SVG" \
-   "$OUT_DIR/hicolor/scalable/apps/${APP_NAME}indicatordark.svg"
+# Everything is built in a staging directory next to the output and only
+# swapped in once complete, so a failed run leaves the previous tree intact.
+STAGE="$(mktemp -d "$SCRIPT_DIR/.icons-staging.XXXXXX")"
+WORK="$(mktemp -d)"
+trap 'rm -rf "$STAGE" "$WORK"' EXIT
 
 # -------------------------------------------------------------------
-# Breeze symbolic app icons
+# hicolor - the fallback theme every desktop searches
 # -------------------------------------------------------------------
 
-echo "Generating Breeze symbolic icons..."
+note "hicolor..."
 
-for theme in breeze breeze-dark; do
-    for size in "${SYM_SIZES[@]}"; do
+place "$APP_SVG" "$STAGE/hicolor/scalable/apps/$APP_NAME.svg"
+for size in "${APP_PNG_SIZES[@]}"; do
+    render "$APP_SVG" "$size" "$STAGE/hicolor/${size}x${size}/apps/$APP_NAME.png"
+done
 
-        dir="$OUT_DIR/$theme/apps/$size"
-        mkdir -p "$dir"
-
-        cp "$MAIN_SVG" \
-           "$dir/${APP_NAME}-symbolic.svg"
-
-
-
+# The tray icon's hicolor copy is the light glyph: outside Plasma, which
+# recolours it anyway, panels are more often dark than light.
+for name in "$APP_NAME-tray" "$APP_NAME-tray-symbolic"; do
+    place "$TRAY_FOR_DARK_PANELS_SVG" "$STAGE/hicolor/scalable/status/$name.svg"
+    for size in "${TRAY_SIZES[@]}"; do
+        render "$TRAY_FOR_DARK_PANELS_SVG" "$size" "$STAGE/hicolor/${size}x${size}/status/$name.png"
     done
 done
 
-# -------------------------------------------------------------------
-# Breeze tray icons
-# -------------------------------------------------------------------
-
-echo "Generating Breeze tray icons..."
-
-for size in "${TRAY_SIZES[@]}"; do
-
-    # -------------------------
-    # Light theme
-    # -------------------------
-
-    mkdir -p "$OUT_DIR/breeze/status/$size"
-
-    cp "$TRAY_DARK_SVG" \
-       "$OUT_DIR/breeze/status/$size/${APP_NAME}-tray.svg"
-
-    cp "$TRAY_DARK_SVG" \
-       "$OUT_DIR/breeze/status/$size/${APP_NAME}-tray-symbolic.svg"
-
-    # -------------------------
-    # Dark theme
-    # -------------------------
-
-    mkdir -p "$OUT_DIR/breeze-dark/status/$size"
-
-    cp "$TRAY_LIGHT_SVG" \
-       "$OUT_DIR/breeze-dark/status/$size/${APP_NAME}-tray.svg"
-
-    cp "$TRAY_LIGHT_SVG" \
-       "$OUT_DIR/breeze-dark/status/$size/${APP_NAME}-tray-symbolic.svg"
-
-done
+# Older names for the tray glyph, kept so nothing that still looks them up
+# breaks. The current GUI only uses msicontroller-tray.
+place "$TRAY_FOR_DARK_PANELS_SVG"  "$STAGE/hicolor/scalable/apps/${APP_NAME}indicator.svg"
+place "$TRAY_FOR_LIGHT_PANELS_SVG" "$STAGE/hicolor/scalable/apps/${APP_NAME}indicatordark.svg"
 
 # -------------------------------------------------------------------
-# Preferences icon
+# breeze / breeze-dark - KDE's own themes
 # -------------------------------------------------------------------
+# Breeze lays icons out as <context>/<size>, not hicolor's
+# <size>x<size>/<context>. These directories only add files: the theme's
+# index.theme belongs to breeze-icons and is never shipped here.
 
-echo "Generating preferences icons..."
+breeze_theme() {
+    local theme="$1" tray_svg="$2" size
 
-for theme in breeze breeze-dark; do
+    note "$theme..."
 
-    mkdir -p "$OUT_DIR/$theme/preferences/32"
-
-    cp "$MAIN_SVG" \
-       "$OUT_DIR/$theme/preferences/32/${APP_NAME}.svg"
-
-done
-
-# -------------------------------------------------------------------
-# PNG icons (hicolor)
-# -------------------------------------------------------------------
-
-echo "Generating PNG icons..."
-
-for size in "${PNG_SIZES[@]}"; do
-
-    dir="$OUT_DIR/hicolor/${size}x${size}/apps"
-    mkdir -p "$dir"
-
-    render_svg \
-        "$MAIN_SVG" \
-        "$dir/${APP_NAME}.png" \
-        "$size"
-
-done
-
-# -------------------------------------------------------------------
-# Pixmaps
-# -------------------------------------------------------------------
-
-echo "Generating pixmaps..."
-
-mkdir -p "$OUT_DIR/pixmaps"
-
-# Main pixmap PNGs
-render_svg "$MAIN_SVG" "$OUT_DIR/pixmaps/${APP_NAME}.png" 256
-render_svg "$MAIN_SVG" "$OUT_DIR/pixmaps/${APP_NAME}-small.png" 64
-render_svg "$MAIN_SVG" "$OUT_DIR/pixmaps/${APP_NAME}-med.png" 128
-
-# SVG pixmaps
-cp "$MAIN_SVG" \
-   "$OUT_DIR/pixmaps/${APP_NAME}.svg"
-
-cp "$TRAY_LIGHT_SVG" \
-   "$OUT_DIR/pixmaps/${APP_NAME}-white.svg"
-
-# -------------------------------------------------------------------
-# Optional ICO generation
-# -------------------------------------------------------------------
-
-if command -v convert >/dev/null 2>&1; then
-
-    echo "Generating ICO..."
-
-    TMPDIR="$(mktemp -d)"
-
-    for size in 16 24 32 48 64 128 256; do
-        render_svg \
-            "$MAIN_SVG" \
-            "$TMPDIR/${size}.png" \
-            "$size"
+    for size in "${BREEZE_APP_SIZES[@]}"; do
+        place "$APP_SVG" "$STAGE/$theme/apps/$size/$APP_NAME-symbolic.svg"
     done
 
-    convert \
-        "$TMPDIR/"*.png \
-        "$OUT_DIR/pixmaps/${APP_NAME}.ico"
+    for size in "${TRAY_SIZES[@]}"; do
+        place "$tray_svg" "$STAGE/$theme/status/$size/$APP_NAME-tray.svg"
+        place "$tray_svg" "$STAGE/$theme/status/$size/$APP_NAME-tray-symbolic.svg"
+    done
 
-    rm -rf "$TMPDIR"
+    place "$APP_SVG" "$STAGE/$theme/preferences/32/$APP_NAME.svg"
+}
 
+breeze_theme breeze      "$TRAY_FOR_LIGHT_PANELS_SVG"
+breeze_theme breeze-dark "$TRAY_FOR_DARK_PANELS_SVG"
+
+# -------------------------------------------------------------------
+# pixmaps - legacy /usr/share/pixmaps location
+# -------------------------------------------------------------------
+
+note "pixmaps..."
+
+place "$APP_SVG"                  "$STAGE/pixmaps/$APP_NAME.svg"
+place "$TRAY_FOR_DARK_PANELS_SVG" "$STAGE/pixmaps/$APP_NAME-white.svg"
+render "$APP_SVG" 256 "$STAGE/pixmaps/$APP_NAME.png"
+render "$APP_SVG" 128 "$STAGE/pixmaps/$APP_NAME-med.png"
+render "$APP_SVG" 64  "$STAGE/pixmaps/$APP_NAME-small.png"
+
+# ImageMagick 7 installs "magick"; IM6 only "convert".
+IMAGEMAGICK=""
+if have magick; then
+    IMAGEMAGICK="magick"
+elif have convert; then
+    IMAGEMAGICK="convert"
+fi
+
+if [[ -n "$IMAGEMAGICK" ]]; then
+    ico_frames=()
+    for size in "${ICO_SIZES[@]}"; do
+        render "$APP_SVG" "$size" "$WORK/ico/$size.png"
+        ico_frames+=("$WORK/ico/$size.png")
+    done
+    "$IMAGEMAGICK" "${ico_frames[@]}" "$STAGE/pixmaps/$APP_NAME.ico" \
+        || die "$IMAGEMAGICK failed building $APP_NAME.ico"
+else
+    keep_previous "pixmaps/$APP_NAME.ico" "ImageMagick"
+fi
+
+if have png2icns; then
+    icns_frames=()
+    for size in "${ICNS_SIZES[@]}"; do
+        render "$APP_SVG" "$size" "$WORK/icns/icon_${size}x${size}.png"
+        icns_frames+=("$WORK/icns/icon_${size}x${size}.png")
+    done
+    png2icns "$STAGE/pixmaps/$APP_NAME.icns" "${icns_frames[@]}" >/dev/null \
+        || die "png2icns failed building $APP_NAME.icns"
+else
+    keep_previous "pixmaps/$APP_NAME.icns" "png2icns"
 fi
 
 # -------------------------------------------------------------------
-# Optional ICNS generation (macOS)
+# Swap the finished tree in
 # -------------------------------------------------------------------
 
-if command -v png2icns >/dev/null 2>&1; then
+chmod 755 "$STAGE"
+rm -rf "$OUT_DIR"
+mv "$STAGE" "$OUT_DIR"
 
-    echo "Generating ICNS..."
-
-    TMPDIR="$(mktemp -d)"
-
-    for size in 16 32 64 128 256 512; do
-        render_svg \
-            "$MAIN_SVG" \
-            "$TMPDIR/icon_${size}x${size}.png" \
-            "$size"
-    done
-
-    png2icns \
-        "$OUT_DIR/pixmaps/${APP_NAME}.icns" \
-        "$TMPDIR/"*.png
-
-    rm -rf "$TMPDIR"
-
-fi
-
-# -------------------------------------------------------------------
-# Desktop install hints
-# -------------------------------------------------------------------
-
-cat <<EOF
-
-Done.
-
-Generated icon hierarchy:
-
-$OUT_DIR/
-
-Example install locations:
-
-  /usr/share/icons/hicolor/
-  /usr/share/icons/breeze/
-  /usr/share/icons/breeze-dark/
-  /usr/share/pixmaps/
-
-Install example:
-
-  sudo cp -r $OUT_DIR/hicolor /usr/share/icons/
-  sudo cp -r $OUT_DIR/breeze /usr/share/icons/
-  sudo cp -r $OUT_DIR/breeze-dark /usr/share/icons/
-  sudo cp -r $OUT_DIR/pixmaps/* /usr/share/pixmaps/
-
-Refresh cache:
-
-  sudo gtk-update-icon-cache /usr/share/icons/hicolor
-  sudo gtk-update-icon-cache /usr/share/icons/breeze
-  sudo gtk-update-icon-cache /usr/share/icons/breeze-dark
-
-EOF
+note "done - $(find "$OUT_DIR" -type f | wc -l | tr -d ' ') files in ${OUT_DIR#"$SCRIPT_DIR"/}/:"
+for dir in hicolor breeze breeze-dark pixmaps; do
+    printf '  %-12s %3d files\n' "$dir" "$(find "$OUT_DIR/$dir" -type f | wc -l)"
+done
+note "installed by the top-level CMakeLists.txt with \"cmake --install\"."
