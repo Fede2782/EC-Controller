@@ -47,7 +47,7 @@ protected:
     void showEvent(QShowEvent *event) override;
 
     // Closing the window hides it into the tray when there is one; the
-    // tray's Quit (or Help -> Exit) is the complete exit.
+    // tray's Quit (or Quit Application) is the complete exit.
     void closeEvent(QCloseEvent *event) override;
 
     // Tracks when the window last lost focus - see toggleFromTray().
@@ -141,6 +141,10 @@ private:
     // window isn't in Edit mode - clicking around a layout being rearranged
     // shouldn't be able to reach the EC.
     void updateWriteControlsEnabled();
+
+    // Re-reads every registered write control from the hardware. Used after
+    // each command and by Reload.
+    void resyncAllControls();
 
     Ui::MainWindow *ui;
     BackendClient *backend;

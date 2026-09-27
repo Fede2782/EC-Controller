@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
     // left" no longer means "done". Worse, with the main window hidden, a
     // dialog (e.g. a failed-command warning) closing would count as the
     // last window closing and end the application. Quitting is explicit
-    // from here on: the tray's Quit, Help -> Exit, or closing the window
+    // from here on: the tray's Quit, Quit Application, or closing the window
     // when there's no tray to hide into.
     a.setQuitOnLastWindowClosed(false);
 

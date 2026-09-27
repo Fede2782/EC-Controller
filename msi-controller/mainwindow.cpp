@@ -87,7 +87,17 @@ MainWindow::~MainWindow()
 
 void MainWindow::onReloadTriggered()
 {
+    // Re-checks that the backend is on the bus; the connection indicator
+    // and every write control's enabled state follow through the usual
+    // connectionStateChanged() path.
     backend->connectToBackend();
+
+    // Then re-reads every control's value from the hardware, so anything
+    // changed behind the GUI's back (another tool, a service restart that
+    // restored saved values) shows up without restarting the application.
+    // Temperatures and fan speeds poll every second and the keyboard
+    // brightness follows UPower's signal, so they're current already.
+    resyncAllControls();
 }
 
 void MainWindow::onExitTriggered()
@@ -172,9 +182,7 @@ void MainWindow::onCommandFinished(bool success)
     // stops at" label, which nothing else was updating on success); on
     // failure it reverts the control instead of leaving it showing a
     // change that didn't happen.
-    for (const auto &resync : resyncCallbacks) {
-        resync();
-    }
+    resyncAllControls();
 
     if (!success) {
         QMessageBox::warning(this, tr("Couldn't Apply Change"),
@@ -218,7 +226,7 @@ void MainWindow::updateConnectionStatus()
     trayIcon->setStatusText(text);
     connectionTextLabel->setToolTip(connected
         ? text
-        : tr("%1\nUse Help → Reload to try again once the service is running.").arg(text));
+        : tr("%1\nUse Reload (F5) to try again once the service is running.").arg(text));
 
     const QIcon icon = style()->standardIcon(connected ? QStyle::SP_DialogApplyButton : QStyle::SP_MessageBoxWarning);
     const int iconSize = style()->pixelMetric(QStyle::PM_SmallIconSize);
@@ -230,6 +238,13 @@ void MainWindow::registerWriteControl(QWidget *widget, std::function<void()> res
     writeControls.append(widget);
     resyncCallbacks.append(std::move(resync));
     widget->setEnabled(backend->isConnected() && !topicBoxes->isEditing());
+}
+
+void MainWindow::resyncAllControls()
+{
+    for (const auto &resync : resyncCallbacks) {
+        resync();
+    }
 }
 
 void MainWindow::updateWriteControlsEnabled()
