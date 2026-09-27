@@ -3,6 +3,7 @@
 #include "featuregroupbox.h"
 #include "topicboxarea.h"
 
+#include <QDialogButtonBox>
 #include <QGuiApplication>
 #include <QHBoxLayout>
 #include <QInputDialog>
@@ -97,7 +98,6 @@ void MainWindow::onEditModeToggled(bool editing)
     // Discard are - so it is left checked but disabled rather than offering
     // a third, ambiguous exit that neither keeps nor reverts explicitly.
     ui->actionEditMode->setEnabled(!editing);
-    ui->actionResetLayout->setEnabled(editing);
 
     // Hardware safety: no EC writes while the layout is being rearranged.
     updateWriteControlsEnabled();
@@ -120,6 +120,18 @@ void MainWindow::onEditDiscardClicked()
 {
     topicBoxes->cancelEdit();
     ui->actionEditMode->setChecked(false);
+}
+
+void MainWindow::onResetOrderRequested()
+{
+    // Reset is always available, but never takes effect on its own: outside
+    // a session it opens one first, so the default order is shown staged
+    // and still has to be confirmed with Apply (or thrown away with
+    // Discard) like any other layout change.
+    if (!topicBoxes->isEditing()) {
+        ui->actionEditMode->setChecked(true);
+    }
+    topicBoxes->resetOrder();
 }
 
 void MainWindow::onShowAllFanSlotsToggled(bool showAll)
@@ -219,36 +231,53 @@ void MainWindow::setupEditMode()
 {
     // Pinned below the scrolling box area, so it stays reachable no matter
     // how far down the boxes run.
+    //
+    // Two rows: the hint on its own line (word-wrapped), then the buttons.
+    // Hint and three buttons side by side would be wider than the window's
+    // default width and force it to grow.
     editActionBar = new QWidget(this);
-    auto *editActionLayout = new QHBoxLayout(editActionBar);
+    auto *editActionLayout = new QVBoxLayout(editActionBar);
     editActionLayout->setContentsMargins(0, 0, 0, 0);
 
-    auto *editHintLabel = new QLabel(tr("Move the boxes with the arrows on the right."), editActionBar);
-    auto *discardButton = new QPushButton(tr("Discard"), editActionBar);
-    auto *applyButton = new QPushButton(tr("Apply"), editActionBar);
+    auto *editHintLabel = new QLabel(tr("Move the boxes with the arrows on the right, then apply."), editActionBar);
+    editHintLabel->setWordWrap(true);
+
+    // QDialogButtonBox rather than hand-placed buttons: it lays them out in
+    // the order the desktop (KDE or GNOME) expects, with Reset on the far
+    // side from Apply/Discard since it's a different kind of action. Texts
+    // are set explicitly so they go through our own translations like every
+    // other string.
+    auto *editButtons = new QDialogButtonBox(
+        QDialogButtonBox::RestoreDefaults | QDialogButtonBox::Discard | QDialogButtonBox::Apply, editActionBar);
+
+    QPushButton *resetButton = editButtons->button(QDialogButtonBox::RestoreDefaults);
+    QPushButton *discardButton = editButtons->button(QDialogButtonBox::Discard);
+    QPushButton *applyButton = editButtons->button(QDialogButtonBox::Apply);
+
+    resetButton->setText(tr("Reset to Default"));
+    resetButton->setToolTip(tr("Put the boxes back in their default order. Apply to keep it."));
+    discardButton->setText(tr("Discard"));
+    discardButton->setToolTip(tr("Leave Edit mode and put the boxes back as they were."));
+    applyButton->setText(tr("Apply"));
+    applyButton->setToolTip(tr("Leave Edit mode and keep the new order."));
     applyButton->setDefault(true);
 
     // Escape discards, which is what Escape means everywhere else.
     discardButton->setShortcut(QKeySequence::Cancel);
 
     editActionLayout->addWidget(editHintLabel);
-    editActionLayout->addStretch();
-    editActionLayout->addWidget(discardButton);
-    editActionLayout->addWidget(applyButton);
+    editActionLayout->addWidget(editButtons);
 
     editActionBar->setVisible(false);
     ui->centralLayout->addWidget(editActionBar);
 
     connect(applyButton, &QPushButton::clicked, this, &MainWindow::onEditApplyClicked);
     connect(discardButton, &QPushButton::clicked, this, &MainWindow::onEditDiscardClicked);
+    connect(resetButton, &QPushButton::clicked, this, &MainWindow::onResetOrderRequested);
 
     connect(ui->actionEditMode, &QAction::toggled, this, &MainWindow::onEditModeToggled);
-    connect(ui->actionResetLayout, &QAction::triggered, topicBoxes, &TopicBoxArea::resetOrder);
+    connect(ui->actionResetLayout, &QAction::triggered, this, &MainWindow::onResetOrderRequested);
     connect(ui->actionShowAllFanSlots, &QAction::toggled, this, &MainWindow::onShowAllFanSlotsToggled);
-
-    // Resetting the order is a staged move like any other, so it only makes
-    // sense inside a session.
-    ui->actionResetLayout->setEnabled(false);
 
     // Nothing to reveal on a machine that reports no fans at all.
     ui->actionShowAllFanSlots->setEnabled(fanSpeedsBox != nullptr);

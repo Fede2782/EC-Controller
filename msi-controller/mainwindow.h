@@ -44,6 +44,7 @@ private slots:
     void onEditModeToggled(bool editing);
     void onEditApplyClicked();
     void onEditDiscardClicked();
+    void onResetOrderRequested();
     void onShowAllFanSlotsToggled(bool showAll);
     void onBackendConnectionStateChanged(bool connected);
     void onCommandFinished(bool success);

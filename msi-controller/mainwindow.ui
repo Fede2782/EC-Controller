@@ -126,7 +126,7 @@
     <string>Reset Box Order</string>
    </property>
    <property name="toolTip">
-    <string>Put the topic boxes back in their default order.</string>
+    <string>Put the topic boxes back in their default order. Opens Edit mode so you can review it before applying.</string>
    </property>
   </action>
   <action name="actionShowAllFanSlots">
