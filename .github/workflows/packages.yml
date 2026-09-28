@@ -1,0 +1,121 @@
+# Builds a .deb and an .rpm on every push and publishes them as a GitHub
+# release:
+#
+# - pushes to the default branch replace the rolling "continuous"
+#   prerelease, so it always holds the latest build;
+# - pushing a v* tag (e.g. v0.4) publishes a normal release for it;
+# - pushes to any other branch still build both packages, available as
+#   workflow artifacts, without touching the releases.
+#
+# The packages are built on the oldest distributions that meet the
+# project's minimums (Qt 6.10, KF6 6.6): Ubuntu 26.04 LTS and Fedora 44.
+# Debian 13 ships Qt 6.8 and can't build this.
+
+name: Packages
+
+on:
+  push:
+    branches: ['**']
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deb:
+    name: .deb (Ubuntu 26.04)
+    runs-on: ubuntu-latest
+    container: ubuntu:26.04
+    steps:
+      - name: Install build dependencies
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            build-essential cmake dpkg-dev file \
+            extra-cmake-modules qt6-base-dev qt6-base-dev-tools \
+            libkf6coreaddons-dev libkf6globalaccel-dev libkf6notifications-dev \
+            libpolkit-qt6-1-dev
+
+      - uses: actions/checkout@v4
+
+      - name: Build
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr \
+                -DMSI_CONTROLLER_PACKAGE_RELEASE=${{ github.run_number }}
+          cmake --build build --parallel
+
+      - name: Package
+        working-directory: build
+        run: cpack -G DEB
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deb
+          path: build/*.deb
+          if-no-files-found: error
+
+  rpm:
+    name: .rpm (Fedora 44)
+    runs-on: ubuntu-latest
+    container: fedora:44
+    steps:
+      - name: Install build dependencies
+        run: |
+          dnf install -y \
+            gcc-c++ make cmake rpm-build \
+            extra-cmake-modules qt6-qtbase-devel \
+            kf6-kcoreaddons-devel kf6-kglobalaccel-devel kf6-knotifications-devel \
+            polkit-qt6-1-devel
+
+      - uses: actions/checkout@v4
+
+      - name: Build
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr \
+                -DMSI_CONTROLLER_PACKAGE_RELEASE=${{ github.run_number }}
+          cmake --build build --parallel
+
+      - name: Package
+        working-directory: build
+        run: cpack -G RPM
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rpm
+          path: build/*.rpm
+          if-no-files-found: error
+
+  release:
+    name: Publish release
+    needs: [deb, rpm]
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) || startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    # Two quick pushes must not interleave replacing the rolling release.
+    concurrency:
+      group: release-${{ github.ref }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: packages
+          merge-multiple: true
+
+      - name: Publish
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            gh release create "$GITHUB_REF_NAME" packages/* \
+              --verify-tag --title "$GITHUB_REF_NAME" --generate-notes
+          else
+            # Recreated rather than edited, so the tag moves to this commit.
+            gh release delete continuous --cleanup-tag --yes || true
+            gh release create continuous packages/* \
+              --prerelease --target "$GITHUB_SHA" --title "Latest build" \
+              --notes "Built automatically from ${GITHUB_SHA::7} on ${GITHUB_REF_NAME}."
+          fi

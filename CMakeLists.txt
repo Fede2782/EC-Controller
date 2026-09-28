@@ -193,5 +193,75 @@ install(FILES
     DESTINATION "${CMAKE_INSTALL_FULL_SYSCONFDIR}/xdg/autostart"
 )
 
+# -----------------------------------------------------------------------------
+# Packaging: .deb and .rpm through CPack (built in CI by
+# .github/workflows/packages.yml)
+# -----------------------------------------------------------------------------
+# Configure with -DCMAKE_INSTALL_PREFIX=/usr when packaging: the systemd
+# unit's ExecStart path and the absolute destinations above are fixed at
+# configure time.
+set(CPACK_PACKAGE_NAME "msi-controller")
+set(CPACK_PACKAGE_VENDOR "FedeLabs")
+set(CPACK_PACKAGE_CONTACT "Fede2782 <78815152+Fede2782@users.noreply.github.com>")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Control MSI laptop hardware through the msi-ec driver")
+set(CPACK_PACKAGE_HOMEPAGE_URL "https://github.com/Fede2782/MsiController")
+set(CPACK_PACKAGING_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
+
+# Some destinations are absolute (the systemd unit, the autostart entry).
+# With DESTDIR, CPack stages those inside the package like everything else
+# instead of installing them onto the build machine. It also makes the
+# install-time systemctl and icon-cache steps skip themselves: in a
+# package, the maintainer scripts below take their place.
+set(CPACK_SET_DESTDIR ON)
+
+# Every push builds the same project version, so CI passes its run number
+# as the package release to keep successive builds in upgrade order.
+set(MSI_CONTROLLER_PACKAGE_RELEASE "1" CACHE STRING "Package release number (the N in <version>-N)")
+
+# Runtime dependencies. Shared libraries (Qt, KF6, polkit-qt) are detected
+# automatically from the binaries - dpkg-shlibdeps for the .deb, rpmbuild's
+# own scan for the .rpm - and merged with what's listed here, which is
+# what the code needs that isn't a library it links:
+#
+# Required:
+#   polkit daemon  - the service authorizes every change through it
+#   D-Bus          - the GUI and the service talk over the system bus
+#
+# Recommended (installed by default, but each feature switches itself off
+# when its piece is missing):
+#   Qt SVG plugin  - the icons are SVG
+#   Qt Wayland     - native Wayland windows instead of XWayland
+#   UPower         - keyboard backlight brightness
+#   libkscreen     - kscreen-doctor, for the display flip shortcut
+#
+# Package names differ between the two families, hence two lists each.
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "polkitd" "dbus")
+set(CPACK_DEBIAN_PACKAGE_RECOMMENDS "qt6-svg-plugins, qt6-wayland, upower, libkscreen-bin")
+set(CPACK_RPM_PACKAGE_REQUIRES "polkit, dbus")
+# CPack has no variable for the RPM Recommends tag; this hook inserts its
+# text into the spec preamble, where a tag line is valid. (Suggests, which
+# CPack does support, is not installed by default.)
+set(CPACK_RPM_SPEC_MORE_DEFINE "Recommends: qt6-qtsvg, qt6-qtwayland, upower, libkscreen")
+
+# Enable and start the backend service on install, stop it on removal.
+# The same two scripts serve both formats.
+set(MSI_CONTROLLER_POSTINST "${CMAKE_CURRENT_SOURCE_DIR}/packaging/postinst")
+set(MSI_CONTROLLER_PRERM "${CMAKE_CURRENT_SOURCE_DIR}/packaging/prerm")
+
+set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
+set(CPACK_DEBIAN_PACKAGE_RELEASE "${MSI_CONTROLLER_PACKAGE_RELEASE}")
+set(CPACK_DEBIAN_PACKAGE_SECTION "utils")
+set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
+set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA "${MSI_CONTROLLER_POSTINST};${MSI_CONTROLLER_PRERM}")
+set(CPACK_DEBIAN_PACKAGE_CONTROL_STRICT_PERMISSION TRUE)
+
+set(CPACK_RPM_FILE_NAME RPM-DEFAULT)
+set(CPACK_RPM_PACKAGE_RELEASE "${MSI_CONTROLLER_PACKAGE_RELEASE}")
+set(CPACK_RPM_PACKAGE_LICENSE "GPL-3.0-only")
+set(CPACK_RPM_POST_INSTALL_SCRIPT_FILE "${MSI_CONTROLLER_POSTINST}")
+set(CPACK_RPM_PRE_UNINSTALL_SCRIPT_FILE "${MSI_CONTROLLER_PRERM}")
+
+include(CPack)
+
 # Show a short summary of discovered packages and configuration status.
 feature_summary(WHAT ALL INCLUDE_QUIET_PACKAGES FATAL_ON_MISSING_REQUIRED_PACKAGES)

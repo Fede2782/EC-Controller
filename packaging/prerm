@@ -1,0 +1,16 @@
+#!/bin/sh
+# Runs before the package is removed or upgraded - as the Debian prerm and
+# as the RPM %preun. Only a real removal stops and disables the service:
+# Debian passes "remove", RPM passes 0 when no version will be left
+# installed. Upgrades leave it running for postinst to restart.
+set -e
+
+case "$1" in
+    remove|0)
+        if [ -d /run/systemd/system ]; then
+            systemctl disable --now org.fedelabs.msicontroller.service || true
+        fi
+        ;;
+esac
+
+exit 0
