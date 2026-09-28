@@ -8,6 +8,8 @@
 
 #include <QApplication>
 #include <QCloseEvent>
+#include <QDBusConnection>
+#include <QDBusConnectionInterface>
 #include <QDialogButtonBox>
 #include <QGuiApplication>
 #include <QHBoxLayout>
@@ -42,6 +44,10 @@ const QList<MsiEcMode> &shiftModes()
 }
 
 const QString notificationIconName = QStringLiteral("msicontroller");
+
+// KDE's global shortcut daemon (kglobalacceld; part of KWin on Plasma
+// Wayland), which every KGlobalAccel call talks to.
+const QString kglobalaccelServiceName = QStringLiteral("org.kde.kglobalaccel");
 
 // The performance-mode notification only confirms what was just pressed,
 // so it goes away sooner than the desktop's default. KNotification has no
@@ -264,6 +270,17 @@ void MainWindow::setupAutostart()
 
 void MainWindow::setupGlobalShortcuts()
 {
+    // Global shortcuts are a KDE service. Outside Plasma, calling KGlobalAccel
+    // would at best fail with console warnings, and at worst get KDE's
+    // shortcut daemon started by D-Bus inside another desktop's session. So
+    // they're registered only if the daemon is already running -
+    // isServiceRegistered() only looks and never starts it. On Plasma it's
+    // running long before this application starts, even from autostart.
+    QDBusConnectionInterface *sessionBus = QDBusConnection::sessionBus().interface();
+    if (!sessionBus || !sessionBus->isServiceRegistered(kglobalaccelServiceName)) {
+        return;
+    }
+
     // KGlobalAccel identifies each shortcut by the action's object name,
     // under the application's component (applicationName), so both are
     // listed - and can be rebound - in System Settings -> Shortcuts under

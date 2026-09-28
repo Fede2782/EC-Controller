@@ -89,7 +89,8 @@ private:
     void setupAutostart();
 
     // Registers the KDE global shortcuts (Milestone 10): Launch1 cycles the
-    // performance mode, RotateWindows flips the display 180°.
+    // performance mode, RotateWindows flips the display 180°. Does nothing
+    // unless KDE's shortcut service is running.
     void setupGlobalShortcuts();
 
     // Moves to the next supported performance mode; the notification
