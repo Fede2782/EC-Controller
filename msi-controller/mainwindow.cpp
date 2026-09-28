@@ -3,6 +3,7 @@
 #include "featuregroupbox.h"
 #include "topicboxarea.h"
 #include "trayicon.h"
+#include "displayrotation.h"
 
 #include <QApplication>
 #include <QCloseEvent>
@@ -17,9 +18,30 @@
 #include <QSettings>
 #include <QStyle>
 #include <QTimer>
+#include <algorithm>
 #include <optional>
 
+#include <KGlobalAccel>
+#include <KNotification>
+
 using namespace MsiControllerLib;
+
+namespace {
+// The performance (shift) modes, in the order the dropdown lists them and
+// the Launch1 shortcut cycles through them.
+const QList<MsiEcMode> &shiftModes()
+{
+    static const QList<MsiEcMode> modes = {
+        MsiEcMode::ComfortShift,
+        MsiEcMode::TurboShift,
+        MsiEcMode::EcoShift,
+        MsiEcMode::SportShift,
+    };
+    return modes;
+}
+
+const QString notificationIconName = QStringLiteral("msicontroller");
+}
 
 namespace {
 // Companion to TopicBoxArea's own key: both live under the same QSettings
@@ -74,6 +96,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     // After the boxes exist, so the saved order can be matched against them.
     setupEditMode();
+
+    setupGlobalShortcuts();
 
     ui->verticalLayout->addStretch();
 
@@ -184,11 +208,103 @@ void MainWindow::onCommandFinished(bool success)
     // change that didn't happen.
     resyncAllControls();
 
+    // A mode change requested from the Launch1 shortcut is announced only
+    // once the backend has confirmed it, with what the hardware now
+    // actually reports. A failure gets the usual warning below instead.
+    if (shiftModeCyclePending) {
+        shiftModeCyclePending = false;
+        if (success) {
+            notifyCurrentShiftMode();
+        }
+    }
+
     if (!success) {
         QMessageBox::warning(this, tr("Couldn't Apply Change"),
             tr("The change couldn't be applied. Check that the msi-ec driver is loaded and up to date, "
                "and check the service logs for details."));
     }
+}
+
+void MainWindow::setupGlobalShortcuts()
+{
+    // KGlobalAccel identifies each shortcut by the action's object name,
+    // under the application's component (applicationName), so both are
+    // listed - and can be rebound - in System Settings -> Shortcuts under
+    // "MSI Controller". The keys below are only the defaults.
+    //
+    // Each shortcut is registered only when it can do something on this
+    // machine, like every other feature in the window.
+
+    const bool hasShiftModes = std::any_of(shiftModes().cbegin(), shiftModes().cend(), isModeSupported);
+    if (hasShiftModes) {
+        auto *cycleAction = new QAction(tr("Cycle Performance Mode"), this);
+        cycleAction->setObjectName(QStringLiteral("cycle-performance-mode"));
+        KGlobalAccel::setGlobalShortcut(cycleAction, QKeySequence(Qt::Key_Launch1));
+        connect(cycleAction, &QAction::triggered, this, &MainWindow::cycleShiftMode);
+    }
+
+    if (DisplayRotation::isAvailable()) {
+        displayRotation = new DisplayRotation(this);
+
+        auto *rotateAction = new QAction(tr("Flip Display 180°"), this);
+        rotateAction->setObjectName(QStringLiteral("flip-display"));
+        KGlobalAccel::setGlobalShortcut(rotateAction, QKeySequence(Qt::Key_RotateWindows));
+        connect(rotateAction, &QAction::triggered, displayRotation, &DisplayRotation::flip);
+
+        connect(displayRotation, &DisplayRotation::failed, this, [](const QString &reason) {
+            KNotification::event(KNotification::Warning, tr("Couldn't Flip the Display"), reason,
+                                 notificationIconName);
+        });
+
+        // Every quit path passes through aboutToQuit (see quitApplication()),
+        // and the window is still alive when it fires.
+        connect(qApp, &QCoreApplication::aboutToQuit, displayRotation, &DisplayRotation::restoreBaseline);
+    }
+}
+
+void MainWindow::cycleShiftMode()
+{
+    // The shortcut works with the window hidden in the tray, so the answer
+    // has to come as a notification rather than anything in the window.
+    if (!backend->isConnected()) {
+        KNotification::event(KNotification::Warning, tr("Performance Mode"),
+                             tr("Not connected to the backend."), notificationIconName);
+        return;
+    }
+
+    QList<MsiEcMode> supported;
+    for (MsiEcMode mode : shiftModes()) {
+        if (isModeSupported(mode)) {
+            supported.append(mode);
+        }
+    }
+    if (supported.isEmpty()) {
+        return;
+    }
+
+    // From the mode the hardware is in now; if that can't be read, or it's
+    // not one of the supported ones, start from the first.
+    int next = 0;
+    QString currentModeName;
+    if (getAttrValue(MsiEcAttribute::ShiftMode, &currentModeName)) {
+        const int current = supported.indexOf(parseModeName(currentModeName));
+        if (current >= 0) {
+            next = (current + 1) % supported.size();
+        }
+    }
+
+    shiftModeCyclePending = true;
+    backend->setMode(getModeKey(supported.at(next)));
+}
+
+void MainWindow::notifyCurrentShiftMode()
+{
+    QString currentModeName;
+    if (!getAttrValue(MsiEcAttribute::ShiftMode, &currentModeName)) {
+        return;
+    }
+    KNotification::event(KNotification::Notification, tr("Performance Mode"),
+                         modeLabel(parseModeName(currentModeName)), notificationIconName);
 }
 
 void MainWindow::setupStatusBar()
@@ -562,14 +678,8 @@ void MainWindow::setupFanMode()
 
 void MainWindow::setupShiftMode()
 {
-    static const QList<MsiEcMode> shiftModes = {
-        MsiEcMode::ComfortShift,
-        MsiEcMode::TurboShift,
-        MsiEcMode::EcoShift,
-        MsiEcMode::SportShift,
-    };
     setupModeDropdown(QStringLiteral("performanceMode"), tr("Performance Mode"), MsiEcAttribute::ShiftMode,
-                      shiftModes);
+                      shiftModes());
 }
 
 QComboBox *MainWindow::setupModeDropdown(const QString &boxId, const QString &boxTitle, MsiEcAttribute attr,

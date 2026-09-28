@@ -26,6 +26,7 @@ QT_END_NAMESPACE
 
 class FeatureGroupBox;
 class QPushButton;
+class DisplayRotation;
 class TopicBoxArea;
 class TrayIcon;
 
@@ -78,6 +79,15 @@ private:
 
     // Creates the tray entry and wires its clicks and menu.
     void setupTray();
+
+    // Registers the KDE global shortcuts (Milestone 10): Launch1 cycles the
+    // performance mode, RotateWindows flips the display 180°.
+    void setupGlobalShortcuts();
+
+    // Moves to the next supported performance mode; the notification
+    // follows once the backend confirms (see onCommandFinished()).
+    void cycleShiftMode();
+    void notifyCurrentShiftMode();
 
     // Left click on the tray icon: hide the window into the tray if the
     // user was just looking at it, otherwise bring it forward.
@@ -157,6 +167,13 @@ private:
     TopicBoxArea *topicBoxes;
 
     TrayIcon *trayIcon;
+
+    // Null when kscreen-doctor isn't installed.
+    DisplayRotation *displayRotation = nullptr;
+
+    // Set while a mode change requested from the Launch1 shortcut waits
+    // for the backend's answer.
+    bool shiftModeCyclePending = false;
 
     // Restarted whenever the window loses focus, invalid while it has it.
     // Clicking the tray icon itself takes focus away from the window (to

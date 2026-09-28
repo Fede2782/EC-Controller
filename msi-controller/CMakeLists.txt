@@ -25,6 +25,8 @@ set(MSI_CONTROLLER_GUI_SOURCES
     trayicon.h
     appactivationservice.cpp
     appactivationservice.h
+    displayrotation.cpp
+    displayrotation.h
 )
 
 qt_add_dbus_interface(
