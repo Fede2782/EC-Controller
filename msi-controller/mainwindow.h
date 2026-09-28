@@ -38,6 +38,9 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+    // Whether there's a tray the window can hide into right now.
+    bool canHideToTray() const;
+
 public slots:
     // Brings the window back from wherever it is - hidden in the tray,
     // minimized, or buried under other windows - and gives it focus. Also
@@ -79,6 +82,9 @@ private:
 
     // Creates the tray entry and wires its clicks and menu.
     void setupTray();
+
+    // Wires Settings > Start at Login to the XDG autostart entry.
+    void setupAutostart();
 
     // Registers the KDE global shortcuts (Milestone 10): Launch1 cycles the
     // performance mode, RotateWindows flips the display 180°.

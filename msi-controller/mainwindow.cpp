@@ -4,6 +4,7 @@
 #include "topicboxarea.h"
 #include "trayicon.h"
 #include "displayrotation.h"
+#include "autostart.h"
 
 #include <QApplication>
 #include <QCloseEvent>
@@ -98,6 +99,7 @@ MainWindow::MainWindow(QWidget *parent)
     setupEditMode();
 
     setupGlobalShortcuts();
+    setupAutostart();
 
     ui->verticalLayout->addStretch();
 
@@ -223,6 +225,36 @@ void MainWindow::onCommandFinished(bool success)
             tr("The change couldn't be applied. Check that the msi-ec driver is loaded and up to date, "
                "and check the service logs for details."));
     }
+}
+
+bool MainWindow::canHideToTray() const
+{
+    return trayIcon->isUsable();
+}
+
+void MainWindow::setupAutostart()
+{
+    // Without the system-wide entry installed (e.g. running from the build
+    // tree) there's nothing to switch, so the entry is greyed out.
+    ui->actionStartAtLogin->setEnabled(Autostart::isAvailable());
+
+    // Re-read every time the menu opens: KDE's Autostart settings page
+    // edits the same file, so the state can change behind our back.
+    auto refresh = [this]() {
+        const QSignalBlocker blocker(ui->actionStartAtLogin);
+        ui->actionStartAtLogin->setChecked(Autostart::isEnabled());
+    };
+    refresh();
+    connect(ui->menuSettings, &QMenu::aboutToShow, this, refresh);
+
+    connect(ui->actionStartAtLogin, &QAction::toggled, this, [this, refresh](bool enabled) {
+        if (Autostart::setEnabled(enabled)) {
+            return;
+        }
+        refresh();
+        QMessageBox::warning(this, tr("Couldn't Change Start at Login"),
+            tr("Your autostart settings couldn't be updated. Check that ~/.config/autostart is writable."));
+    });
 }
 
 void MainWindow::setupGlobalShortcuts()

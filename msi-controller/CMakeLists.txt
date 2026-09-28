@@ -27,6 +27,8 @@ set(MSI_CONTROLLER_GUI_SOURCES
     appactivationservice.h
     displayrotation.cpp
     displayrotation.h
+    autostart.cpp
+    autostart.h
 )
 
 qt_add_dbus_interface(

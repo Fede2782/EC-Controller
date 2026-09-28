@@ -96,6 +96,29 @@ install(FILES
     DESTINATION "${MSI_CONTROLLER_SYSTEMD_UNIT_DIR}"
 )
 
+# Start the backend service automatically: enable it for every boot and
+# start it right away, so the application works immediately after
+# installing. Only on a direct install - when installing into a staging
+# area (DESTDIR) for a package, enabling is the package manager's job.
+# Failure (not root, no systemd) is reported but doesn't stop the install.
+install(CODE [[
+    if("$ENV{DESTDIR}" STREQUAL "")
+        find_program(MSI_CONTROLLER_SYSTEMCTL systemctl)
+        if(MSI_CONTROLLER_SYSTEMCTL)
+            execute_process(COMMAND "${MSI_CONTROLLER_SYSTEMCTL}" --no-ask-password daemon-reload)
+            execute_process(
+                COMMAND "${MSI_CONTROLLER_SYSTEMCTL}" --no-ask-password enable --now org.fedelabs.msicontroller.service
+                RESULT_VARIABLE MSI_CONTROLLER_ENABLE_RESULT)
+            if(MSI_CONTROLLER_ENABLE_RESULT EQUAL 0)
+                message(STATUS "Enabled and started org.fedelabs.msicontroller.service")
+            else()
+                message(WARNING "Couldn't enable org.fedelabs.msicontroller.service. "
+                                "Enable it with: sudo systemctl enable --now org.fedelabs.msicontroller.service")
+            endif()
+        endif()
+    endif()
+]])
+
 # Application and tray icons: the whole set icons/gen.sh generates. The
 # generated tree is committed, so installing never needs an SVG renderer -
 # only regenerating it does.
@@ -159,6 +182,15 @@ install(CODE [[
 install(FILES
     "${CMAKE_CURRENT_SOURCE_DIR}/msi-controller.desktop"
     DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/applications"
+)
+
+# Start the application at every user's login, hidden in the tray. Users
+# opt out from Settings > Start at Login (or KDE's Autostart settings),
+# which writes a Hidden=true override of this same file name into their
+# own ~/.config/autostart. SYSCONFDIR is /etc for a /usr prefix.
+install(FILES
+    "${CMAKE_CURRENT_SOURCE_DIR}/msi-controller-autostart.desktop"
+    DESTINATION "${CMAKE_INSTALL_FULL_SYSCONFDIR}/xdg/autostart"
 )
 
 # Show a short summary of discovered packages and configuration status.

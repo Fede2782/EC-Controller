@@ -2,6 +2,7 @@
 #include "appactivationservice.h"
 
 #include <QApplication>
+#include <QCommandLineParser>
 #include <QDBusConnection>
 #include <QDBusConnectionInterface>
 #include <QDebug>
@@ -31,6 +32,19 @@ int main(int argc, char *argv[])
     // when there's no tray to hide into.
     a.setQuitOnLastWindowClosed(false);
 
+    // --minimized starts straight into the tray. It's what the login
+    // autostart entry passes, so logging in doesn't put the window in
+    // front of everything.
+    QCommandLineParser parser;
+    parser.addHelpOption();
+    parser.addVersionOption();
+    const QCommandLineOption minimizedOption(
+        { QStringLiteral("m"), QStringLiteral("minimized") },
+        QCoreApplication::translate("main", "Start hidden in the system tray."));
+    parser.addOption(minimizedOption);
+    parser.process(a);
+    const bool startMinimized = parser.isSet(minimizedOption);
+
     // A single running instance is enforced on the session bus. Reachability
     // of the system-bus backend is no longer checked here: MainWindow starts
     // regardless and shows its own connection status, so "Reload GUI &
@@ -44,6 +58,12 @@ int main(int argc, char *argv[])
     }
 
     if (sessionBus.interface()->isServiceRegistered(AppActivationService::serviceName)) {
+        // An autostart launch finding the application already running has
+        // nothing to do - and must not pop its window up.
+        if (startMinimized) {
+            return 0;
+        }
+
         // Most likely the other instance is hidden in the tray, and this
         // launch is how the user is trying to get it back - so bring it
         // forward rather than just refusing to start.
@@ -70,7 +90,12 @@ int main(int argc, char *argv[])
         qWarning() << "Unable to export the activation interface on the Session Bus";
     }
 
-    w.show();
+    // Without a tray to hide into (none running yet, or a desktop without
+    // one), starting hidden would leave no way to reach the window, so it
+    // is shown after all.
+    if (!startMinimized || !w.canHideToTray()) {
+        w.show();
+    }
 
     return a.exec();
 }
