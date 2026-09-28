@@ -42,6 +42,11 @@ const QList<MsiEcMode> &shiftModes()
 }
 
 const QString notificationIconName = QStringLiteral("msicontroller");
+
+// The performance-mode notification only confirms what was just pressed,
+// so it goes away sooner than the desktop's default. KNotification has no
+// timeout setting of its own, so it's closed explicitly after this long.
+constexpr int shiftModeNotificationTimeoutMs = 3000;
 }
 
 namespace {
@@ -335,8 +340,18 @@ void MainWindow::notifyCurrentShiftMode()
     if (!getAttrValue(MsiEcAttribute::ShiftMode, &currentModeName)) {
         return;
     }
-    KNotification::event(KNotification::Notification, tr("Performance Mode"),
-                         modeLabel(parseModeName(currentModeName)), notificationIconName);
+    // Pressing the key again replaces the previous notification instead of
+    // stacking another one on top of it.
+    if (shiftModeNotification) {
+        shiftModeNotification->close();
+    }
+
+    shiftModeNotification = KNotification::event(KNotification::Notification, tr("Performance Mode"),
+                                                 modeLabel(parseModeName(currentModeName)), notificationIconName);
+
+    // Tied to the notification: if it's closed and deleted first (by the
+    // user, or by the desktop's own timeout), the timer goes with it.
+    QTimer::singleShot(shiftModeNotificationTimeoutMs, shiftModeNotification.data(), &KNotification::close);
 }
 
 void MainWindow::setupStatusBar()

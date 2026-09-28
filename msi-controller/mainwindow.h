@@ -9,6 +9,7 @@
 #include <QSlider>
 #include <QList>
 #include <QElapsedTimer>
+#include <QPointer>
 #include <functional>
 
 #include "backendclient.h"
@@ -27,6 +28,7 @@ QT_END_NAMESPACE
 class FeatureGroupBox;
 class QPushButton;
 class DisplayRotation;
+class KNotification;
 class TopicBoxArea;
 class TrayIcon;
 
@@ -180,6 +182,10 @@ private:
     // Set while a mode change requested from the Launch1 shortcut waits
     // for the backend's answer.
     bool shiftModeCyclePending = false;
+
+    // The performance-mode notification currently on screen, if any. Null
+    // once it's closed - KNotification deletes itself.
+    QPointer<KNotification> shiftModeNotification;
 
     // Restarted whenever the window loses focus, invalid while it has it.
     // Clicking the tray icon itself takes focus away from the window (to
