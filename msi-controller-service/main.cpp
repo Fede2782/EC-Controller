@@ -13,7 +13,7 @@ int main(int argc, char *argv[]) {
 
     a.setApplicationName("msi-controller-service");
     a.setOrganizationName("FedeLabs");
-    a.setApplicationVersion("0.3");
+    a.setApplicationVersion("1.0");
 
     // Restores the last saved attribute/mode values as part of construction.
     MsiControllerBackend controllerBackend;
