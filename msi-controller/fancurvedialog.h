@@ -32,11 +32,6 @@ private:
     // Apply is only enabled while every curve would be accepted.
     void updateApplyButton();
 
-    // Sizes the dialog to fit everything it shows, and makes that its
-    // minimum size, so it grows when the message appears instead of
-    // squeezing the rows, and can never be made smaller than that.
-    void fitToContents();
-
     FanCurveEditor *m_cpuEditor = nullptr;
     FanCurveEditor *m_gpuEditor = nullptr;
     QLabel *m_invalidCurveLabel = nullptr;

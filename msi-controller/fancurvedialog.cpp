@@ -14,6 +14,12 @@ FanCurveDialog::FanCurveDialog(const QString &cpuCurve, const QString &gpuCurve,
 
     auto *layout = new QVBoxLayout(this);
 
+    // The dialog is always exactly the size its contents need, and can't
+    // be resized by hand. There's nothing a bigger dialog would show, and
+    // a smaller one squeezes the rows. Qt refits it on its own whenever
+    // the invalid-curve message appears or disappears.
+    layout->setSizeConstraint(QLayout::SetFixedSize);
+
     auto *introLabel = new QLabel(
         tr("Check the fan curve, adjust it if needed, then apply it to switch to Advanced fan mode."), this);
     introLabel->setWordWrap(true);
@@ -52,7 +58,6 @@ FanCurveDialog::FanCurveDialog(const QString &cpuCurve, const QString &gpuCurve,
     connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
 
     updateApplyButton();
-    fitToContents();
 }
 
 QString FanCurveDialog::cpuCurve() const
@@ -76,23 +81,5 @@ void FanCurveDialog::updateApplyButton()
     }
 
     m_applyButton->setEnabled(valid);
-
-    // Refit only when the message appears or disappears, not on every
-    // edit, so the dialog doesn't jump around while the user types.
-    const bool showMessage = !valid;
-    if (m_invalidCurveLabel->isVisibleTo(this) != showMessage) {
-        m_invalidCurveLabel->setVisible(showMessage);
-        fitToContents();
-    }
-}
-
-void FanCurveDialog::fitToContents()
-{
-    layout()->activate();
-
-    // By default the minimum size lets the word-wrapped texts squeeze onto
-    // a single line, and the rows get squashed with them. The size
-    // everything asks for is the real minimum, message included.
-    setMinimumSize(sizeHint());
-    adjustSize();
+    m_invalidCurveLabel->setVisible(!valid);
 }
