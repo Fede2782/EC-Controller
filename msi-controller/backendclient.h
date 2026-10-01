@@ -5,6 +5,8 @@
 #include <QDBusServiceWatcher>
 #include <QDBusPendingReply>
 
+#include <functional>
+
 #include "msicontrollerbackend_interface.h"
 
 // Thin wrapper around the generated D-Bus proxy for the msi-controller-service
@@ -29,6 +31,12 @@ public:
     void setAttrValue(const QString &attrKey, bool value);
     void setAttrValue(const QString &attrKey, int value);
 
+    // Used for fan curves. onFinished, if given, is called with the result
+    // right after commandFinished(), so a caller can send its next write
+    // only once this one has succeeded.
+    void setAttrValue(const QString &attrKey, const QString &value,
+                      std::function<void(bool success)> onFinished = nullptr);
+
 signals:
     void connectionStateChanged(bool connected);
 
@@ -40,7 +48,8 @@ signals:
 private:
     void setConnected();
     void setDisconnected(const QString &reason);
-    void watchReply(const QDBusPendingReply<bool> &reply);
+    void watchReply(const QDBusPendingReply<bool> &reply,
+                    std::function<void(bool success)> onFinished = nullptr);
 
     static const QString serviceName;
     static const QString objectPath;

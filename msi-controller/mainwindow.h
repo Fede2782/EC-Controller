@@ -141,6 +141,17 @@ private:
     void syncModeSelection(QComboBox *combo, MsiControllerLib::MsiEcAttribute attr);
     QString modeLabel(MsiControllerLib::MsiEcMode mode) const;
 
+    // Called when the user picks Advanced in the Fan Mode dropdown: shows
+    // the fan curve dialog and, only if it is accepted, applies the curves
+    // and the mode. Cancelling puts the dropdown back and changes nothing.
+    void selectAdvancedFanMode(QComboBox *fanModeCombo);
+
+    // Writes the CPU curve, then the GPU curve (if there is one), then
+    // switches to Advanced fan mode. Each step is sent only after the
+    // previous one succeeded, so a rejected curve never leaves the fans in
+    // Advanced mode.
+    void applyAdvancedFanMode(const QString &cpuCurve, const QString &gpuCurve);
+
     // Adds one "label: checkbox" row for a boolean attribute to an existing
     // box: preselected from its current value, wired to setAttrValue(bool)
     // and registered as a write control. If confirmChange is given, it's

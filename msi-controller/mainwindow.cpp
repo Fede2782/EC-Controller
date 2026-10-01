@@ -5,11 +5,13 @@
 #include "trayicon.h"
 #include "displayrotation.h"
 #include "autostart.h"
+#include "fancurvedialog.h"
 
 #include <QApplication>
 #include <QCloseEvent>
 #include <QDBusConnection>
 #include <QDBusConnectionInterface>
+#include <QDebug>
 #include <QDialogButtonBox>
 #include <QGuiApplication>
 #include <QHBoxLayout>
@@ -19,6 +21,7 @@
 #include <QScreen>
 #include <QScrollArea>
 #include <QSettings>
+#include <QStandardItemModel>
 #include <QStyle>
 #include <QTimer>
 #include <algorithm>
@@ -737,7 +740,90 @@ void MainWindow::setupFanMode()
         MsiEcMode::SilentFan,
         MsiEcMode::BasicFan,
     };
-    setupModeDropdown(QStringLiteral("fanMode"), tr("Fan Mode"), MsiEcAttribute::FanMode, fanModes);
+    QComboBox *combo = setupModeDropdown(QStringLiteral("fanMode"), tr("Fan Mode"), MsiEcAttribute::FanMode,
+                                         fanModes);
+    if (!combo) {
+        return;
+    }
+
+    // Advanced mode needs a CPU fan curve to edit (alone, or together with
+    // a GPU one). A GPU curve without a CPU one isn't a valid configuration,
+    // so it doesn't count. Without one, Advanced stays in the list - so the
+    // dropdown can still show it if the hardware is already in that mode -
+    // but can't be picked.
+    if (!isAttrSupported(MsiEcAttribute::CpuFanCurve)) {
+        if (isAttrSupported(MsiEcAttribute::GpuFanCurve)) {
+            qWarning() << Q_FUNC_INFO << "GPU fan curve without a CPU one, Advanced fan mode disabled";
+        }
+
+        const int advancedIndex = combo->findData(getModeKey(MsiEcMode::AdvancedFan));
+        auto *model = qobject_cast<QStandardItemModel *>(combo->model());
+        if (advancedIndex >= 0 && model) {
+            model->item(advancedIndex)->setEnabled(false);
+        }
+    }
+}
+
+void MainWindow::selectAdvancedFanMode(QComboBox *fanModeCombo)
+{
+    // Same rule as in setupFanMode(), checked again in case the driver
+    // changed since the dropdown was built.
+    if (!isAttrSupported(MsiEcAttribute::CpuFanCurve)) {
+        syncModeSelection(fanModeCombo, MsiEcAttribute::FanMode);
+        return;
+    }
+
+    QString cpuCurve;
+    QString gpuCurve;
+    bool curvesRead = getAttrValue(MsiEcAttribute::CpuFanCurve, &cpuCurve);
+    if (curvesRead && isAttrSupported(MsiEcAttribute::GpuFanCurve)) {
+        curvesRead = getAttrValue(MsiEcAttribute::GpuFanCurve, &gpuCurve);
+    }
+    if (!curvesRead) {
+        syncModeSelection(fanModeCombo, MsiEcAttribute::FanMode);
+        QMessageBox::warning(this, tr("Couldn't Read the Fan Curve"),
+            tr("The fan curve couldn't be read from the msi-ec driver, so the fan mode was not changed."));
+        return;
+    }
+
+    FanCurveDialog dialog(cpuCurve, gpuCurve, this);
+    if (dialog.exec() != QDialog::Accepted) {
+        // Nothing was written, so putting the dropdown back is all there is
+        // to undo.
+        syncModeSelection(fanModeCombo, MsiEcAttribute::FanMode);
+        return;
+    }
+
+    applyAdvancedFanMode(dialog.cpuCurve(), dialog.gpuCurve());
+}
+
+void MainWindow::applyAdvancedFanMode(const QString &cpuCurve, const QString &gpuCurve)
+{
+    // On failure the chain just stops: onCommandFinished() has already
+    // reported it and resynced the dropdown, and the mode was never sent.
+    auto setAdvancedMode = [this]() {
+        backend->setMode(getModeKey(MsiEcMode::AdvancedFan));
+    };
+
+    auto writeGpuCurveThenMode = [this, gpuCurve, setAdvancedMode]() {
+        if (gpuCurve.isEmpty()) {
+            setAdvancedMode();
+            return;
+        }
+        const QString gpuCurveKey = getAttrKey(MsiEcAttribute::GpuFanCurve);
+        backend->setAttrValue(gpuCurveKey, gpuCurve, [setAdvancedMode](bool success) {
+            if (success) {
+                setAdvancedMode();
+            }
+        });
+    };
+
+    const QString cpuCurveKey = getAttrKey(MsiEcAttribute::CpuFanCurve);
+    backend->setAttrValue(cpuCurveKey, cpuCurve, [writeGpuCurveThenMode](bool success) {
+        if (success) {
+            writeGpuCurveThenMode();
+        }
+    });
 }
 
 void MainWindow::setupShiftMode()
@@ -771,7 +857,16 @@ QComboBox *MainWindow::setupModeDropdown(const QString &boxId, const QString &bo
     // currentIndexChanged() - so syncing the selection never triggers a
     // write on its own, whether at startup or after a failed command.
     connect(combo, &QComboBox::activated, this, [this, combo](int index) {
-        backend->setMode(combo->itemData(index).toString());
+        const QString modeKey = combo->itemData(index).toString();
+
+        // Advanced fan mode isn't a plain mode switch: its curve has to be
+        // confirmed first.
+        if (modeKey == getModeKey(MsiEcMode::AdvancedFan)) {
+            selectAdvancedFanMode(combo);
+            return;
+        }
+
+        backend->setMode(modeKey);
     });
 
     registerWriteControl(combo, [this, combo, attr]() { syncModeSelection(combo, attr); });

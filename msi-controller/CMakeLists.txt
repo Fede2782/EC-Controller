@@ -29,6 +29,10 @@ set(MSI_CONTROLLER_GUI_SOURCES
     displayrotation.h
     autostart.cpp
     autostart.h
+    fancurveeditor.cpp
+    fancurveeditor.h
+    fancurvedialog.cpp
+    fancurvedialog.h
 )
 
 qt_add_dbus_interface(

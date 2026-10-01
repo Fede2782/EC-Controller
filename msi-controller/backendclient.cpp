@@ -51,12 +51,24 @@ void BackendClient::setAttrValue(const QString &attrKey, int value)
     watchReply(m_interface->setAttrValue(attrKey, value));
 }
 
-void BackendClient::watchReply(const QDBusPendingReply<bool> &reply)
+void BackendClient::setAttrValue(const QString &attrKey, const QString &value,
+                                 std::function<void(bool success)> onFinished)
+{
+    watchReply(m_interface->setAttrValue(attrKey, value), onFinished);
+}
+
+void BackendClient::watchReply(const QDBusPendingReply<bool> &reply,
+                               std::function<void(bool success)> onFinished)
 {
     auto *watcher = new QDBusPendingCallWatcher(reply, this);
-    connect(watcher, &QDBusPendingCallWatcher::finished, this, [this](QDBusPendingCallWatcher *watcher) {
+    connect(watcher, &QDBusPendingCallWatcher::finished, this,
+            [this, onFinished](QDBusPendingCallWatcher *watcher) {
         const QDBusPendingReply<bool> reply = *watcher;
-        emit commandFinished(!reply.isError() && reply.value());
+        const bool success = !reply.isError() && reply.value();
+        emit commandFinished(success);
+        if (onFinished) {
+            onFinished(success);
+        }
         watcher->deleteLater();
     });
 }
