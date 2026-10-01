@@ -52,6 +52,7 @@ FanCurveDialog::FanCurveDialog(const QString &cpuCurve, const QString &gpuCurve,
     connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
 
     updateApplyButton();
+    fitToContents();
 }
 
 QString FanCurveDialog::cpuCurve() const
@@ -75,5 +76,23 @@ void FanCurveDialog::updateApplyButton()
     }
 
     m_applyButton->setEnabled(valid);
-    m_invalidCurveLabel->setVisible(!valid);
+
+    // Refit only when the message appears or disappears, not on every
+    // edit, so the dialog doesn't jump around while the user types.
+    const bool showMessage = !valid;
+    if (m_invalidCurveLabel->isVisibleTo(this) != showMessage) {
+        m_invalidCurveLabel->setVisible(showMessage);
+        fitToContents();
+    }
+}
+
+void FanCurveDialog::fitToContents()
+{
+    layout()->activate();
+
+    // By default the minimum size lets the word-wrapped texts squeeze onto
+    // a single line, and the rows get squashed with them. The size
+    // everything asks for is the real minimum, message included.
+    setMinimumSize(sizeHint());
+    adjustSize();
 }
