@@ -124,10 +124,20 @@ private:
 
     // Resizes the window's height to exactly what its contents need,
     // capped by the screen. Qt grows a window when its contents grow but
-    // never shrinks it again, so anything that reveals or hides a row (Edit
-    // mode's bar, the extra fan slots) has to ask for this explicitly or
-    // the window stays permanently stretched.
+    // never shrinks it again, so anything that reveals or hides a row (the
+    // extra fan slots) has to ask for this explicitly or the window stays
+    // permanently stretched.
     void fitWindowToContents();
+
+    // Edit mode keeps whatever size the user gave the window. Entering
+    // only adds the space the Apply/Discard bar needs; leaving takes exactly
+    // that space back, so resizing done during the session is kept.
+    void addEditBarSpace();
+    void removeEditBarSpace();
+
+    // The tallest the window can be on its current screen, leaving room
+    // for its title bar and frame.
+    int maxWindowHeight() const;
 
     // Shared by every msi-ec "mode" attribute (fan mode, shift mode, and
     // kbd backlight mode): builds a combo box with only the supported
@@ -224,6 +234,10 @@ private:
     // The Edit bar's "Reset to Default", kept to enable and disable it as
     // the order changes.
     QPushButton *resetOrderButton = nullptr;
+
+    // How much addEditBarSpace() grew the window, for removeEditBarSpace()
+    // to take back. Zero outside an Edit session.
+    QSize editBarSpace = QSize(0, 0);
 
     // The window is sized to its contents once, the first time it's shown.
     bool initialFitDone = false;

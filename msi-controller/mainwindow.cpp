@@ -176,9 +176,56 @@ void MainWindow::onEditModeToggled(bool editing)
     // Hardware safety: no EC writes while the layout is being rearranged.
     updateWriteControlsEnabled();
 
-    // The bar appearing or disappearing changes how much height the window
-    // needs, which is exactly the growth that used to be permanent.
-    fitWindowToContents();
+    if (editing) {
+        addEditBarSpace();
+    } else {
+        removeEditBarSpace();
+    }
+}
+
+void MainWindow::addEditBarSpace()
+{
+    editBarSpace = QSize(0, 0);
+    if (isMaximized() || isFullScreen()) {
+        return;
+    }
+
+    const QSize sizeBefore = size();
+
+    // Updates the window's minimum size for the bar right away. If the
+    // window is too narrow for the bar's buttons, Qt widens it here.
+    ui->centralLayout->activate();
+    layout()->activate();
+
+    // Taller by the bar's height, so the boxes keep the space they had.
+    // Never taller than the screen; the scroll area handles the rest.
+    const int barHeight = editActionBar->sizeHint().height() + qMax(0, ui->centralLayout->spacing());
+    resize(width(), qMax(height(), qMin(sizeBefore.height() + barHeight, maxWindowHeight())));
+
+    editBarSpace = size() - sizeBefore;
+}
+
+void MainWindow::removeEditBarSpace()
+{
+    if (!isMaximized() && !isFullScreen()) {
+        // The bar is hidden by now, but the window's minimum size only drops
+        // once the layouts are updated, and resize() can't go below it.
+        ui->centralLayout->activate();
+        layout()->activate();
+
+        resize(size() - editBarSpace);
+    }
+    editBarSpace = QSize(0, 0);
+}
+
+int MainWindow::maxWindowHeight() const
+{
+    const QScreen *activeScreen = screen() ? screen() : QGuiApplication::primaryScreen();
+    if (!activeScreen) {
+        return QWIDGETSIZE_MAX;
+    }
+    const int frameOverhead = frameGeometry().height() - height();
+    return activeScreen->availableGeometry().height() - frameOverhead;
 }
 
 void MainWindow::onEditApplyClicked()
@@ -630,8 +677,18 @@ void MainWindow::fitWindowToContents()
             return;
         }
 
-        if (QLayout *contentsLayout = ui->scrollAreaContents->layout()) {
-            contentsLayout->activate();
+        // A hidden fan row sits several layouts deep (box, box row, box
+        // area), and each level only updates its cached size on its own
+        // event-loop pass. Measured now, the contents would still include
+        // the hidden rows and the window would never shrink. So every
+        // cached size below the scroll area is dropped first.
+        const auto contentsLayouts = ui->scrollAreaContents->findChildren<QLayout *>();
+        for (QLayout *contentsLayout : contentsLayouts) {
+            contentsLayout->invalidate();
+        }
+        const auto contentsWidgets = ui->scrollAreaContents->findChildren<QWidget *>();
+        for (QWidget *contentsWidget : contentsWidgets) {
+            contentsWidget->updateGeometry();
         }
 
         // Everything that is not the scroll area's viewport - menu bar,
@@ -644,11 +701,7 @@ void MainWindow::fitWindowToContents()
 
         // Never taller than the screen can show - the scroll area takes over
         // from there, which is the point of having one.
-        const QScreen *activeScreen = screen() ? screen() : QGuiApplication::primaryScreen();
-        if (activeScreen) {
-            const int frameOverhead = frameGeometry().height() - height();
-            wanted = qMin(wanted, activeScreen->availableGeometry().height() - frameOverhead);
-        }
+        wanted = qMin(wanted, maxWindowHeight());
 
         resize(width(), qMax(wanted, minimumSizeHint().height()));
     });
