@@ -15,7 +15,7 @@ int main(int argc, char *argv[])
     a.setApplicationName("msi-controller");
     a.setOrganizationName("FedeLabs");
     a.setApplicationDisplayName("MSI Controller");
-    a.setApplicationVersion("1.0");
+    a.setApplicationVersion("0.1");
 
     // On Wayland the window is identified by its desktop file, which is
     // also where the taskbar and window switcher take its icon from. Must

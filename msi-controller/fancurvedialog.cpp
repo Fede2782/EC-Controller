@@ -21,7 +21,8 @@ FanCurveDialog::FanCurveDialog(const QString &cpuCurve, const QString &gpuCurve,
     layout->setSizeConstraint(QLayout::SetFixedSize);
 
     auto *introLabel = new QLabel(
-        tr("Check the fan curve, adjust it if needed, then apply it to switch to Advanced fan mode."), this);
+        tr("In Advanced mode the fans follow this curve. Adjust it if needed, then apply it to "
+           "switch to Advanced fan mode."), this);
     introLabel->setWordWrap(true);
     layout->addWidget(introLabel);
 

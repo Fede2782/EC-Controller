@@ -29,6 +29,8 @@ set(MSI_CONTROLLER_GUI_SOURCES
     displayrotation.h
     autostart.cpp
     autostart.h
+    fancurvechart.cpp
+    fancurvechart.h
     fancurveeditor.cpp
     fancurveeditor.h
     fancurvedialog.cpp
