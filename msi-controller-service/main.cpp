@@ -6,6 +6,8 @@
 #include <QDBusConnection>
 #include <QDBusConnectionInterface>
 
+#include <unistd.h>
+
 #include "msicontrollerbackend.h"
 
 int main(int argc, char *argv[]) {
@@ -14,6 +16,14 @@ int main(int argc, char *argv[]) {
     a.setApplicationName("ec-controller-service");
     a.setOrganizationName("FedeLabs");
     a.setApplicationVersion("1.0.0");
+
+    // The service writes to sysfs and to /etc, and only root may own its
+    // bus name, so it can't do anything useful as another user. Refusing
+    // here gives a clear message before anything else is attempted.
+    if (geteuid() != 0) {
+        qCritical() << "ec-controller-service must be run as root";
+        return 1;
+    }
 
     // Restores the last saved attribute/mode values as part of construction.
     MsiControllerBackend controllerBackend;
