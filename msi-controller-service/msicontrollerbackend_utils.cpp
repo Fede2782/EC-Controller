@@ -57,7 +57,7 @@ bool MsiControllerBackend::checkAuth() {
     const PolkitQt1::SystemBusNameSubject subject(message().service());
     const auto result =
         PolkitQt1::Authority::instance()->checkAuthorizationSync(
-            "org.fedelabs.MsiControllerAPI.write",
+            "org.fedelabs.EcControllerAPI.write",
             subject,
             PolkitQt1::Authority::AllowUserInteraction);
 

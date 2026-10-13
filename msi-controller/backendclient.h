@@ -55,7 +55,7 @@ private:
     static const QString objectPath;
 
     QDBusServiceWatcher *m_watcher;
-    OrgFedelabsMsiControllerAPIInterface *m_interface;
+    OrgFedelabsEcControllerAPIInterface *m_interface;
     bool m_connected = false;
     QString m_lastError;
 };

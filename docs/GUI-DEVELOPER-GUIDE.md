@@ -1,12 +1,30 @@
-# MSI Controller — GUI Developer Guide
+# EC Controller — GUI Developer Guide
 
-**Scope:** the `msi-controller` desktop application (Qt 6 Widgets + KF6), and as much of the
+**Scope:** the EC Controller desktop application (Qt 6 Widgets + KF6; source directory
+`msi-controller/`, installed as `ec-controller`), and as much of the
 library, backend service and driver as you need to change the GUI safely.
-**Baseline:** `MsiController-v2-FanCurve-rev7` — Autostart-rev7 plus the commits listed in §14.
-Every statement below was checked against that tree (last update: 2026-10-10, fan-curve editor
-rework).
+**Baseline:** `EcController-Rename-WIP1` — Autostart-rev7 plus the commits listed in §14.
+Every statement below was checked against that tree (last update: 2026-10-12, rename to
+EC Controller).
 **Audience:** any developer or AI agent continuing this project. Read §1–§4 once to get oriented,
 then work from §8 (adding features), §9 (rules) and §13 (open work).
+
+**Naming.** The product is called **EC Controller** (it was "MSI Controller" until October 2026;
+the name was changed so the product name doesn't carry MSI's trademark). Everything a user sees
+or installs uses the new name: the displayed name, the package `ec-controller`, the programs
+`ec-controller` and `ec-controller-service`, the desktop and autostart files, the icons
+(`ec-controller`, `ec-controller-tray`), the systemd unit
+`org.fedelabs.eccontroller.service`, the D-Bus names (`org.fedelabs.EcController`,
+`/EcController`, `org.fedelabs.EcControllerAPI`, `org.fedelabs.EcController.App`), the polkit
+action `org.fedelabs.EcControllerAPI.write` with its files `org.fedelabs.EcController.*`, the
+service's config file `/etc/eccontroller.conf` and the repository
+(`github.com/Fede2782/ec-controller`). Only the **source tree keeps its original names**: the
+directories and CMake targets `msi-controller*`, the CMake project name, and the classes and
+namespace (`MsiControllerLib`, `MsiControllerBackend`). Describing
+the hardware ("for MSI laptops",
+the `msi-ec` driver) is fine and stays. The About box carries the trademark notice: MSI is a
+trademark of Micro-Star International, and EC Controller is unofficial and not affiliated with
+or endorsed by MSI. Keep that notice if the About text is ever reworded.
 
 ---
 
@@ -31,15 +49,15 @@ then work from §8 (adding features), §9 (rules) and §13 (open work).
 
 ## 1. What the GUI is
 
-MSI Controller controls MSI laptop hardware through the out-of-tree `msi-ec` kernel driver.
+EC Controller controls MSI laptop hardware through the out-of-tree `msi-ec` kernel driver.
 The project has four parts:
 
 | Part | Directory | What it does |
 |---|---|---|
 | `msi-ec` | separate repo | Kernel driver; exposes the embedded controller (EC) as sysfs files |
 | `msi-controller-lib` | `msi-controller-lib/` | Static library: attribute names, sysfs paths, reading, validation, persisted-state access. Linked into both programs below |
-| `msi-controller-service` | `msi-controller-service/` | Root D-Bus service on the system bus. The **only** thing that writes. Checks polkit, validates, writes sysfs, saves to `/etc/msicontroller.conf`, restores at boot |
-| `msi-controller` | `msi-controller/` | **The GUI** — this document. Runs as the user, reads sysfs directly, asks the service to write |
+| `msi-controller-service` (installed as `ec-controller-service`) | `msi-controller-service/` | Root D-Bus service on the system bus. The **only** thing that writes. Checks polkit, validates, writes sysfs, saves to `/etc/eccontroller.conf`, restores at boot |
+| `msi-controller` (installed as `ec-controller`) | `msi-controller/` | **The GUI** — this document. Runs as the user, reads sysfs directly, asks the service to write |
 
 The GUI shows one "topic box" per feature the machine supports: temperatures, fan speeds, fan
 mode, performance mode, battery charge limit, hardware toggles, keyboard backlight mode and
@@ -59,7 +77,7 @@ fewer features, never crashing — on other desktops.
  │ MainWindow + helpers         │ ─ setMode(s) ────────────▶ │ validate (library)             │
  │                              │ ─ setAttrValue(s, b|i|s) ▶ │ polkit check                   │
  │ BackendClient ◀── bool reply ┤ ◀──────────────────────────│ write sysfs                    │
- │                              │                            │ save /etc/msicontroller.conf   │
+ │                              │                            │ save /etc/eccontroller.conf    │
  │ reads sysfs directly ─┐      │                            │ restore saved state at start   │
  └───────────────────────┼──────┘                            └───────────────┬────────────────┘
                          │   both link msi-controller-lib (static)           │
@@ -82,7 +100,7 @@ fewer features, never crashing — on other desktops.
 1. **Reads never go through the backend.** The GUI reads sysfs through `msi-controller-lib`
    (`getAttrValue`, `isAttrSupported`, `isModeSupported`). Anyone may read.
 2. **Writes always go through the backend.** Every write is a D-Bus call that the service
-   authorizes with polkit (`org.fedelabs.MsiControllerAPI.write`), validates, writes and saves.
+   authorizes with polkit (`org.fedelabs.EcControllerAPI.write`), validates, writes and saves.
    The GUI never writes sysfs. The one exception is keyboard brightness, which goes through
    UPower (§6.8).
 3. **The library is the single source of validation truth.** The GUI may validate first, as a
@@ -106,8 +124,8 @@ icons/                             SVG sources, gen.sh, generated icons/icons/ t
 packaging/                         postinst, prerm (shared by .deb and .rpm)
 .github/workflows/packages.yml     CI: builds .deb and .rpm, publishes releases
 docs/                              HANDOFF-WIP1.md (history of the GUI chapter)
-org.fedelabs.MsiController.{conf,policy,rules}, org.fedelabs.msicontroller.service
-msi-controller.desktop, msi-controller-autostart.desktop
+org.fedelabs.EcController.{conf,policy,rules}, org.fedelabs.eccontroller.service
+ec-controller.desktop, ec-controller-autostart.desktop
 ```
 
 GUI files (`msi-controller/`), about 3,850 lines in total:
@@ -140,14 +158,14 @@ D-Bus XML (`qt_add_dbus_interface` in `msi-controller/CMakeLists.txt`); it isn't
 
 ### 4.1 `main.cpp`
 
-1. Sets application name `msi-controller`, organization `FedeLabs` (these decide the QSettings
-   file: `~/.config/FedeLabs/msi-controller.conf`), display name, version, desktop file name
-   (`msi-controller`, which is the Wayland app id) and the window icon (theme icon
-   `msicontroller`, with an embedded fallback).
+1. Sets application name `ec-controller`, organization `FedeLabs` (these decide the QSettings
+   file: `~/.config/FedeLabs/ec-controller.conf`), display name, version, desktop file name
+   (`ec-controller`, which is the Wayland app id) and the window icon (theme icon
+   `ec-controller`, with an embedded fallback).
 2. `setQuitOnLastWindowClosed(false)`: the window hides into the tray, so the app quits only
    explicitly (§6.11).
 3. Parses `--minimized` / `-m` (used by the login autostart entry).
-4. **Single instance** on the session bus: if `org.fedelabs.MsiController.App` is taken, it calls
+4. **Single instance** on the session bus: if `org.fedelabs.EcController.App` is taken, it calls
    `activate(XDG_ACTIVATION_TOKEN)` on the running instance and exits. With `--minimized` it exits
    silently instead.
 5. Creates `MainWindow` and exports `AppActivationService` (`activate` → `showAndActivate()`).
@@ -457,8 +475,8 @@ cover it — use `addPermanentWidget()` if you ever need temporary messages.
 
 ### 6.11 Tray, close-to-tray, single instance
 
-- Tray icon theme name `msicontroller-tray` (Plasma recolours it), fallback
-  `:/icons/status/msicontroller-tray.svg`. Tooltip carries the connection state.
+- Tray icon theme name `ec-controller-tray` (Plasma recolours it), fallback
+  `:/icons/status/ec-controller-tray.svg`. Tooltip carries the connection state.
 - Left click: hide if the window was active within the last second (clicking the tray moves
   focus to the panel first, hence `lastDeactivated`), else show/raise/activate. Menu: *Show MSI
   Controller*, *Quit*.
@@ -470,7 +488,7 @@ cover it — use `addPermanentWidget()` if you ever need temporary messages.
 
 Registered only if `org.kde.kglobalaccel` is **already** on the session bus
 (`isServiceRegistered`, which never starts it). Shortcuts are listed in System Settings →
-Shortcuts under "MSI Controller":
+Shortcuts under "EC Controller":
 
 - `cycle-performance-mode` — `Qt::Key_Launch1` (§6.5), only if a shift mode is supported.
 - `flip-display` — `Qt::Key_RotateWindows`, only if `kscreen-doctor` exists. `DisplayRotation`
@@ -480,9 +498,9 @@ Shortcuts under "MSI Controller":
 
 ### 6.13 Start at login
 
-System entry `/etc/xdg/autostart/msi-controller-autostart.desktop` (`Exec=msi-controller
+System entry `/etc/xdg/autostart/ec-controller-autostart.desktop` (`Exec=ec-controller
 --minimized`) starts it for every user. *Settings → Start at Login* writes
-`~/.config/autostart/msi-controller-autostart.desktop` with `Hidden=true` to opt out, and deletes
+`~/.config/autostart/ec-controller-autostart.desktop` with `Hidden=true` to opt out, and deletes
 it to opt back in (the same file KDE's Autostart page edits). The state is re-read every time the
 menu opens. The entry is disabled if the system file isn't installed.
 
@@ -490,7 +508,7 @@ menu opens. The entry is disabled if the system file isn't installed.
 
 - **Edit:** GUI Edit Mode (Ctrl+E), —, Show All Fan Slots.
 - **Settings:** Start at Login.
-- **Help:** Reload GUI & Backend Connection (F5), —, About MSI Controller, Quit Application (Ctrl+Q).
+- **Help:** Reload GUI & Backend Connection (F5), —, About EC Controller, Quit Application (Ctrl+Q).
 
 Actions live in `mainwindow.ui` with `action…` names. `actionEsci` is the legacy Italian name of
 Quit — keep it. Don't give menu-action enabled state a meaning users rely on (on the owner's
@@ -504,15 +522,15 @@ controls in the window.
 ### 7.1 D-Bus
 
 ```
-System bus   org.fedelabs.MsiController  /MsiController  org.fedelabs.MsiControllerAPI
+System bus   org.fedelabs.EcController  /EcController  org.fedelabs.EcControllerAPI
   setMode(s modeKey) → b                 modeKey = MsiEcMode key, e.g. "TurboShift"
   setAttrValue(s attrKey, b) → b         e.g. ("CoolerBoost", true)
   setAttrValue(s attrKey, i) → b         e.g. ("ChargeEnd", 80)
   setAttrValue(s attrKey, s) → b         e.g. ("CpuFanCurve", "0 50 30 …")
-  polkit action org.fedelabs.MsiControllerAPI.write
+  polkit action org.fedelabs.EcControllerAPI.write
     (active: auth_admin_keep; rule: active members of group "wheel" need no password)
 
-Session bus  org.fedelabs.MsiController.App  /App  activate(s xdgActivationToken)
+Session bus  org.fedelabs.EcController.App  /App  activate(s xdgActivationToken)
 ```
 
 The service's interface is generated from its class with `qdbuscpp2xml` (all public slots are
@@ -522,12 +540,12 @@ exported), and the GUI's proxy from that XML. **Every public slot of the service
 
 | Where | Key | Meaning |
 |---|---|---|
-| `/etc/msicontroller.conf` (service, INI) | `<group>/<sysfs name>`; groups `root`, `cpu`, `gpu`, `kbdbacklight`, `battery` | last written value of every attribute, restored at service start |
-| `~/.config/FedeLabs/msi-controller.conf` (GUI) | `GUI/topicBoxOrder` | `QStringList` of box ids |
+| `/etc/eccontroller.conf` (service, INI) | `<group>/<sysfs name>`; groups `root`, `cpu`, `gpu`, `kbdbacklight`, `battery` | last written value of every attribute, restored at service start |
+| `~/.config/FedeLabs/ec-controller.conf` (GUI) | `GUI/topicBoxOrder` | `QStringList` of box ids |
 | | `GUI/showAllFanSlots` | bool |
 | | `GUI/trayHintShown` | bool |
-| `~/.config/autostart/msi-controller-autostart.desktop` | `Hidden=true` | user opted out of start at login |
-| kglobalaccel | component `msi-controller` | shortcut bindings |
+| `~/.config/autostart/ec-controller-autostart.desktop` | `Hidden=true` | user opted out of start at login |
+| kglobalaccel | component `ec-controller` | shortcut bindings |
 
 ### 7.3 sysfs used by the GUI (all via the library unless noted)
 
@@ -577,7 +595,7 @@ All in `msicontrollerlib.h` / `msicontrollerlib_attributes.cpp` / `_settings.cpp
 6. **`isBooleanAttr()`:** add it to the `false` or `true` list.
 7. **`isModesAttr()`:** add it if its value is a mode name.
 8. **`getGroupName()`** (`_settings.cpp`): only if it doesn't belong in the `root` group of
-   `/etc/msicontroller.conf`. Never move an existing attribute between groups (saved state would
+   `/etc/eccontroller.conf`. Never move an existing attribute between groups (saved state would
    silently stop being restored).
 9. **Validator:** if the value has rules beyond on/off or a mode name, add a pure function
    (`bool isValidXxx(...)`) in the library — the single source of truth used by the service
@@ -830,10 +848,11 @@ sudo cmake --install build
 
 ### 10.2 What gets installed
 
-GUI binary; service binary and its systemd unit `org.fedelabs.msicontroller.service`
+GUI binary `ec-controller`; service binary `ec-controller-service` and its systemd unit
+`org.fedelabs.eccontroller.service`
 (`Type=dbus`, in `<prefix>/lib/systemd/system`); the D-Bus system-bus policy
-(`org.fedelabs.MsiController.conf`); the polkit action and rule (rule installed as
-`49-org.fedelabs.MsiController.rules`); `msi-controller.desktop`; the
+(`org.fedelabs.EcController.conf`); the polkit action and rule (rule installed as
+`49-org.fedelabs.EcController.rules`); `ec-controller.desktop`; the
 autostart entry (`<sysconfdir>/xdg/autostart`); all generated icons (hicolor, breeze,
 breeze-dark, pixmaps). A direct (non-DESTDIR) install also runs `systemctl daemon-reload` +
 `enable --now` for the service and refreshes existing GTK icon caches — warning, never failing,
@@ -844,7 +863,7 @@ Don't regenerate the committed PNGs unless asked.
 
 ### 10.3 Packages (CPack) and CI
 
-- Package name `msi-controller`. `.deb` (`DEB-DEFAULT` file name) and `.rpm` (`RPM-DEFAULT`).
+- Package name `ec-controller`. `.deb` (`DEB-DEFAULT` file name) and `.rpm` (`RPM-DEFAULT`).
   Runtime deps declared (deb: `polkitd`, `dbus`; rpm: `polkit`, `dbus`) plus recommends
   (`qt6-svg-plugins`/`qt6-qtsvg`, `qt6-wayland`/`qt6-qtwayland`, `upower`,
   `libkscreen-bin`/`libkscreen`). `packaging/postinst` / `prerm` enable/restart/disable the
@@ -886,11 +905,11 @@ breaking any of them silently breaks existing installs:
 |---|---|---|
 | D-Bus name/path/interface and `setMode(s)→b`, `setAttrValue(s, b\|i\|s)→b` | rename/remove a method or change a signature | **add** methods/signals |
 | `MsiEcAttribute` / `MsiEcMode` **key names** (they're the D-Bus strings) | rename an enumerator | append before `InvalidAttribute` / `InvalidMode` |
-| `/etc/msicontroller.conf` groups and keys | move/rename without migration | add keys |
-| Polkit action `org.fedelabs.MsiControllerAPI.write` | rename it | add new actions alongside |
+| `/etc/eccontroller.conf` groups and keys | move/rename without migration | add keys |
+| Polkit action `org.fedelabs.EcControllerAPI.write` | rename it | add new actions alongside |
 | GUI QSettings keys and **box ids** | rename them (users lose their layout) | add new ones |
-| Session bus `org.fedelabs.MsiController.App` `/App` `activate(s)` | change it | add methods |
-| Autostart file name, desktop id `msi-controller` | rename them (opt-outs stop matching; Wayland app id changes) | — |
+| Session bus `org.fedelabs.EcController.App` `/App` `activate(s)` | change it | add methods |
+| Autostart file name, desktop id `ec-controller` | rename them (opt-outs stop matching; Wayland app id changes) | — |
 | sysfs curve format `s0 t1 s1 …`, `2N−1` tokens | change order, separator or count on one side | add a new file |
 | Curve rules: driver `read_curve()` **and** library `isValidCurve()` | edit one without the other | edit both in the same change, each comment naming its twin |
 
@@ -986,3 +1005,4 @@ None of these are approved work — propose, don't just do (§9.2).
 | Autostart | Start at login, notification tweaks, kglobalaccel guard, CI packaging (`docs/HANDOFF-WIP1.md` covers all of the above in depth) |
 | Driver | `msi-ec`: keyboard-backlight change notification, fan curve, unload fix |
 | FanCurve (this baseline) | `feat(gui): edit the fan curve when switching to Advanced fan mode` · `fix(gui): keep the fan curve dialog at the size its contents need` · `fix(gui): keep the user's window size across an Edit mode session` · `fix(gui): shrink the window again when fan slots are hidden` · `docs: add the GUI developer guide` · `feat(gui): chart the fan curve and keep it in order while editing` |
+| Rename | `feat: rename the application to EC Controller` — displayed name, package, programs, desktop files, icons and systemd unit; source names unchanged |

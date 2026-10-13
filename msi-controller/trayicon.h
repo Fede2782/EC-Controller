@@ -8,7 +8,7 @@
 class QMenu;
 class QSystemTrayIcon;
 
-// The system tray entry: the msicontroller-tray icon, a tooltip carrying
+// The system tray entry: the ec-controller-tray icon, a tooltip carrying
 // the backend connection state, and a right-click menu whose Quit is the
 // one complete exit from the application.
 //
@@ -33,7 +33,7 @@ public:
     // extension).
     bool isUsable() const;
 
-    // Shown after "MSI Controller" in the tooltip, e.g. the backend
+    // Shown after "EC Controller" in the tooltip, e.g. the backend
     // connection state.
     void setStatusText(const QString &text);
 
@@ -44,7 +44,7 @@ signals:
     // Left click.
     void toggleWindowRequested();
 
-    // "Show MSI Controller" in the menu. Left click already does this, but
+    // "Show EC Controller" in the menu. Left click already does this, but
     // not every tray delivers left clicks as activation, so the menu is the
     // path that always works.
     void showWindowRequested();

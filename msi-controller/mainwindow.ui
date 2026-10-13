@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MSI Controller</string>
+   <string>EC Controller</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="centralLayout">
@@ -143,7 +143,7 @@
     <string>Start at Login</string>
    </property>
    <property name="toolTip">
-    <string>Start MSI Controller in the system tray when you log in.</string>
+    <string>Start EC Controller in the system tray when you log in.</string>
    </property>
   </action>
   <action name="actionEsci">
@@ -162,7 +162,7 @@
     <iconset theme="QIcon::ThemeIcon::HelpAbout"/>
    </property>
    <property name="text">
-    <string>About MSI Controller</string>
+    <string>About EC Controller</string>
    </property>
   </action>
   <action name="actionReload">

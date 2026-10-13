@@ -12,17 +12,17 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 
-    a.setApplicationName("msi-controller");
+    a.setApplicationName("ec-controller");
     a.setOrganizationName("FedeLabs");
-    a.setApplicationDisplayName("MSI Controller");
-    a.setApplicationVersion("1.0");
+    a.setApplicationDisplayName("EC Controller");
+    a.setApplicationVersion("1.0.0");
 
     // On Wayland the window is identified by its desktop file, which is
     // also where the taskbar and window switcher take its icon from. Must
-    // match the installed msi-controller.desktop.
-    a.setDesktopFileName(QStringLiteral("msi-controller"));
-    a.setWindowIcon(QIcon::fromTheme(QStringLiteral("msicontroller"),
-                                     QIcon(QStringLiteral(":/icons/apps/msicontroller.svg"))));
+    // match the installed ec-controller.desktop.
+    a.setDesktopFileName(QStringLiteral("ec-controller"));
+    a.setWindowIcon(QIcon::fromTheme(QStringLiteral("ec-controller"),
+                                     QIcon(QStringLiteral(":/icons/apps/ec-controller.svg"))));
 
     // The window hides into the tray instead of closing, so "no windows
     // left" no longer means "done". Worse, with the main window hidden, a

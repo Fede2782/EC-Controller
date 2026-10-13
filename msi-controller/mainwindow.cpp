@@ -46,7 +46,7 @@ const QList<MsiEcMode> &shiftModes()
     return modes;
 }
 
-const QString notificationIconName = QStringLiteral("msicontroller");
+const QString notificationIconName = QStringLiteral("ec-controller");
 
 // KDE's global shortcut daemon (kglobalacceld; part of KWin on Plasma
 // Wayland), which every KGlobalAccel call talks to.
@@ -149,8 +149,10 @@ void MainWindow::onExitTriggered()
 
 void MainWindow::onAboutTriggered()
 {
-    QMessageBox::about(this, tr("About MSI Controller"),
-        tr("MSI Controller\nA GUI for controlling MSI laptop hardware via the msi-ec kernel driver."));
+    QMessageBox::about(this, tr("About EC Controller"),
+        tr("EC Controller\nA GUI for controlling MSI laptop hardware via the msi-ec kernel driver.\n\n"
+           "MSI is a trademark of Micro-Star International Co., Ltd. EC Controller is an unofficial, "
+           "independent project. It is not affiliated with, endorsed by or supported by MSI."));
 }
 
 void MainWindow::onEditModeToggled(bool editing)
@@ -334,7 +336,7 @@ void MainWindow::setupGlobalShortcuts()
     // KGlobalAccel identifies each shortcut by the action's object name,
     // under the application's component (applicationName), so both are
     // listed - and can be rebound - in System Settings -> Shortcuts under
-    // "MSI Controller". The keys below are only the defaults.
+    // "EC Controller". The keys below are only the defaults.
     //
     // Each shortcut is registered only when it can do something on this
     // machine, like every other feature in the window.
@@ -555,7 +557,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
     QSettings settings;
     if (!settings.value(trayHintShownSettingsKey, false).toBool()) {
         settings.setValue(trayHintShownSettingsKey, true);
-        trayIcon->showMessage(tr("MSI Controller is still running"),
+        trayIcon->showMessage(tr("EC Controller is still running"),
             tr("It keeps running in the system tray. Click the tray icon to bring it back, "
                "or choose Quit from its menu to exit completely."));
     }

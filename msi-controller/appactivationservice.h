@@ -23,7 +23,7 @@ class QDBusConnection;
 class AppActivationService : public QObject
 {
     Q_OBJECT
-    Q_CLASSINFO("D-Bus Interface", "org.fedelabs.MsiController.App")
+    Q_CLASSINFO("D-Bus Interface", "org.fedelabs.EcController.App")
 
 public:
     static const QString serviceName;

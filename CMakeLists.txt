@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.20)
 
 # Project identity and the global C++ language level are defined once here so
 # every subdirectory inherits the same clean, predictable build behavior.
-project(msicontroller VERSION 1.0 LANGUAGES CXX)
+project(msicontroller VERSION 1.0.0 LANGUAGES CXX)
 
 # Standard GNU-style install directories keep the project portable across Linux
 # distributions and make it easy for users to override the install layout with
@@ -63,8 +63,8 @@ set(MSI_CONTROLLER_SYSTEMD_UNIT_DIR "${CMAKE_INSTALL_PREFIX}/lib/systemd/system"
 # The systemd unit needs the real install-time path to the backend executable,
 # so we configure it once from the source template.
 configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/org.fedelabs.msicontroller.service"
-    "${CMAKE_CURRENT_BINARY_DIR}/org.fedelabs.msicontroller.service"
+    "${CMAKE_CURRENT_SOURCE_DIR}/org.fedelabs.eccontroller.service"
+    "${CMAKE_CURRENT_BINARY_DIR}/org.fedelabs.eccontroller.service"
     @ONLY
 )
 
@@ -72,27 +72,27 @@ configure_file(
 # editable at the source level while still landing in the standard Linux
 # configuration directories selected by CMake.
 install(FILES
-    "${CMAKE_CURRENT_SOURCE_DIR}/org.fedelabs.MsiController.conf"
+    "${CMAKE_CURRENT_SOURCE_DIR}/org.fedelabs.EcController.conf"
     DESTINATION "${MSI_CONTROLLER_DBUS_SYSTEM_DIR}"
 )
 
 install(FILES
-    "${CMAKE_CURRENT_SOURCE_DIR}/org.fedelabs.MsiController.policy"
+    "${CMAKE_CURRENT_SOURCE_DIR}/org.fedelabs.EcController.policy"
     DESTINATION "${MSI_CONTROLLER_POLKIT_ACTIONS_DIR}"
 )
 
 # Polkit rule files are commonly installed with a numeric prefix so their
 # ordering stays deterministic.
 install(FILES
-    "${CMAKE_CURRENT_SOURCE_DIR}/org.fedelabs.MsiController.rules"
+    "${CMAKE_CURRENT_SOURCE_DIR}/org.fedelabs.EcController.rules"
     DESTINATION "${MSI_CONTROLLER_POLKIT_RULES_DIR}"
-    RENAME "49-org.fedelabs.MsiController.rules"
+    RENAME "49-org.fedelabs.EcController.rules"
 )
 
 # The configured unit file is installed into the systemd unit directory chosen
 # by GNUInstallDirs, so custom prefixes automatically work.
 install(FILES
-    "${CMAKE_CURRENT_BINARY_DIR}/org.fedelabs.msicontroller.service"
+    "${CMAKE_CURRENT_BINARY_DIR}/org.fedelabs.eccontroller.service"
     DESTINATION "${MSI_CONTROLLER_SYSTEMD_UNIT_DIR}"
 )
 
@@ -107,13 +107,13 @@ install(CODE [[
         if(MSI_CONTROLLER_SYSTEMCTL)
             execute_process(COMMAND "${MSI_CONTROLLER_SYSTEMCTL}" --no-ask-password daemon-reload)
             execute_process(
-                COMMAND "${MSI_CONTROLLER_SYSTEMCTL}" --no-ask-password enable --now org.fedelabs.msicontroller.service
+                COMMAND "${MSI_CONTROLLER_SYSTEMCTL}" --no-ask-password enable --now org.fedelabs.eccontroller.service
                 RESULT_VARIABLE MSI_CONTROLLER_ENABLE_RESULT)
             if(MSI_CONTROLLER_ENABLE_RESULT EQUAL 0)
-                message(STATUS "Enabled and started org.fedelabs.msicontroller.service")
+                message(STATUS "Enabled and started org.fedelabs.eccontroller.service")
             else()
-                message(WARNING "Couldn't enable org.fedelabs.msicontroller.service. "
-                                "Enable it with: sudo systemctl enable --now org.fedelabs.msicontroller.service")
+                message(WARNING "Couldn't enable org.fedelabs.eccontroller.service. "
+                                "Enable it with: sudo systemctl enable --now org.fedelabs.eccontroller.service")
             endif()
         endif()
     endif()
@@ -180,7 +180,7 @@ install(CODE [[
 # its window identity (QGuiApplication::desktopFileName in main.cpp must
 # keep matching this file's name).
 install(FILES
-    "${CMAKE_CURRENT_SOURCE_DIR}/msi-controller.desktop"
+    "${CMAKE_CURRENT_SOURCE_DIR}/ec-controller.desktop"
     DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/applications"
 )
 
@@ -189,7 +189,7 @@ install(FILES
 # which writes a Hidden=true override of this same file name into their
 # own ~/.config/autostart. SYSCONFDIR is /etc for a /usr prefix.
 install(FILES
-    "${CMAKE_CURRENT_SOURCE_DIR}/msi-controller-autostart.desktop"
+    "${CMAKE_CURRENT_SOURCE_DIR}/ec-controller-autostart.desktop"
     DESTINATION "${CMAKE_INSTALL_FULL_SYSCONFDIR}/xdg/autostart"
 )
 
@@ -200,11 +200,11 @@ install(FILES
 # Configure with -DCMAKE_INSTALL_PREFIX=/usr when packaging: the systemd
 # unit's ExecStart path and the absolute destinations above are fixed at
 # configure time.
-set(CPACK_PACKAGE_NAME "msi-controller")
+set(CPACK_PACKAGE_NAME "ec-controller")
 set(CPACK_PACKAGE_VENDOR "FedeLabs")
 set(CPACK_PACKAGE_CONTACT "Fede2782 <78815152+Fede2782@users.noreply.github.com>")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Control MSI laptop hardware through the msi-ec driver")
-set(CPACK_PACKAGE_HOMEPAGE_URL "https://github.com/Fede2782/MsiController")
+set(CPACK_PACKAGE_HOMEPAGE_URL "https://github.com/Fede2782/ec-controller")
 set(CPACK_PACKAGING_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 
 # Some destinations are absolute (the systemd unit, the autostart entry).

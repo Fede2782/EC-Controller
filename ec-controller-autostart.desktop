@@ -1,8 +1,8 @@
 [Desktop Entry]
-Name=MSI Controller
+Name=EC Controller
 Comment=Get full control of your MSI Laptop
 Comment[it]=Ottieni il controllo completo del tuo portatile MSI
-Exec=msi-controller --minimized
-Icon=msicontroller
+Exec=ec-controller --minimized
+Icon=ec-controller
 Type=Application
 Terminal=false

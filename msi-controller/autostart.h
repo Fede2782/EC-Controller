@@ -3,7 +3,7 @@
 
 // Start-at-login, the XDG autostart way.
 //
-// The system-wide entry (msi-controller-autostart.desktop in
+// The system-wide entry (ec-controller-autostart.desktop in
 // /etc/xdg/autostart, installed by the top-level CMakeLists.txt) makes
 // every user start the application at login by default. A user opts out
 // with an entry of the same name in their own ~/.config/autostart that

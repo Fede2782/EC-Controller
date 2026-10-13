@@ -155,7 +155,7 @@ namespace MsiControllerLib {
     // Persisted state (reads from the config file)
     // -------------------------------------------------------------------------
 
-    const QString configFilePath               = QStringLiteral("/etc/msicontroller.conf");
+    const QString configFilePath               = QStringLiteral("/etc/eccontroller.conf");
     const QString rootAttrsGroupName            = QStringLiteral("root");
     const QString cpuAttrsGroupName             = QStringLiteral("cpu");
     const QString gpuAttrsGroupName             = QStringLiteral("gpu");

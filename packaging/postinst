@@ -9,8 +9,8 @@ set -e
 
 if [ -d /run/systemd/system ]; then
     systemctl daemon-reload || true
-    systemctl enable org.fedelabs.msicontroller.service || true
-    systemctl restart org.fedelabs.msicontroller.service || true
+    systemctl enable org.fedelabs.eccontroller.service || true
+    systemctl restart org.fedelabs.eccontroller.service || true
 fi
 
 exit 0

@@ -7,9 +7,9 @@
 #   ICON_RENDERER=rsvg-convert icons/gen.sh
 #
 # Sources, next to this script:
-#   msicontroller.svg                   full-colour application icon
-#   msicontroller-tray-breeze.svg       tray glyph for LIGHT panels (dark, #232629)
-#   msicontroller-tray-breeze-dark.svg  tray glyph for DARK panels (light, #eff0f1)
+#   ec-controller.svg                   full-colour application icon
+#   ec-controller-tray-breeze.svg       tray glyph for LIGHT panels (dark, #232629)
+#   ec-controller-tray-breeze-dark.svg  tray glyph for DARK panels (light, #eff0f1)
 #
 # The file names follow the Breeze theme they're installed into: Breeze is
 # the light theme, so its tray icon is the dark glyph, and vice versa. Both
@@ -17,7 +17,7 @@
 # Plasma recolours them to the panel anyway; the fixed colours matter for
 # everything else.
 #
-# msicontroller-flattened.svg is not used. Its path carries the
+# ec-controller-flattened.svg is not used. Its path carries the
 # ColorScheme-Text class but a hardcoded fill (#0d8773), so it would not
 # recolour the way a symbolic icon should.
 #
@@ -30,8 +30,8 @@
 # Requires one of: inkscape (1.x), rsvg-convert (librsvg), resvg.
 #   ICON_RENDERER=<name> forces one; otherwise the first found in that order.
 # Optional:
-#   ImageMagick (magick, or IM6's convert) -> pixmaps/msicontroller.ico
-#   png2icns (libicns)                      -> pixmaps/msicontroller.icns
+#   ImageMagick (magick, or IM6's convert) -> pixmaps/ec-controller.ico
+#   png2icns (libicns)                      -> pixmaps/ec-controller.icns
 # When an optional tool is missing, the previous run's file is kept rather
 # than silently dropped from the committed tree.
 
@@ -39,11 +39,11 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-APP_NAME="msicontroller"
+APP_NAME="ec-controller"
 
-APP_SVG="$SCRIPT_DIR/msicontroller.svg"
-TRAY_FOR_LIGHT_PANELS_SVG="$SCRIPT_DIR/msicontroller-tray-breeze.svg"
-TRAY_FOR_DARK_PANELS_SVG="$SCRIPT_DIR/msicontroller-tray-breeze-dark.svg"
+APP_SVG="$SCRIPT_DIR/ec-controller.svg"
+TRAY_FOR_LIGHT_PANELS_SVG="$SCRIPT_DIR/ec-controller-tray-breeze.svg"
+TRAY_FOR_DARK_PANELS_SVG="$SCRIPT_DIR/ec-controller-tray-breeze-dark.svg"
 
 OUT_DIR="$SCRIPT_DIR/icons"
 
@@ -165,7 +165,7 @@ for name in "$APP_NAME-tray" "$APP_NAME-tray-symbolic"; do
 done
 
 # Older names for the tray glyph, kept so nothing that still looks them up
-# breaks. The current GUI only uses msicontroller-tray.
+# breaks. The current GUI only uses ec-controller-tray.
 place "$TRAY_FOR_DARK_PANELS_SVG"  "$STAGE/hicolor/scalable/apps/${APP_NAME}indicator.svg"
 place "$TRAY_FOR_LIGHT_PANELS_SVG" "$STAGE/hicolor/scalable/apps/${APP_NAME}indicatordark.svg"
 

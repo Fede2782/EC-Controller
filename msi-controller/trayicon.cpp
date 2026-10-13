@@ -9,12 +9,12 @@ namespace {
 // and breeze-dark; the top-level CMakeLists.txt installs all three). Loading it by name matters on Plasma: Qt then hands the
 // tray the icon *name*, and Plasma recolours the SVG's ColorScheme-Text
 // class to match light and dark panels.
-const QString trayIconName = QStringLiteral("msicontroller-tray");
+const QString trayIconName = QStringLiteral("ec-controller-tray");
 
 // Embedded copy, used only when the theme lookup fails - running straight
 // from the build directory, before anything is installed. It reaches the
 // tray as a plain pixmap, so it can't be recoloured, but it's never blank.
-const QString trayIconFallback = QStringLiteral(":/icons/status/msicontroller-tray.svg");
+const QString trayIconFallback = QStringLiteral(":/icons/status/ec-controller-tray.svg");
 }
 
 TrayIcon::TrayIcon(QObject *parent)
@@ -23,9 +23,9 @@ TrayIcon::TrayIcon(QObject *parent)
     , m_menu(std::make_unique<QMenu>())
 {
     m_trayIcon->setIcon(QIcon::fromTheme(trayIconName, QIcon(trayIconFallback)));
-    m_trayIcon->setToolTip(tr("MSI Controller"));
+    m_trayIcon->setToolTip(tr("EC Controller"));
 
-    QAction *showAction = m_menu->addAction(tr("Show MSI Controller"));
+    QAction *showAction = m_menu->addAction(tr("Show EC Controller"));
     m_menu->addSeparator();
     QAction *quitAction = m_menu->addAction(QIcon::fromTheme(QIcon::ThemeIcon::ApplicationExit), tr("Quit"));
 
@@ -62,7 +62,7 @@ bool TrayIcon::isUsable() const
 
 void TrayIcon::setStatusText(const QString &text)
 {
-    m_trayIcon->setToolTip(tr("MSI Controller — %1").arg(text));
+    m_trayIcon->setToolTip(tr("EC Controller — %1").arg(text));
 }
 
 void TrayIcon::showMessage(const QString &title, const QString &body)

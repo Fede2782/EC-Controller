@@ -4,19 +4,19 @@
 #include <QDBusConnectionInterface>
 #include <QDBusPendingCallWatcher>
 
-const QString BackendClient::serviceName = QStringLiteral("org.fedelabs.MsiController");
-const QString BackendClient::objectPath = QStringLiteral("/MsiController");
+const QString BackendClient::serviceName = QStringLiteral("org.fedelabs.EcController");
+const QString BackendClient::objectPath = QStringLiteral("/EcController");
 
 BackendClient::BackendClient(QObject *parent)
     : QObject(parent)
     , m_watcher(new QDBusServiceWatcher(serviceName, QDBusConnection::systemBus(),
                                          QDBusServiceWatcher::WatchForOwnerChange, this))
-    , m_interface(new OrgFedelabsMsiControllerAPIInterface(serviceName, objectPath,
+    , m_interface(new OrgFedelabsEcControllerAPIInterface(serviceName, objectPath,
                                                              QDBusConnection::systemBus(), this))
 {
     connect(m_watcher, &QDBusServiceWatcher::serviceRegistered, this, &BackendClient::setConnected);
     connect(m_watcher, &QDBusServiceWatcher::serviceUnregistered, this, [this]() {
-        setDisconnected(tr("The msi-controller-service backend disconnected."));
+        setDisconnected(tr("The ec-controller-service backend disconnected."));
     });
 
     connectToBackend();
@@ -32,7 +32,7 @@ void BackendClient::connectToBackend()
     if (QDBusConnection::systemBus().interface()->isServiceRegistered(serviceName)) {
         setConnected();
     } else {
-        setDisconnected(tr("The msi-controller-service backend isn't running."));
+        setDisconnected(tr("The ec-controller-service backend isn't running."));
     }
 }
 

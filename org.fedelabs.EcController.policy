@@ -3,13 +3,13 @@
 "http://www.freedesktop.org/software/polkit/policyconfig-1.dtd">
 <policyconfig>
 
-  <vendor>msi-controller</vendor>
-  <vendor_url>https://github.com/Fede2782/MsiController</vendor_url>
+  <vendor>ec-controller</vendor>
+  <vendor_url>https://github.com/Fede2782/ec-controller</vendor_url>
 
-  <action id="org.fedelabs.MsiControllerAPI.write">
+  <action id="org.fedelabs.EcControllerAPI.write">
     <description>Edit system configuration of MSI Laptops.</description>
     <message>Authentication is required to apply a change to your system configuration.</message>
-    <!-- <icon_name>msi-controller</icon_name> -->
+    <!-- <icon_name>ec-controller</icon_name> -->
     <defaults>
       <allow_any>no</allow_any>
       <allow_inactive>no</allow_inactive>

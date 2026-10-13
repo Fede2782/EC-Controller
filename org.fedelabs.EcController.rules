@@ -1,0 +1,7 @@
+// Rule to allow admin users to call EcControllerAPI.write without having to authenticate
+polkit.addRule(function(action, subject) {
+    if (action.id == "org.fedelabs.EcControllerAPI.write" &&
+        subject.isInGroup("wheel") && subject.active) {
+        return polkit.Result.YES;
+    }
+});

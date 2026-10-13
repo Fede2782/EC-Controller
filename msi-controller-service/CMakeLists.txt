@@ -7,16 +7,20 @@ add_executable(msi-controller-service
     msicontrollerbackend_utils.cpp
 )
 
+# The program is installed as "ec-controller-service". The target and its
+# source directory keep their original names.
+set_target_properties(msi-controller-service PROPERTIES OUTPUT_NAME ec-controller-service)
+
 qt_generate_dbus_interface(
     msicontrollerbackend.h
-    org.fedelabs.MsiControllerAPI.xml
+    org.fedelabs.EcControllerAPI.xml
     OPTIONS -M
 )
 
 # Qt generates the XML through a custom command, so this target gives the
 # executable a clean dependency that guarantees the file exists first.
 add_custom_target(generate_dbus_xml
-    DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/org.fedelabs.MsiControllerAPI.xml"
+    DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/org.fedelabs.EcControllerAPI.xml"
 )
 
 add_dependencies(msi-controller-service generate_dbus_xml)

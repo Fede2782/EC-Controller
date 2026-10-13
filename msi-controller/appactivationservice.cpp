@@ -4,11 +4,11 @@
 #include <QDBusMessage>
 #include <QDebug>
 
-const QString AppActivationService::serviceName = QStringLiteral("org.fedelabs.MsiController.App");
+const QString AppActivationService::serviceName = QStringLiteral("org.fedelabs.EcController.App");
 const QString AppActivationService::objectPath = QStringLiteral("/App");
 
 namespace {
-const QString interfaceName = QStringLiteral("org.fedelabs.MsiController.App");
+const QString interfaceName = QStringLiteral("org.fedelabs.EcController.App");
 constexpr char activationTokenVariable[] = "XDG_ACTIVATION_TOKEN";
 
 // Long enough for a busy session, short enough that a wedged first

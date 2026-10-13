@@ -8,7 +8,7 @@
 namespace {
 // Must match the file the top-level CMakeLists.txt installs: the XDG
 // override only applies to an entry with exactly the same name.
-const QString entryFileName = QStringLiteral("msi-controller-autostart.desktop");
+const QString entryFileName = QStringLiteral("ec-controller-autostart.desktop");
 
 QString userConfigDir()
 {
@@ -97,7 +97,7 @@ bool setEnabled(bool enabled)
     // Hidden=true is what actually disables it.
     const QByteArray content = "[Desktop Entry]\n"
                                "Type=Application\n"
-                               "Name=MSI Controller\n"
+                               "Name=EC Controller\n"
                                "Hidden=true\n";
     return file.write(content) == content.size();
 }

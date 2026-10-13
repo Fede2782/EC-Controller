@@ -1,7 +1,0 @@
-// Rule to allow admin users to call MsiControllerAPI.write without having to authenticate
-polkit.addRule(function(action, subject) {
-    if (action.id == "org.fedelabs.MsiControllerAPI.write" &&
-        subject.isInGroup("wheel") && subject.active) {
-        return polkit.Result.YES;
-    }
-});

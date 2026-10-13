@@ -1,0 +1,13 @@
+[Unit]
+Description=EC Controller Service
+Requires=dbus.service
+After=dbus.service
+
+[Service]
+Type=dbus
+BusName=org.fedelabs.EcController
+ExecStart=@CMAKE_INSTALL_FULL_BINDIR@/ec-controller-service
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

@@ -2,6 +2,10 @@
 # from the service build tree is appended automatically.
 add_executable(msi-controller)
 
+# The program is installed as "ec-controller". The target and its source
+# directory keep their original names.
+set_target_properties(msi-controller PROPERTIES OUTPUT_NAME ec-controller)
+
 set(MSI_CONTROLLER_GUI_SOURCES
     main.cpp
     mainwindow.cpp
@@ -39,7 +43,7 @@ set(MSI_CONTROLLER_GUI_SOURCES
 
 qt_add_dbus_interface(
     MSI_CONTROLLER_GUI_SOURCES
-    "${CMAKE_CURRENT_BINARY_DIR}/../msi-controller-service/org.fedelabs.MsiControllerAPI.xml"
+    "${CMAKE_CURRENT_BINARY_DIR}/../msi-controller-service/org.fedelabs.EcControllerAPI.xml"
     msicontrollerbackend_interface
 )
 
@@ -56,8 +60,8 @@ qt_add_resources(msi-controller "fallback_icons"
     PREFIX "/icons"
     BASE "${MSI_CONTROLLER_ICON_ROOT}"
     FILES
-        "${MSI_CONTROLLER_ICON_ROOT}/apps/msicontroller.svg"
-        "${MSI_CONTROLLER_ICON_ROOT}/status/msicontroller-tray.svg"
+        "${MSI_CONTROLLER_ICON_ROOT}/apps/ec-controller.svg"
+        "${MSI_CONTROLLER_ICON_ROOT}/status/ec-controller-tray.svg"
 )
 
 target_link_libraries(msi-controller PRIVATE

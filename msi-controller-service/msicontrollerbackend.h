@@ -26,7 +26,7 @@ using namespace MsiControllerLib;
 class MsiControllerBackend : public QObject, protected QDBusContext
 {
     Q_OBJECT
-    Q_CLASSINFO("D-Bus Interface", "org.fedelabs.MsiControllerAPI")
+    Q_CLASSINFO("D-Bus Interface", "org.fedelabs.EcControllerAPI")
 
 public:
     explicit MsiControllerBackend(QObject *parent = nullptr);
