@@ -149,10 +149,14 @@ void MainWindow::onExitTriggered()
 
 void MainWindow::onAboutTriggered()
 {
+    // The version is the one main.cpp gives the application, so it's the
+    // same number "ec-controller --version" prints.
     QMessageBox::about(this, tr("About EC Controller"),
-        tr("EC Controller\nA GUI for controlling MSI laptop hardware via the msi-ec kernel driver.\n\n"
+        tr("EC Controller\nVersion %1\n\n"
+           "A GUI for controlling MSI laptop hardware via the msi-ec kernel driver.\n\n"
            "MSI is a trademark of Micro-Star International Co., Ltd. EC Controller is an unofficial, "
-           "independent project. It is not affiliated with, endorsed by or supported by MSI."));
+           "independent project. It is not affiliated with, endorsed by or supported by MSI.")
+            .arg(QCoreApplication::applicationVersion()));
 }
 
 void MainWindow::onEditModeToggled(bool editing)
