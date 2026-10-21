@@ -1,10 +1,8 @@
 %global debug_package %{nil}
-%{!?pkg_version: %global pkg_version 1.0.0}
-%{!?pkg_release: %global pkg_release 1}
 
 Name:           ec-controller
-Version:        %{pkg_version}
-Release:        %{pkg_release}%{?dist}
+Version:        1.0.0
+Release:        1%{?dist}
 Summary:        Control MSI laptop hardware through the msi-ec driver
 
 License:        GPL-3.0-only
