@@ -184,6 +184,11 @@ install(FILES
     DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/applications"
 )
 
+install(FILES
+    "${CMAKE_CURRENT_SOURCE_DIR}/org.fedelabs.EcController.metainfo.xml"
+    DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/metainfo"
+)
+
 # Start the application at every user's login, hidden in the tray. Users
 # opt out from Settings > Start at Login (or KDE's Autostart settings),
 # which writes a Hidden=true override of this same file name into their
