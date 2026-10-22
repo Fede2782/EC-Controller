@@ -121,7 +121,7 @@ msi-controller/                    the GUI
 msi-controller-lib/                static library (msicontrollerlib.h + _attributes/_modes/_fancurve/_io/_settings.cpp)
 msi-controller-service/            D-Bus backend
 icons/                             SVG sources, gen.sh, generated icons/icons/ tree (committed)
-packaging/                         postinst, prerm (shared by .deb and .rpm)
+packaging/                         postinst, prerm (.deb), postinst.rpm, prerm.rpm, postun.rpm (.rpm)
 .github/workflows/packages.yml     CI: builds .deb and .rpm, publishes releases
 docs/                              HANDOFF-WIP1.md (history of the GUI chapter)
 org.fedelabs.EcController.{conf,policy,rules}, org.fedelabs.eccontroller.service
@@ -866,7 +866,8 @@ Don't regenerate the committed PNGs unless asked.
 - Package name `ec-controller`. `.deb` (`DEB-DEFAULT` file name) and `.rpm` (`RPM-DEFAULT`).
   Runtime deps declared (deb: `polkitd`, `dbus`; rpm: `polkit`, `dbus`) plus recommends
   (`qt6-svg-plugins`/`qt6-qtsvg`, `qt6-wayland`/`qt6-qtwayland`, `upower`,
-  `libkscreen-bin`/`libkscreen`). `packaging/postinst` / `prerm` enable/restart/disable the
+  `libkscreen-bin`/`libkscreen`). `packaging/postinst` / `prerm` (for .deb) and
+  `postinst.rpm` / `prerm.rpm` / `postun.rpm` (using systemd macros for .rpm) enable/restart/disable the
   service.
 - `.github/workflows/packages.yml`: `.deb` built in `ubuntu:26.04`, `.rpm` in `fedora:44`.
   - Push to the default branch → replaces the rolling **`continuous`** prerelease.

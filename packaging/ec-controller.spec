@@ -18,6 +18,8 @@ BuildRequires:  kf6-kcoreaddons-devel
 BuildRequires:  kf6-kglobalaccel-devel
 BuildRequires:  kf6-knotifications-devel
 BuildRequires:  polkit-qt6-1-devel
+BuildRequires:  desktop-file-utils
+BuildRequires:  systemd-rpm-macros
 
 Requires:       polkit
 Requires:       dbus
@@ -25,6 +27,7 @@ Recommends:     qt6-qtsvg
 Recommends:     qt6-qtwayland
 Recommends:     upower
 Recommends:     libkscreen
+%{?systemd_requires}
 
 %description
 A graphical control panel and background service for MSI laptops on Linux.
@@ -42,21 +45,17 @@ cmake --build build --parallel
 %install
 DESTDIR=%{buildroot} cmake --install build
 
+%check
+desktop-file-validate %{buildroot}%{_datadir}/applications/org.fedelabs.EcController.desktop
+
 %post
-if [ -d /run/systemd/system ]; then
-    systemctl daemon-reload || true
-    systemctl enable org.fedelabs.eccontroller.service || true
-    systemctl restart org.fedelabs.eccontroller.service || true
-fi
+%systemd_post org.fedelabs.eccontroller.service
 
 %preun
-case "$1" in
-    remove|0)
-        if [ -d /run/systemd/system ]; then
-            systemctl disable --now org.fedelabs.eccontroller.service || true
-        fi
-        ;;
-esac
+%systemd_preun org.fedelabs.eccontroller.service
+
+%postun
+%systemd_postun_with_restart org.fedelabs.eccontroller.service
 
 %files
 %license LICENSE
@@ -66,7 +65,7 @@ esac
 %{_datadir}/dbus-1/system.d/org.fedelabs.EcController.conf
 %{_datadir}/polkit-1/actions/org.fedelabs.EcController.policy
 %{_datadir}/polkit-1/rules.d/49-org.fedelabs.EcController.rules
-/usr/lib/systemd/system/org.fedelabs.eccontroller.service
+%{_unitdir}/org.fedelabs.eccontroller.service
 %{_datadir}/applications/org.fedelabs.EcController.desktop
 %{_datadir}/metainfo/org.fedelabs.EcController.metainfo.xml
 %config(noreplace) %{_sysconfdir}/xdg/autostart/ec-controller-autostart.desktop

@@ -184,6 +184,15 @@ install(FILES
     DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/applications"
 )
 
+# Validate the desktop entry when desktop-file-validate is available.
+find_program(MSI_CONTROLLER_DESKTOP_FILE_VALIDATE desktop-file-validate)
+if(MSI_CONTROLLER_DESKTOP_FILE_VALIDATE)
+    add_custom_target(validate-desktop ALL
+        COMMAND "${MSI_CONTROLLER_DESKTOP_FILE_VALIDATE}" "${CMAKE_CURRENT_SOURCE_DIR}/org.fedelabs.EcController.desktop"
+        COMMENT "Validating org.fedelabs.EcController.desktop"
+    )
+endif()
+
 install(FILES
     "${CMAKE_CURRENT_SOURCE_DIR}/org.fedelabs.EcController.metainfo.xml"
     DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/metainfo"
@@ -246,10 +255,10 @@ set(CPACK_RPM_PACKAGE_REQUIRES "polkit, dbus")
 # CPack has no variable for the RPM Recommends tag; this hook inserts its
 # text into the spec preamble, where a tag line is valid. (Suggests, which
 # CPack does support, is not installed by default.)
-set(CPACK_RPM_SPEC_MORE_DEFINE "Recommends: qt6-qtsvg, qt6-qtwayland, upower, libkscreen")
+set(CPACK_RPM_SPEC_MORE_DEFINE "Recommends: qt6-qtsvg, qt6-qtwayland, upower, libkscreen\n%{?systemd_requires}")
 
 # Enable and start the backend service on install, stop it on removal.
-# The same two scripts serve both formats.
+# Debian packages use shell maintainer scripts; RPM uses systemd macros.
 set(MSI_CONTROLLER_POSTINST "${CMAKE_CURRENT_SOURCE_DIR}/packaging/postinst")
 set(MSI_CONTROLLER_PRERM "${CMAKE_CURRENT_SOURCE_DIR}/packaging/prerm")
 
@@ -263,8 +272,9 @@ set(CPACK_DEBIAN_PACKAGE_CONTROL_STRICT_PERMISSION TRUE)
 set(CPACK_RPM_FILE_NAME RPM-DEFAULT)
 set(CPACK_RPM_PACKAGE_RELEASE "${MSI_CONTROLLER_PACKAGE_RELEASE}")
 set(CPACK_RPM_PACKAGE_LICENSE "GPL-3.0-only")
-set(CPACK_RPM_POST_INSTALL_SCRIPT_FILE "${MSI_CONTROLLER_POSTINST}")
-set(CPACK_RPM_PRE_UNINSTALL_SCRIPT_FILE "${MSI_CONTROLLER_PRERM}")
+set(CPACK_RPM_POST_INSTALL_SCRIPT_FILE "${CMAKE_CURRENT_SOURCE_DIR}/packaging/postinst.rpm")
+set(CPACK_RPM_PRE_UNINSTALL_SCRIPT_FILE "${CMAKE_CURRENT_SOURCE_DIR}/packaging/prerm.rpm")
+set(CPACK_RPM_POST_UNINSTALL_SCRIPT_FILE "${CMAKE_CURRENT_SOURCE_DIR}/packaging/postun.rpm")
 
 include(CPack)
 

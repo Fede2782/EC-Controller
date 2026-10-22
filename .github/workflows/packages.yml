@@ -65,7 +65,7 @@ jobs:
       - name: Install build dependencies
         run: |
           dnf install -y \
-            gcc-c++ make cmake rpm-build \
+            gcc-c++ make cmake rpm-build desktop-file-utils systemd-rpm-macros \
             extra-cmake-modules qt6-qtbase-devel \
             kf6-kcoreaddons-devel kf6-kglobalaccel-devel kf6-knotifications-devel \
             polkit-qt6-1-devel

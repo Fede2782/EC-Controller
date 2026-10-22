@@ -1,0 +1,1 @@
+%systemd_postun_with_restart org.fedelabs.eccontroller.service
