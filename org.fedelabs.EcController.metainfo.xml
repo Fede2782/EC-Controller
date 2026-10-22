@@ -24,7 +24,7 @@
     </ul>
   </description>
 
-  <launchable type="desktop-id">ec-controller.desktop</launchable>
+  <launchable type="desktop-id">org.fedelabs.EcController.desktop</launchable>
 
   <url type="homepage">https://github.com/Fede2782/EC-Controller</url>
   <url type="bugtracker">https://github.com/Fede2782/EC-Controller/issues</url>
@@ -36,6 +36,8 @@
 
   <categories>
     <category>System</category>
+    <category>Settings</category>
+    <category>HardwareSettings</category>
   </categories>
 
   <screenshots>
@@ -52,6 +54,20 @@
   <content_rating type="oars-1.1" />
 
   <releases>
-    <release version="1.0.0" date="2026-10-13" />
+    <release version="1.0.1" date="2026-10-22">
+      <description>
+        <p>Reinitialize whole GUI and monitors on reload; fix window height expansion in single-box edit mode.</p>
+        <ul>
+          <li>Reinitialize hardware monitors and GUI dynamically on Reload GUI &amp; Backend Connection (F5)</li>
+          <li>Fix window height expansion and extra white space when toggling Edit mode with single feature box</li>
+          <li>Rename desktop launcher to org.fedelabs.EcController.desktop and update AppStream metadata categories</li>
+        </ul>
+      </description>
+    </release>
+    <release version="1.0.0" date="2026-10-13">
+      <description>
+        <p>Initial release of EC Controller.</p>
+      </description>
+    </release>
   </releases>
 </component>

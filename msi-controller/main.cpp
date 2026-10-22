@@ -19,8 +19,8 @@ int main(int argc, char *argv[])
 
     // On Wayland the window is identified by its desktop file, which is
     // also where the taskbar and window switcher take its icon from. Must
-    // match the installed ec-controller.desktop.
-    a.setDesktopFileName(QStringLiteral("ec-controller"));
+    // match the installed org.fedelabs.EcController.desktop.
+    a.setDesktopFileName(QStringLiteral("org.fedelabs.EcController"));
     a.setWindowIcon(QIcon::fromTheme(QStringLiteral("ec-controller"),
                                      QIcon(QStringLiteral(":/icons/apps/ec-controller.svg"))));
 

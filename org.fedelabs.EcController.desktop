@@ -7,4 +7,5 @@ Exec=ec-controller
 Icon=ec-controller
 Type=Application
 Terminal=false
-Categories=System
+StartupWMClass=org.fedelabs.EcController
+Categories=Qt;KDE;System;HardwareSettings;Settings;

@@ -180,7 +180,7 @@ install(CODE [[
 # its window identity (QGuiApplication::desktopFileName in main.cpp must
 # keep matching this file's name).
 install(FILES
-    "${CMAKE_CURRENT_SOURCE_DIR}/ec-controller.desktop"
+    "${CMAKE_CURRENT_SOURCE_DIR}/org.fedelabs.EcController.desktop"
     DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/applications"
 )
 

@@ -125,7 +125,7 @@ packaging/                         postinst, prerm (shared by .deb and .rpm)
 .github/workflows/packages.yml     CI: builds .deb and .rpm, publishes releases
 docs/                              HANDOFF-WIP1.md (history of the GUI chapter)
 org.fedelabs.EcController.{conf,policy,rules}, org.fedelabs.eccontroller.service
-ec-controller.desktop, ec-controller-autostart.desktop
+org.fedelabs.EcController.desktop, ec-controller-autostart.desktop
 ```
 
 GUI files (`msi-controller/`), about 3,850 lines in total:
@@ -852,7 +852,7 @@ GUI binary `ec-controller`; service binary `ec-controller-service` and its syste
 `org.fedelabs.eccontroller.service`
 (`Type=dbus`, in `<prefix>/lib/systemd/system`); the D-Bus system-bus policy
 (`org.fedelabs.EcController.conf`); the polkit action and rule (rule installed as
-`49-org.fedelabs.EcController.rules`); `ec-controller.desktop`; the
+`49-org.fedelabs.EcController.rules`); `org.fedelabs.EcController.desktop`; the
 autostart entry (`<sysconfdir>/xdg/autostart`); all generated icons (hicolor, breeze,
 breeze-dark, pixmaps). A direct (non-DESTDIR) install also runs `systemctl daemon-reload` +
 `enable --now` for the service and refreshes existing GTK icon caches — warning, never failing,

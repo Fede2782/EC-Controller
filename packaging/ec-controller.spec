@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 
 Name:           ec-controller
-Version:        1.0.0
+Version:        1.0.1
 Release:        1%{?dist}
 Summary:        Control MSI laptop hardware through the msi-ec driver
 
@@ -67,7 +67,7 @@ esac
 %{_datadir}/polkit-1/actions/org.fedelabs.EcController.policy
 %{_datadir}/polkit-1/rules.d/49-org.fedelabs.EcController.rules
 /usr/lib/systemd/system/org.fedelabs.eccontroller.service
-%{_datadir}/applications/ec-controller.desktop
+%{_datadir}/applications/org.fedelabs.EcController.desktop
 %{_datadir}/metainfo/org.fedelabs.EcController.metainfo.xml
 %config(noreplace) %{_sysconfdir}/xdg/autostart/ec-controller-autostart.desktop
 %{_datadir}/icons/hicolor/*/*/ec-controller*
@@ -76,3 +76,7 @@ esac
 %{_datadir}/pixmaps/ec-controller*
 
 %changelog
+* Thu Oct 22 2026 Fede2782 <78815152+Fede2782@users.noreply.github.com> - 1.0.1-1
+- Reinitialize GUI and hardware monitors on reload
+- Fix window height expansion in single-box edit mode
+- Rename desktop launcher to org.fedelabs.EcController.desktop and update AppStream categories
