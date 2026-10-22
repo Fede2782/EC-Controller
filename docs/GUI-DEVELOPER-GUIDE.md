@@ -247,7 +247,7 @@ When **any** command finishes, `BackendClient` emits `commandFinished(bool succe
   should be added.
 - on failure, shows one generic warning ("Couldn't Apply Change").
 
-*Reload* (F5) = `backend->connectToBackend()` + `resyncAllControls()`.
+*Reload* (F5) = reinitializes the whole GUI (`clearGui()`, probes hardware monitors anew, `buildGui()`, `backend->connectToBackend()`, and `fitWindowToContents()`).
 
 ### 5.4 Chained writes (when one write depends on another)
 

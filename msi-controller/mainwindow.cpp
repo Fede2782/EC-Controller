@@ -82,7 +82,6 @@ MainWindow::MainWindow(QWidget *parent)
     , fanSpeedMonitor(new FanSpeedMonitor(this))
     , kbdBacklightBrightness(new KbdBacklightBrightnessClient(this))
     , kdePowerManagementWatcher(new KdePowerManagementWatcher(this))
-    , topicBoxes(new TopicBoxArea(this))
     , trayIcon(new TrayIcon(this))
 {
     ui->setupUi(this);
@@ -92,8 +91,57 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->actionReload, &QAction::triggered, this, &MainWindow::onReloadTriggered);
     connect(ui->actionEsci, &QAction::triggered, this, &MainWindow::onExitTriggered);
     connect(ui->actionAbout_MSI_Controller, &QAction::triggered, this, &MainWindow::onAboutTriggered);
+    connect(ui->actionEditMode, &QAction::toggled, this, &MainWindow::onEditModeToggled);
+    connect(ui->actionShowAllFanSlots, &QAction::toggled, this, &MainWindow::onShowAllFanSlotsToggled);
     connect(backend, &BackendClient::connectionStateChanged, this, &MainWindow::onBackendConnectionStateChanged);
     connect(backend, &BackendClient::commandFinished, this, &MainWindow::onCommandFinished);
+
+    setupGlobalShortcuts();
+    setupAutostart();
+
+    buildGui();
+
+    backend->connectToBackend();
+}
+
+MainWindow::~MainWindow()
+{
+    delete ui;
+}
+
+void MainWindow::onReloadTriggered()
+{
+    clearGui();
+
+    // Recreate the monitors so any newly loaded kernel driver or hwmon
+    // fan nodes are probed afresh from sysfs.
+    delete fanSpeedMonitor;
+    fanSpeedMonitor = new FanSpeedMonitor(this);
+
+    delete hardwareMonitor;
+    hardwareMonitor = new HardwareMonitor(this);
+
+    delete kbdBacklightBrightness;
+    kbdBacklightBrightness = new KbdBacklightBrightnessClient(this);
+
+    setupGlobalShortcuts();
+
+    buildGui();
+
+    // Re-checks that the backend is on the bus; the connection indicator
+    // and every write control's enabled state follow through the usual
+    // connectionStateChanged() path.
+    backend->connectToBackend();
+
+    updateConnectionStatus();
+    updateWriteControlsEnabled();
+
+    fitWindowToContents();
+}
+
+void MainWindow::buildGui()
+{
+    topicBoxes = new TopicBoxArea(this);
 
     // Every topic box goes into this one container from here on, so the
     // setup functions below no longer touch the window's layout directly -
@@ -112,32 +160,43 @@ MainWindow::MainWindow(QWidget *parent)
     // After the boxes exist, so the saved order can be matched against them.
     setupEditMode();
 
-    setupGlobalShortcuts();
-    setupAutostart();
-
     ui->verticalLayout->addStretch();
-
-    backend->connectToBackend();
 }
 
-MainWindow::~MainWindow()
+void MainWindow::clearGui()
 {
-    delete ui;
-}
+    if (topicBoxes && topicBoxes->isEditing()) {
+        topicBoxes->cancelEdit();
+    }
+    ui->actionEditMode->setChecked(false);
+    ui->actionEditMode->setEnabled(true);
 
-void MainWindow::onReloadTriggered()
-{
-    // Re-checks that the backend is on the bus; the connection indicator
-    // and every write control's enabled state follow through the usual
-    // connectionStateChanged() path.
-    backend->connectToBackend();
+    delete editActionBar;
+    editActionBar = nullptr;
+    resetOrderButton = nullptr;
+    editBarSpace = QSize(0, 0);
 
-    // Then re-reads every control's value from the hardware, so anything
-    // changed behind the GUI's back (another tool, a service restart that
-    // restored saved values) shows up without restarting the application.
-    // Temperatures and fan speeds poll every second and the keyboard
-    // brightness follows UPower's signal, so they're current already.
-    resyncAllControls();
+    delete topicBoxes;
+    topicBoxes = nullptr;
+
+    while (ui->verticalLayout->count() > 0) {
+        delete ui->verticalLayout->takeAt(0);
+    }
+
+    disconnect(kdePowerManagementWatcher, nullptr, this, nullptr);
+
+    shiftModeCyclePending = false;
+    if (shiftModeNotification) {
+        shiftModeNotification->close();
+    }
+
+    writeControls.clear();
+    resyncCallbacks.clear();
+    fanSpeedLabels.clear();
+    defaultFanSlots.clear();
+    cpuTemperatureLabel = nullptr;
+    gpuTemperatureLabel = nullptr;
+    fanSpeedsBox = nullptr;
 }
 
 void MainWindow::onExitTriggered()
@@ -353,14 +412,14 @@ void MainWindow::setupGlobalShortcuts()
     // machine, like every other feature in the window.
 
     const bool hasShiftModes = std::any_of(shiftModes().cbegin(), shiftModes().cend(), isModeSupported);
-    if (hasShiftModes) {
+    if (hasShiftModes && !findChild<QAction *>(QStringLiteral("cycle-performance-mode"))) {
         auto *cycleAction = new QAction(tr("Cycle Performance Mode"), this);
         cycleAction->setObjectName(QStringLiteral("cycle-performance-mode"));
         KGlobalAccel::setGlobalShortcut(cycleAction, QKeySequence(Qt::Key_Launch1));
         connect(cycleAction, &QAction::triggered, this, &MainWindow::cycleShiftMode);
     }
 
-    if (DisplayRotation::isAvailable()) {
+    if (!displayRotation && DisplayRotation::isAvailable()) {
         displayRotation = new DisplayRotation(this);
 
         auto *rotateAction = new QAction(tr("Flip Display 180°"), this);
@@ -634,9 +693,6 @@ void MainWindow::setupEditMode()
     connect(discardButton, &QPushButton::clicked, this, &MainWindow::onEditDiscardClicked);
     connect(resetOrderButton, &QPushButton::clicked, topicBoxes, &TopicBoxArea::resetOrder);
     connect(topicBoxes, &TopicBoxArea::orderChanged, this, &MainWindow::updateResetOrderEnabled);
-
-    connect(ui->actionEditMode, &QAction::toggled, this, &MainWindow::onEditModeToggled);
-    connect(ui->actionShowAllFanSlots, &QAction::toggled, this, &MainWindow::onShowAllFanSlotsToggled);
 
     // Nothing to reveal on a machine that reports no fans at all.
     ui->actionShowAllFanSlots->setEnabled(fanSpeedsBox != nullptr);

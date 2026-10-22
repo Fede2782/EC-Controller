@@ -107,6 +107,14 @@ private:
     // that must happen on the way out has a single place to live.
     void quitApplication();
 
+    // Builds all topic boxes, the edit bar, and layout stretch. Called in
+    // the constructor and by onReloadTriggered().
+    void buildGui();
+
+    // Tears down all topic boxes, the edit bar, watchers, and control
+    // tracking lists before rebuilding or reloading the UI.
+    void clearGui();
+
     // Wires up the Edit menu, builds the Apply/Discard bar, and applies
     // what they remember from the last session (box order, revealed fan
     // slots). Called once every topic box exists, since restoring an order
@@ -194,7 +202,7 @@ private:
     KdePowerManagementWatcher *kdePowerManagementWatcher;
 
     // Holds every topic box and owns their ordering.
-    TopicBoxArea *topicBoxes;
+    TopicBoxArea *topicBoxes = nullptr;
 
     TrayIcon *trayIcon;
 
