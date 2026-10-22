@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.20)
 
 # Project identity and the global C++ language level are defined once here so
 # every subdirectory inherits the same clean, predictable build behavior.
-project(msicontroller VERSION 1.0.0 LANGUAGES CXX)
+project(msicontroller VERSION 1.0.1 LANGUAGES CXX)
 
 # Standard GNU-style install directories keep the project portable across Linux
 # distributions and make it easy for users to override the install layout with
