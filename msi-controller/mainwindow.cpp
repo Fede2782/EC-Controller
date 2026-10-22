@@ -172,8 +172,6 @@ void MainWindow::onEditModeToggled(bool editing)
         topicBoxes->cancelEdit();
     }
 
-    editActionBar->setVisible(editing);
-
     // While a session is open the menu entry is not the way out - Apply and
     // Discard are - so it is left checked but disabled rather than offering
     // a third, ambiguous exit that neither keeps nor reverts explicitly.
@@ -191,21 +189,28 @@ void MainWindow::onEditModeToggled(bool editing)
 
 void MainWindow::addEditBarSpace()
 {
+    const QSize sizeBefore = size();
+
+    // setVisible(true) activates the parent layouts right away, which
+    // raises the window's minimum size to fit the bar and already grows a
+    // small window before this call returns. Capturing sizeBefore first
+    // keeps that growth inside editBarSpace instead of adding barHeight on
+    // top of it.
+    editActionBar->setVisible(true);
+
     editBarSpace = QSize(0, 0);
     if (isMaximized() || isFullScreen()) {
         return;
     }
 
-    const QSize sizeBefore = size();
-
-    // Updates the window's minimum size for the bar right away. If the
-    // window is too narrow for the bar's buttons, Qt widens it here.
     ui->centralLayout->activate();
     layout()->activate();
 
-    // Taller by the bar's height, so the boxes keep the space they had.
-    // Never taller than the screen; the scroll area handles the rest.
-    const int barHeight = editActionBar->sizeHint().height() + qMax(0, ui->centralLayout->spacing());
+    // Taller by the bar's height at its actual width in the window, so the
+    // boxes keep the space they had. Never taller than the screen; the
+    // scroll area handles the rest.
+    const int barHeight = editActionBar->heightForWidth(editActionBar->width())
+        + qMax(0, ui->centralLayout->spacing());
     resize(width(), qMax(height(), qMin(sizeBefore.height() + barHeight, maxWindowHeight())));
 
     editBarSpace = size() - sizeBefore;
@@ -213,6 +218,8 @@ void MainWindow::addEditBarSpace()
 
 void MainWindow::removeEditBarSpace()
 {
+    editActionBar->setVisible(false);
+
     if (!isMaximized() && !isFullScreen()) {
         // The bar is hidden by now, but the window's minimum size only drops
         // once the layouts are updated, and resize() can't go below it.
