@@ -18,9 +18,6 @@ srpm:
 	sed -e "s/^Version:.*/Version:        $${VERSION}/" \
 	    -e "s/^Release:.*/Release:        $${RELEASE}%{?dist}/" \
 	    packaging/ec-controller.spec > "$${RPM_ROOT}/SPECS/ec-controller.spec"; \
-	TZ=UTC LC_ALL=C git log -n 10 --date-order --date=format-local:"%a %b %d %Y" \
-		--pretty=tformat:"* %cd %an <%ae> - $${VERSION}-$${RELEASE}%n- %s (%h)" \
-		| sed 's/%/%%/g' >> "$${RPM_ROOT}/SPECS/ec-controller.spec"; \
 	rpmbuild -bs \
 		--define "_topdir $${RPM_ROOT}" \
 		--define "_srcrpmdir $(outdir)" \

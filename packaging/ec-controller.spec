@@ -80,3 +80,6 @@ esac
 - Reinitialize GUI and hardware monitors on reload
 - Fix window height expansion in single-box edit mode
 - Rename desktop launcher to org.fedelabs.EcController.desktop and update AppStream categories
+
+* Tue Oct 13 2026 Fede2782 <78815152+Fede2782@users.noreply.github.com> - 1.0.0-1
+- Initial release
