@@ -15,7 +15,7 @@ int main(int argc, char *argv[])
     a.setApplicationName("ec-controller");
     a.setOrganizationName("FedeLabs");
     a.setApplicationDisplayName("EC Controller");
-    a.setApplicationVersion("1.0.1");
+    a.setApplicationVersion(QStringLiteral(PROJECT_VERSION));
 
     // On Wayland the window is identified by its desktop file, which is
     // also where the taskbar and window switcher take its icon from. Must

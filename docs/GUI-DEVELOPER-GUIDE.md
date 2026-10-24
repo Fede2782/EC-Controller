@@ -883,13 +883,13 @@ Package version = `<version>-<release>`:
 - `<release>` = the GitHub run number (`-DMSI_CONTROLLER_PACKAGE_RELEASE=${{ github.run_number
   }}`); `1` for local builds.
 
-Bump **all three** by hand — nothing ties them together (known issue B7/G9):
+The version is defined once in `CMakeLists.txt` and shared with both binaries via `PROJECT_VERSION`:
 
 | File | Setting |
 |---|---|
-| `CMakeLists.txt` | `project(msicontroller VERSION x.y.z …)` — the only one that affects packages |
-| `msi-controller/main.cpp` | `a.setApplicationVersion("x.y.z")` (GUI `--version`) |
-| `msi-controller-service/main.cpp` | `a.setApplicationVersion("x.y.z")` |
+| `CMakeLists.txt` | `project(msicontroller VERSION x.y.z …)` — single source of truth for packages and binaries |
+| `msi-controller/main.cpp` | `a.setApplicationVersion(QStringLiteral(PROJECT_VERSION))` (GUI `--version`) |
+| `msi-controller-service/main.cpp` | `a.setApplicationVersion(QStringLiteral(PROJECT_VERSION))` |
 
 Release: commit the bump (`build: release x.y.z`) to the default branch, then tag that commit
 `vx.y.z` and push the tag. **The workflow doesn't check that the tag matches
@@ -961,7 +961,7 @@ None of these are approved work — propose, don't just do (§9.2).
 | G5 | `FanSpeedMonitor` takes the first hwmon with `fan1_input`, which may not be msi-ec's | match hwmon by name |
 | G6 | Polling (1 s) continues while hidden in the tray | pause while hidden |
 | G8 | Strings are in `tr()` but no translation is ever generated or loaded | add the pipeline |
-| G9 / B7 | Version hard-coded in two `main.cpp` files and CMake (§10.4) | one source from `project(VERSION)` |
+| G9 / B7 | Version hard-coded in two `main.cpp` files and CMake (§10.4) | resolved: derived from `project(VERSION)` |
 | G10 | No tray on stock GNOME without the AppIndicator extension (the app then quits on close) | — |
 | G12 | Global shortcuts decided once at startup | watch for kglobalaccel |
 | G13 | Re-enabling Start at Login deletes the user's override file entirely | — |

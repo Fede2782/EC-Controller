@@ -4,6 +4,9 @@ cmake_minimum_required(VERSION 3.20)
 # every subdirectory inherits the same clean, predictable build behavior.
 project(msicontroller VERSION 1.0.1 LANGUAGES CXX)
 
+# Pass the project version to C++ sources so CMake remains the single source of truth.
+add_compile_definitions(PROJECT_VERSION="${PROJECT_VERSION}")
+
 # Standard GNU-style install directories keep the project portable across Linux
 # distributions and make it easy for users to override the install layout with
 # the normal CMake cache variables such as CMAKE_INSTALL_PREFIX and

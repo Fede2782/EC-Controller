@@ -15,7 +15,7 @@ int main(int argc, char *argv[]) {
 
     a.setApplicationName("ec-controller-service");
     a.setOrganizationName("FedeLabs");
-    a.setApplicationVersion("1.0.1");
+    a.setApplicationVersion(QStringLiteral(PROJECT_VERSION));
 
     // The service writes to sysfs and to /etc, and only root may own its
     // bus name, so it can't do anything useful as another user. Refusing
