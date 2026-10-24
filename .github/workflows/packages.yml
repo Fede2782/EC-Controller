@@ -1,5 +1,5 @@
-# Builds a .deb and an .rpm on every push and publishes them as a GitHub
-# release:
+# Builds .deb (Debian 13 & Ubuntu 26.04) and .rpm (Fedora 44) on every push and
+# publishes them as a GitHub release:
 #
 # - pushes to the default branch replace the rolling "continuous"
 #   prerelease, so it always holds the latest build;
@@ -7,9 +7,8 @@
 # - pushes to any other branch still build both packages, available as
 #   workflow artifacts, without touching the releases.
 #
-# The packages are built on the oldest distributions that meet the
-# project's minimums (Qt 6.10, KF6 6.6): Ubuntu 26.04 LTS and Fedora 44.
-# Debian 13 ships Qt 6.8 and can't build this.
+# The packages are built on distributions that meet the project's minimums
+# (Qt 6.8, KF6 6.13): Debian 13 (Trixie), Ubuntu 26.04 LTS, and Fedora 44.
 
 name: Packages
 
@@ -24,9 +23,20 @@ permissions:
 
 jobs:
   deb:
-    name: .deb (Ubuntu 26.04)
+    name: .deb (${{ matrix.distro.name }})
     runs-on: ubuntu-latest
-    container: ubuntu:26.04
+    container: ${{ matrix.distro.container }}
+    strategy:
+      matrix:
+        distro:
+          - name: Debian 13
+            container: debian:trixie
+            tag: ~deb13
+            artifact: deb-debian13
+          - name: Ubuntu 26.04
+            container: ubuntu:26.04
+            tag: ~ubuntu26.04
+            artifact: deb-ubuntu26.04
     steps:
       - name: Install build dependencies
         env:
@@ -45,7 +55,8 @@ jobs:
       - name: Build
         run: |
           cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr \
-                -DMSI_CONTROLLER_PACKAGE_RELEASE=${{ github.run_number }}
+                -DMSI_CONTROLLER_PACKAGE_RELEASE=${{ github.run_number }} \
+                -DMSI_CONTROLLER_PACKAGE_DIST_TAG=${{ matrix.distro.tag }}
           cmake --build build --parallel
 
       - name: Package
@@ -54,7 +65,7 @@ jobs:
 
       - uses: actions/upload-artifact@v7
         with:
-          name: deb
+          name: ${{ matrix.distro.artifact }}
           path: build/*.deb
           if-no-files-found: error
 

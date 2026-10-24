@@ -28,8 +28,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Centralize minimum dependency versions so the whole tree uses the same
 # requirements.
-set(MSI_CONTROLLER_QT_MIN_VERSION 6.10.0)
-set(MSI_CONTROLLER_KF_MIN_VERSION 6.6.0)
+set(MSI_CONTROLLER_QT_MIN_VERSION 6.8.0)
+set(MSI_CONTROLLER_KF_MIN_VERSION 6.13.0)
 
 # ECM is still needed for the KDE CMake helpers used by this project.
 find_package(ECM ${MSI_CONTROLLER_KF_MIN_VERSION} REQUIRED NO_MODULE)
@@ -238,6 +238,7 @@ set(CPACK_SET_DESTDIR ON)
 # Every push builds the same project version, so CI passes its run number
 # as the package release to keep successive builds in upgrade order.
 set(MSI_CONTROLLER_PACKAGE_RELEASE "1" CACHE STRING "Package release number (the N in <version>-N)")
+set(MSI_CONTROLLER_PACKAGE_DIST_TAG "" CACHE STRING "Distribution tag suffix for Debian/RPM packages")
 
 # Runtime dependencies. Shared libraries (Qt, KF6, polkit-qt) are detected
 # automatically from the binaries - dpkg-shlibdeps for the .deb, rpmbuild's
@@ -270,7 +271,7 @@ set(MSI_CONTROLLER_POSTINST "${CMAKE_CURRENT_SOURCE_DIR}/packaging/postinst")
 set(MSI_CONTROLLER_PRERM "${CMAKE_CURRENT_SOURCE_DIR}/packaging/prerm")
 
 set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
-set(CPACK_DEBIAN_PACKAGE_RELEASE "${MSI_CONTROLLER_PACKAGE_RELEASE}")
+set(CPACK_DEBIAN_PACKAGE_RELEASE "${MSI_CONTROLLER_PACKAGE_RELEASE}${MSI_CONTROLLER_PACKAGE_DIST_TAG}")
 set(CPACK_DEBIAN_PACKAGE_SECTION "utils")
 set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
 set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA "${MSI_CONTROLLER_POSTINST};${MSI_CONTROLLER_PRERM}")

@@ -778,7 +778,7 @@ What that has meant in practice in this project (lessons from rejected or redone
 
 ### 9.5 C++ style (all components)
 
-- C++20, Qt ≥ 6.10, KF6 ≥ 6.6. 4-space indentation, no tabs, lines around 100 columns.
+- C++20, Qt ≥ 6.8, KF6 ≥ 6.13. 4-space indentation, no tabs, lines around 100 columns.
 - `PascalCase` types, `camelCase` functions/variables, `enum class`.
 - Header guards `#ifndef FOO_H` / `#define FOO_H` / `#endif // FOO_H` — never `#pragma once`.
   Forward-declare Qt classes in headers where possible.
