@@ -91,6 +91,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->actionReload, &QAction::triggered, this, &MainWindow::onReloadTriggered);
     connect(ui->actionEsci, &QAction::triggered, this, &MainWindow::onExitTriggered);
     connect(ui->actionAbout_MSI_Controller, &QAction::triggered, this, &MainWindow::onAboutTriggered);
+    connect(ui->actionAbout_Qt, &QAction::triggered, this, &MainWindow::onAboutQtTriggered);
     connect(ui->actionEditMode, &QAction::toggled, this, &MainWindow::onEditModeToggled);
     connect(ui->actionShowAllFanSlots, &QAction::toggled, this, &MainWindow::onShowAllFanSlotsToggled);
     connect(backend, &BackendClient::connectionStateChanged, this, &MainWindow::onBackendConnectionStateChanged);
@@ -225,6 +226,11 @@ void MainWindow::onAboutTriggered()
            "MSI is a trademark of Micro-Star International Co., Ltd. EC Controller is an unofficial, "
            "independent project. It is not affiliated with, endorsed by or supported by MSI.")
             .arg(QCoreApplication::applicationVersion()));
+}
+
+void MainWindow::onAboutQtTriggered()
+{
+    QMessageBox::aboutQt(this, tr("About Qt"));
 }
 
 void MainWindow::onEditModeToggled(bool editing)

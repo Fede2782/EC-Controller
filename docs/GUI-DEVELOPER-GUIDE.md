@@ -508,7 +508,7 @@ menu opens. The entry is disabled if the system file isn't installed.
 
 - **Edit:** GUI Edit Mode (Ctrl+E), —, Show All Fan Slots.
 - **Settings:** Start at Login.
-- **Help:** Reload GUI & Backend Connection (F5), —, About EC Controller, Quit Application (Ctrl+Q).
+- **Help:** Reload GUI & Backend Connection (F5), —, About EC Controller, About Qt, Quit Application (Ctrl+Q).
 
 Actions live in `mainwindow.ui` with `action…` names. `actionEsci` is the legacy Italian name of
 Quit — keep it. Don't give menu-action enabled state a meaning users rely on (on the owner's

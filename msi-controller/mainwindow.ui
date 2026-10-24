@@ -87,6 +87,7 @@
     <addaction name="actionReload"/>
     <addaction name="separator"/>
     <addaction name="actionAbout_MSI_Controller"/>
+    <addaction name="actionAbout_Qt"/>
     <addaction name="actionEsci"/>
    </widget>
    <addaction name="menuEdit"/>
@@ -163,6 +164,14 @@
    </property>
    <property name="text">
     <string>About EC Controller</string>
+   </property>
+  </action>
+  <action name="actionAbout_Qt">
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::HelpAbout"/>
+   </property>
+   <property name="text">
+    <string>About Qt</string>
    </property>
   </action>
   <action name="actionReload">

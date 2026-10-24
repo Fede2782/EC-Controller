@@ -64,6 +64,7 @@ private slots:
     void onReloadTriggered();
     void onExitTriggered();
     void onAboutTriggered();
+    void onAboutQtTriggered();
     void onEditModeToggled(bool editing);
     void onEditApplyClicked();
     void onEditDiscardClicked();
