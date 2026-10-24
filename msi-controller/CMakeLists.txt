@@ -64,6 +64,16 @@ qt_add_resources(msi-controller "fallback_icons"
         "${MSI_CONTROLLER_ICON_ROOT}/status/ec-controller-tray.svg"
 )
 
+if(TARGET Qt6::lrelease)
+    qt_add_translations(msi-controller
+        TS_FILES
+            translations/ec-controller_en.ts
+            translations/ec-controller_it.ts
+        RESOURCE_PREFIX
+            "/i18n"
+    )
+endif()
+
 target_link_libraries(msi-controller PRIVATE
     Qt6::Widgets
     Qt6::DBus

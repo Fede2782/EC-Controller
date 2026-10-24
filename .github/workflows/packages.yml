@@ -36,6 +36,7 @@ jobs:
           apt-get install -y --no-install-recommends \
             build-essential cmake dpkg-dev file \
             extra-cmake-modules qt6-base-dev qt6-base-dev-tools \
+            qt6-tools-dev qt6-tools-dev-tools \
             libkf6coreaddons-dev libkf6globalaccel-dev libkf6notifications-dev \
             libpolkit-qt6-1-dev
 
@@ -66,7 +67,7 @@ jobs:
         run: |
           dnf install -y \
             gcc-c++ make cmake rpm-build desktop-file-utils systemd-rpm-macros \
-            extra-cmake-modules qt6-qtbase-devel \
+            extra-cmake-modules qt6-qtbase-devel qt6-qttools-devel \
             kf6-kcoreaddons-devel kf6-kglobalaccel-devel kf6-knotifications-devel \
             polkit-qt6-1-devel
 

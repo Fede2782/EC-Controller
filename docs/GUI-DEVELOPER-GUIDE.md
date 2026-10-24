@@ -802,7 +802,7 @@ What that has meant in practice in this project (lessons from rejected or redone
   never mass-rename.
 - In-class default member initializers (`bool quitting = false;`, `QLabel *x = nullptr;`).
 - **Every user-visible string goes through `tr()`** (`QCoreApplication::translate` outside
-  QObjects), including tooltips and notifications, even though no translation is loaded yet.
+  QObjects), including tooltips and notifications; translations are loaded via `QTranslator` at startup.
 - One `setupXxx()` per feature, called from the constructor in default box order.
 - Write controls: §5.3. Name the technique you use against feedback loops in a comment.
 
@@ -960,7 +960,7 @@ None of these are approved work — propose, don't just do (§9.2).
 | G4 | Reload doesn't rebuild boxes: a feature that appears after start (driver loaded later) needs a restart | make Reload rebuild |
 | G5 | `FanSpeedMonitor` takes the first hwmon with `fan1_input`, which may not be msi-ec's | match hwmon by name |
 | G6 | Polling (1 s) continues while hidden in the tray | resolved: paused via hideEvent/showEvent |
-| G8 | Strings are in `tr()` but no translation is ever generated or loaded | add the pipeline |
+| G8 | Strings are in `tr()` but no translation is ever generated or loaded | resolved: added Qt Linguist pipeline and runtime loader |
 | G9 / B7 | Version hard-coded in two `main.cpp` files and CMake (§10.4) | resolved: derived from `project(VERSION)` |
 | G10 | No tray on stock GNOME without the AppIndicator extension (the app then quits on close) | — |
 | G12 | Global shortcuts decided once at startup | watch for kglobalaccel |

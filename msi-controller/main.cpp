@@ -7,6 +7,8 @@
 #include <QDBusConnectionInterface>
 #include <QDebug>
 #include <QIcon>
+#include <QLocale>
+#include <QTranslator>
 
 int main(int argc, char *argv[])
 {
@@ -16,6 +18,24 @@ int main(int argc, char *argv[])
     a.setOrganizationName("FedeLabs");
     a.setApplicationDisplayName("EC Controller");
     a.setApplicationVersion(QStringLiteral(PROJECT_VERSION));
+
+    QTranslator translator;
+    QStringList uiLanguages = QLocale::system().uiLanguages();
+    if (uiLanguages.isEmpty()) {
+        uiLanguages.append(QLocale::system().name());
+    }
+    for (const QString &locale : uiLanguages) {
+        const QString baseName = QStringLiteral("ec-controller_") + QLocale(locale).name();
+        if (translator.load(QStringLiteral(":/i18n/") + baseName)) {
+            a.installTranslator(&translator);
+            break;
+        }
+        const QString shortName = QStringLiteral("ec-controller_") + QLocale(locale).name().section(QLatin1Char('_'), 0, 0);
+        if (translator.load(QStringLiteral(":/i18n/") + shortName)) {
+            a.installTranslator(&translator);
+            break;
+        }
+    }
 
     // On Wayland the window is identified by its desktop file, which is
     // also where the taskbar and window switcher take its icon from. Must
