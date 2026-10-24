@@ -54,6 +54,11 @@
   <content_rating type="oars-1.1" />
 
   <releases>
+    <release version="1.0.2" date="2026-10-24">
+      <description>
+        <p>Improve strings, Italian localization, performance improvements and About Qt page.</p>
+      </description>
+    </release>
     <release version="1.0.1" date="2026-10-22">
       <description>
         <p>Reinitialize whole GUI and monitors on reload; fix window height expansion in single-box edit mode.</p>

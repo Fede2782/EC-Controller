@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.20)
 
 # Project identity and the global C++ language level are defined once here so
 # every subdirectory inherits the same clean, predictable build behavior.
-project(msicontroller VERSION 1.0.1 LANGUAGES CXX)
+project(msicontroller VERSION 1.0.2 LANGUAGES CXX)
 
 # Pass the project version to C++ sources so CMake remains the single source of truth.
 add_compile_definitions(PROJECT_VERSION="${PROJECT_VERSION}")
