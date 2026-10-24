@@ -22,9 +22,27 @@ FanSpeedMonitor::FanSpeedMonitor(QObject *parent)
 
     m_timer.setInterval(pollIntervalMs);
     connect(&m_timer, &QTimer::timeout, this, &FanSpeedMonitor::poll);
-    m_timer.start();
 
+    // Initial read populates values once without starting continuous background polling.
     poll();
+}
+
+void FanSpeedMonitor::pause()
+{
+    m_timer.stop();
+}
+
+void FanSpeedMonitor::resume()
+{
+    if (!m_timer.isActive()) {
+        m_timer.start();
+        poll();
+    }
+}
+
+bool FanSpeedMonitor::isPolling() const
+{
+    return m_timer.isActive();
 }
 
 int FanSpeedMonitor::fanCount() const

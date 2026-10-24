@@ -19,6 +19,11 @@ public:
     bool hasCpuTemperature() const;
     bool hasGpuTemperature() const;
 
+    // Pauses and resumes periodic 1s polling (e.g. while hidden in the tray).
+    void pause();
+    void resume();
+    bool isPolling() const;
+
 signals:
     void cpuTemperatureRead(const QString &value);
     void gpuTemperatureRead(const QString &value);

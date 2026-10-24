@@ -13,9 +13,27 @@ HardwareMonitor::HardwareMonitor(QObject *parent)
 {
     m_timer.setInterval(pollIntervalMs);
     connect(&m_timer, &QTimer::timeout, this, &HardwareMonitor::poll);
-    m_timer.start();
 
+    // Initial read populates values once without starting continuous background polling.
     poll();
+}
+
+void HardwareMonitor::pause()
+{
+    m_timer.stop();
+}
+
+void HardwareMonitor::resume()
+{
+    if (!m_timer.isActive()) {
+        m_timer.start();
+        poll();
+    }
+}
+
+bool HardwareMonitor::isPolling() const
+{
+    return m_timer.isActive();
 }
 
 bool HardwareMonitor::hasCpuTemperature() const

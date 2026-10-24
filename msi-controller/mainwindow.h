@@ -51,6 +51,7 @@ public slots:
 
 protected:
     void showEvent(QShowEvent *event) override;
+    void hideEvent(QHideEvent *event) override;
 
     // Closing the window hides it into the tray when there is one; the
     // tray's Quit (or Quit Application) is the complete exit.

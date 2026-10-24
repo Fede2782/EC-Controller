@@ -959,7 +959,7 @@ None of these are approved work — propose, don't just do (§9.2).
 | G3 | `commandFinished(bool)` doesn't say *which* command finished (the shift-mode notification relies on a pending flag) | tag calls in `BackendClient`, or wait for B5 |
 | G4 | Reload doesn't rebuild boxes: a feature that appears after start (driver loaded later) needs a restart | make Reload rebuild |
 | G5 | `FanSpeedMonitor` takes the first hwmon with `fan1_input`, which may not be msi-ec's | match hwmon by name |
-| G6 | Polling (1 s) continues while hidden in the tray | pause while hidden |
+| G6 | Polling (1 s) continues while hidden in the tray | resolved: paused via hideEvent/showEvent |
 | G8 | Strings are in `tr()` but no translation is ever generated or loaded | add the pipeline |
 | G9 / B7 | Version hard-coded in two `main.cpp` files and CMake (§10.4) | resolved: derived from `project(VERSION)` |
 | G10 | No tray on stock GNOME without the AppIndicator extension (the app then quits on close) | — |

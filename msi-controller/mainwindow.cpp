@@ -128,6 +128,15 @@ void MainWindow::onReloadTriggered()
 
     buildGui();
 
+    if (isVisible()) {
+        if (hardwareMonitor) {
+            hardwareMonitor->resume();
+        }
+        if (fanSpeedMonitor) {
+            fanSpeedMonitor->resume();
+        }
+    }
+
     // Re-checks that the backend is on the bus; the connection indicator
     // and every write control's enabled state follow through the usual
     // connectionStateChanged() path.
@@ -724,11 +733,30 @@ void MainWindow::showEvent(QShowEvent *event)
 {
     QMainWindow::showEvent(event);
 
+    if (hardwareMonitor) {
+        hardwareMonitor->resume();
+    }
+    if (fanSpeedMonitor) {
+        fanSpeedMonitor->resume();
+    }
+
     // The .ui geometry is only a starting point; the real height depends on
     // how many features this machine actually supports.
     if (!initialFitDone) {
         initialFitDone = true;
         fitWindowToContents();
+    }
+}
+
+void MainWindow::hideEvent(QHideEvent *event)
+{
+    QMainWindow::hideEvent(event);
+
+    if (hardwareMonitor) {
+        hardwareMonitor->pause();
+    }
+    if (fanSpeedMonitor) {
+        fanSpeedMonitor->pause();
     }
 }
 
