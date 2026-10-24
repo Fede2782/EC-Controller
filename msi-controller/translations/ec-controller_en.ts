@@ -46,11 +46,13 @@
     <name>FanCurveChart</name>
     <message>
         <location filename="../fancurvechart.cpp" line="39"/>
+        <location filename="../fancurvechart.cpp" line="86"/>
         <source>%1 %</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../fancurvechart.cpp" line="41"/>
+        <location filename="../fancurvechart.cpp" line="73"/>
         <source>%1 °C</source>
         <translation type="unfinished"></translation>
     </message>
@@ -164,6 +166,11 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="../mainwindow.ui" line="125"/>
+        <source>Ctrl+E</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../mainwindow.ui" line="133"/>
         <source>Show all fan slots</source>
         <translation type="unfinished"></translation>
@@ -189,12 +196,19 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="../mainwindow.ui" line="158"/>
+        <source>Ctrl+Q</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../mainwindow.ui" line="166"/>
+        <location filename="../mainwindow.cpp" line="223"/>
         <source>About EC Controller</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../mainwindow.ui" line="174"/>
+        <location filename="../mainwindow.cpp" line="233"/>
         <source>About Qt</source>
         <translation type="unfinished"></translation>
     </message>
@@ -206,6 +220,11 @@
     <message>
         <location filename="../mainwindow.ui" line="185"/>
         <source>Reconnect to the backend service and re-read every setting from the hardware.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../mainwindow.ui" line="188"/>
+        <source>F5</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -255,6 +274,8 @@ MSI is a trademark of Micro-Star International Co., Ltd. EC Controller is an uno
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="461"/>
+        <location filename="../mainwindow.cpp" line="503"/>
+        <location filename="../mainwindow.cpp" line="987"/>
         <source>Performance mode</source>
         <translation type="unfinished"></translation>
     </message>
@@ -341,6 +362,8 @@ Use Reload (F5) to try again once the service is running.</source>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="835"/>
+        <location filename="../mainwindow.cpp" line="838"/>
+        <location filename="../mainwindow.cpp" line="867"/>
         <source>—</source>
         <translation type="unfinished"></translation>
     </message>
@@ -366,6 +389,7 @@ Use Reload (F5) to try again once the service is running.</source>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="876"/>
+        <location filename="../mainwindow.cpp" line="881"/>
         <source>%1 °C</source>
         <translation type="unfinished"></translation>
     </message>
