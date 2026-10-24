@@ -59,7 +59,7 @@
     <name>FanCurveDialog</name>
     <message>
         <location filename="../fancurvedialog.cpp" line="13"/>
-        <source>Advanced Fan Mode</source>
+        <source>Advanced fan mode</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -69,12 +69,12 @@
     </message>
     <message>
         <location filename="../fancurvedialog.cpp" line="40"/>
-        <source>CPU Fan</source>
+        <source>CPU fan</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../fancurvedialog.cpp" line="41"/>
-        <source>GPU Fan</source>
+        <source>GPU fan</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -155,7 +155,7 @@
     </message>
     <message>
         <location filename="../mainwindow.ui" line="119"/>
-        <source>GUI Edit Mode</source>
+        <source>GUI edit mode</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -165,7 +165,7 @@
     </message>
     <message>
         <location filename="../mainwindow.ui" line="133"/>
-        <source>Show All Fan Slots</source>
+        <source>Show all fan slots</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -175,7 +175,7 @@
     </message>
     <message>
         <location filename="../mainwindow.ui" line="144"/>
-        <source>Start at Login</source>
+        <source>Start at login</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -185,7 +185,7 @@
     </message>
     <message>
         <location filename="../mainwindow.ui" line="155"/>
-        <source>Quit Application</source>
+        <source>Quit application</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -200,7 +200,7 @@
     </message>
     <message>
         <location filename="../mainwindow.ui" line="182"/>
-        <source>Reload GUI &amp;&amp; Backend Connection</source>
+        <source>Reload GUI &amp;&amp; backend connection</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -220,7 +220,7 @@ MSI is a trademark of Micro-Star International Co., Ltd. EC Controller is an uno
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="372"/>
-        <source>Couldn&apos;t Apply Change</source>
+        <source>Couldn&apos;t apply change</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -230,7 +230,7 @@ MSI is a trademark of Micro-Star International Co., Ltd. EC Controller is an uno
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="403"/>
-        <source>Couldn&apos;t Change Start at Login</source>
+        <source>Couldn&apos;t change start at login</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -240,22 +240,22 @@ MSI is a trademark of Micro-Star International Co., Ltd. EC Controller is an uno
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="431"/>
-        <source>Cycle Performance Mode</source>
+        <source>Cycle performance mode</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="440"/>
-        <source>Flip Display 180°</source>
+        <source>Flip display 180°</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="446"/>
-        <source>Couldn&apos;t Flip the Display</source>
+        <source>Couldn&apos;t flip the display</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="461"/>
-        <source>Performance Mode</source>
+        <source>Performance mode</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -301,7 +301,7 @@ Use Reload (F5) to try again once the service is running.</source>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="690"/>
-        <source>Reset to Default</source>
+        <source>Reset to default</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -351,7 +351,7 @@ Use Reload (F5) to try again once the service is running.</source>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="865"/>
-        <source>Fan Speeds</source>
+        <source>Fan speeds</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -376,12 +376,12 @@ Use Reload (F5) to try again once the service is running.</source>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="899"/>
-        <source>Fan Mode</source>
+        <source>Fan mode</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="940"/>
-        <source>Couldn&apos;t Read the Fan Curve</source>
+        <source>Couldn&apos;t read the fan curve</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -441,7 +441,7 @@ Use Reload (F5) to try again once the service is running.</source>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="1056"/>
-        <source>Always On</source>
+        <source>Always on</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -481,12 +481,12 @@ Use Reload (F5) to try again once the service is running.</source>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="1115"/>
-        <source>Charge Limit</source>
+        <source>Charge limit</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="1129"/>
-        <source>Custom Battery Threshold</source>
+        <source>Custom battery threshold</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -511,12 +511,12 @@ Use Reload (F5) to try again once the service is running.</source>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="1169"/>
-        <source>Swap Fn/Win Keys</source>
+        <source>Swap Fn/Win keys</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="1170"/>
-        <source>Block Webcam</source>
+        <source>Block webcam</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -526,17 +526,17 @@ Use Reload (F5) to try again once the service is running.</source>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="1180"/>
-        <source>Hardware Toggles</source>
+        <source>Hardware toggles</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="1231"/>
-        <source>Keyboard Backlight Mode</source>
+        <source>Keyboard backlight mode</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="1259"/>
-        <source>Keyboard Backlight Brightness</source>
+        <source>Keyboard backlight brightness</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

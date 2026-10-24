@@ -369,7 +369,7 @@ void MainWindow::onCommandFinished(bool success)
     }
 
     if (!success) {
-        QMessageBox::warning(this, tr("Couldn't Apply Change"),
+        QMessageBox::warning(this, tr("Couldn't apply change"),
             tr("The change couldn't be applied. Check that the msi-ec driver is loaded and up to date, "
                "and check the service logs for details."));
     }
@@ -400,7 +400,7 @@ void MainWindow::setupAutostart()
             return;
         }
         refresh();
-        QMessageBox::warning(this, tr("Couldn't Change Start at Login"),
+        QMessageBox::warning(this, tr("Couldn't change start at login"),
             tr("Your autostart settings couldn't be updated. Check that ~/.config/autostart is writable."));
     });
 }
@@ -428,7 +428,7 @@ void MainWindow::setupGlobalShortcuts()
 
     const bool hasShiftModes = std::any_of(shiftModes().cbegin(), shiftModes().cend(), isModeSupported);
     if (hasShiftModes && !findChild<QAction *>(QStringLiteral("cycle-performance-mode"))) {
-        auto *cycleAction = new QAction(tr("Cycle Performance Mode"), this);
+        auto *cycleAction = new QAction(tr("Cycle performance mode"), this);
         cycleAction->setObjectName(QStringLiteral("cycle-performance-mode"));
         KGlobalAccel::setGlobalShortcut(cycleAction, QKeySequence(Qt::Key_Launch1));
         connect(cycleAction, &QAction::triggered, this, &MainWindow::cycleShiftMode);
@@ -437,13 +437,13 @@ void MainWindow::setupGlobalShortcuts()
     if (!displayRotation && DisplayRotation::isAvailable()) {
         displayRotation = new DisplayRotation(this);
 
-        auto *rotateAction = new QAction(tr("Flip Display 180°"), this);
+        auto *rotateAction = new QAction(tr("Flip display 180°"), this);
         rotateAction->setObjectName(QStringLiteral("flip-display"));
         KGlobalAccel::setGlobalShortcut(rotateAction, QKeySequence(Qt::Key_RotateWindows));
         connect(rotateAction, &QAction::triggered, displayRotation, &DisplayRotation::flip);
 
         connect(displayRotation, &DisplayRotation::failed, this, [](const QString &reason) {
-            KNotification::event(KNotification::Warning, tr("Couldn't Flip the Display"), reason,
+            KNotification::event(KNotification::Warning, tr("Couldn't flip the display"), reason,
                                  notificationIconName);
         });
 
@@ -458,7 +458,7 @@ void MainWindow::cycleShiftMode()
     // The shortcut works with the window hidden in the tray, so the answer
     // has to come as a notification rather than anything in the window.
     if (!backend->isConnected()) {
-        KNotification::event(KNotification::Warning, tr("Performance Mode"),
+        KNotification::event(KNotification::Warning, tr("Performance mode"),
                              tr("Not connected to the backend."), notificationIconName);
         return;
     }
@@ -500,7 +500,7 @@ void MainWindow::notifyCurrentShiftMode()
         shiftModeNotification->close();
     }
 
-    shiftModeNotification = KNotification::event(KNotification::Notification, tr("Performance Mode"),
+    shiftModeNotification = KNotification::event(KNotification::Notification, tr("Performance mode"),
                                                  modeLabel(parseModeName(currentModeName)), notificationIconName);
 
     // Tied to the notification: if it's closed and deleted first (by the
@@ -687,7 +687,7 @@ void MainWindow::setupEditMode()
     QPushButton *discardButton = editButtons->button(QDialogButtonBox::Discard);
     QPushButton *applyButton = editButtons->button(QDialogButtonBox::Apply);
 
-    resetOrderButton->setText(tr("Reset to Default"));
+    resetOrderButton->setText(tr("Reset to default"));
     resetOrderButton->setToolTip(tr("Put the boxes back in their default order. Apply to keep it."));
     discardButton->setText(tr("Discard"));
     discardButton->setToolTip(tr("Leave Edit mode and put the boxes back as they were."));
@@ -862,7 +862,7 @@ void MainWindow::setupHardwareOverview()
     // all still gets no box, exactly as before - there'd be nothing to
     // reveal.
     if (fanSpeedMonitor->fanCount() > 0) {
-        fanSpeedsBox = new FeatureGroupBox(QStringLiteral("fanSpeeds"), tr("Fan Speeds"), this);
+        fanSpeedsBox = new FeatureGroupBox(QStringLiteral("fanSpeeds"), tr("Fan speeds"), this);
         for (int fan = 1; fan <= FanSpeedMonitor::maxFans; ++fan) {
             const QString initialText = fanSpeedMonitor->isFanPopulated(fan) ? tr("—") : tr("Not reported");
             fanSpeedLabels[fan] =
@@ -896,7 +896,7 @@ void MainWindow::setupFanMode()
         MsiEcMode::SilentFan,
         MsiEcMode::BasicFan,
     };
-    QComboBox *combo = setupModeDropdown(QStringLiteral("fanMode"), tr("Fan Mode"), MsiEcAttribute::FanMode,
+    QComboBox *combo = setupModeDropdown(QStringLiteral("fanMode"), tr("Fan mode"), MsiEcAttribute::FanMode,
                                          fanModes);
     if (!combo) {
         return;
@@ -937,7 +937,7 @@ void MainWindow::selectAdvancedFanMode(QComboBox *fanModeCombo)
     }
     if (!curvesRead) {
         syncModeSelection(fanModeCombo, MsiEcAttribute::FanMode);
-        QMessageBox::warning(this, tr("Couldn't Read the Fan Curve"),
+        QMessageBox::warning(this, tr("Couldn't read the fan curve"),
             tr("The fan curve couldn't be read from the msi-ec driver, so the fan mode was not changed."));
         return;
     }
@@ -984,7 +984,7 @@ void MainWindow::applyAdvancedFanMode(const QString &cpuCurve, const QString &gp
 
 void MainWindow::setupShiftMode()
 {
-    setupModeDropdown(QStringLiteral("performanceMode"), tr("Performance Mode"), MsiEcAttribute::ShiftMode,
+    setupModeDropdown(QStringLiteral("performanceMode"), tr("Performance mode"), MsiEcAttribute::ShiftMode,
                       shiftModes());
 }
 
@@ -1053,7 +1053,7 @@ QString MainWindow::modeLabel(MsiEcMode mode) const
     case MsiEcMode::EcoShift: return tr("Eco");
     case MsiEcMode::SportShift: return tr("Sport");
     case MsiEcMode::TimeoutKbdBacklight: return tr("Timeout");
-    case MsiEcMode::AlwaysOnKbdBacklight: return tr("Always On");
+    case MsiEcMode::AlwaysOnKbdBacklight: return tr("Always on");
     default: return getModeName(mode);
     }
 }
@@ -1112,7 +1112,7 @@ void MainWindow::setupBattery()
     syncBattery();
 
     auto *box = new FeatureGroupBox(QStringLiteral("battery"), tr("Battery"), this);
-    box->addRow(tr("Charge Limit"), combo);
+    box->addRow(tr("Charge limit"), combo);
     box->addRow(QString(), startsChargingLabel);
     box->addRow(QString(), stopsAtLabel);
     topicBoxes->addBox(box);
@@ -1126,7 +1126,7 @@ void MainWindow::setupBattery()
         const int value = combo->itemData(index).toInt();
         if (value == customChargeEndSentinel) {
             bool ok = false;
-            const int chosen = QInputDialog::getInt(this, tr("Custom Battery Threshold"),
+            const int chosen = QInputDialog::getInt(this, tr("Custom battery threshold"),
                 tr("Stop charging at (%):"), currentChargeEnd().value_or(batteryModeMediumChargeEnd),
                 batteryModeMinChargeEnd, batteryModeMaxChargeEnd, 1, &ok);
             if (ok) {
@@ -1166,8 +1166,8 @@ void MainWindow::setupToggles()
                   tr("Cooler Boost will spin the fans up to their maximum speed. Continue?"),
                   QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes;
           } },
-        { tr("Swap Fn/Win Keys"), MsiEcAttribute::FnWinSwap },
-        { tr("Block Webcam"), MsiEcAttribute::WebcamBlock },
+        { tr("Swap Fn/Win keys"), MsiEcAttribute::FnWinSwap },
+        { tr("Block webcam"), MsiEcAttribute::WebcamBlock },
         { tr("USB PowerShare"), MsiEcAttribute::UsbPowershare },
     };
 
@@ -1177,7 +1177,7 @@ void MainWindow::setupToggles()
             continue;
         }
         if (!box) {
-            box = new FeatureGroupBox(QStringLiteral("hardwareToggles"), tr("Hardware Toggles"), this);
+            box = new FeatureGroupBox(QStringLiteral("hardwareToggles"), tr("Hardware toggles"), this);
         }
         setupToggle(box, toggle.label, toggle.attr, toggle.confirmChange);
     }
@@ -1228,7 +1228,7 @@ void MainWindow::setupKeyboardBacklight()
         MsiEcMode::TimeoutKbdBacklight,
         MsiEcMode::AlwaysOnKbdBacklight,
     };
-    setupModeDropdown(QStringLiteral("keyboardBacklightMode"), tr("Keyboard Backlight Mode"),
+    setupModeDropdown(QStringLiteral("keyboardBacklightMode"), tr("Keyboard backlight mode"),
                       MsiEcAttribute::KbdBacklightMode, kbdBacklightModes);
 
     if (!kbdBacklightBrightness->isAvailable()) {
@@ -1256,7 +1256,7 @@ void MainWindow::setupKeyboardBacklight()
     });
 
     auto *box = new FeatureGroupBox(QStringLiteral("keyboardBacklightBrightness"),
-                                    tr("Keyboard Backlight Brightness"), this);
+                                    tr("Keyboard backlight brightness"), this);
     box->addRow(tr("Brightness"), slider);
     topicBoxes->addBox(box);
 

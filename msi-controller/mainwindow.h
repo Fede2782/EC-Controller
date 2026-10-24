@@ -129,7 +129,7 @@ private:
     void updateResetOrderEnabled();
 
     // Shows or hides the fan rows that aren't part of the default set,
-    // according to the Edit menu's "Show All Fan Slots" option.
+    // according to the Edit menu's "Show all fan slots" option.
     void updateFanSlotVisibility();
 
     // Resizes the window's height to exactly what its contents need,
@@ -161,7 +161,7 @@ private:
     void syncModeSelection(QComboBox *combo, MsiControllerLib::MsiEcAttribute attr);
     QString modeLabel(MsiControllerLib::MsiEcMode mode) const;
 
-    // Called when the user picks Advanced in the Fan Mode dropdown: shows
+    // Called when the user picks Advanced in the Fan mode dropdown: shows
     // the fan curve dialog and, only if it is accepted, applies the curves
     // and the mode. Cancelling puts the dropdown back and changes nothing.
     void selectAdvancedFanMode(QComboBox *fanModeCombo);
@@ -266,7 +266,7 @@ private:
     // hiding a row is a layout concern, so the labels always exist.
     QMap<int, QLabel *> fanSpeedLabels;
 
-    // The fan slots shown without "Show All Fan Slots" - the first few
+    // The fan slots shown without "Show all fan slots" - the first few
     // populated ones, by slot number. Kept as the actual set rather than a
     // count because hwmon channel numbers need not be contiguous.
     QList<int> defaultFanSlots;

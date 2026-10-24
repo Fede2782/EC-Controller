@@ -437,11 +437,11 @@ Presets Max (100), Medium (80), Low (60), plus Custom… (`QInputDialog`, 60–1
 `ChargeEnd` only. Shows "Starts charging around end − 10%" and, for custom values, "Stops at N%".
 Also resyncs on `KdePowerManagementWatcher::batteryThresholdChanged`.
 
-### 6.7 Fan speeds and Show All Fan Slots
+### 6.7 Fan speeds and Show all fan slots
 
 Four rows always exist (Fan 1–4); unpopulated slots say "Not reported". The default visible set
 is the first 1 populated slot, or the first 2 if a GPU temperature exists (`defaultFanSlots`).
-*Edit → Show All Fan Slots* (saved as `GUI/showAllFanSlots`) shows the rest, via
+*Edit → Show all fan slots* (saved as `GUI/showAllFanSlots`) shows the rest, via
 `FeatureGroupBox::setRowVisible()`, then `fitWindowToContents()`.
 
 ### 6.8 Keyboard backlight brightness
@@ -506,9 +506,9 @@ menu opens. The entry is disabled if the system file isn't installed.
 
 ### 6.14 Menus
 
-- **Edit:** GUI Edit Mode (Ctrl+E), —, Show All Fan Slots.
-- **Settings:** Start at Login.
-- **Help:** Reload GUI & Backend Connection (F5), —, About EC Controller, About Qt, Quit Application (Ctrl+Q).
+- **Edit:** GUI edit mode (Ctrl+E), —, Show all fan slots.
+- **Settings:** Start at login.
+- **Help:** Reload GUI & backend connection (F5), —, About EC Controller, About Qt, Quit application (Ctrl+Q).
 
 Actions live in `mainwindow.ui` with `action…` names. `actionEsci` is the legacy Italian name of
 Quit — keep it. Don't give menu-action enabled state a meaning users rely on (on the owner's
@@ -936,12 +936,12 @@ Manual checklist for GUI changes (run the relevant parts):
       written then mode Advanced; reselect Advanced → editor reopens with the new curve.
 - [ ] Edit mode at a reduced window size: enter, resize, move boxes, Apply/Discard/Esc → window
       keeps the user's size; bar never cut off; order saved only on Apply.
-- [ ] Show All Fan Slots on/off → window grows, then shrinks back with no empty space.
+- [ ] Show all fan slots on/off → window grows, then shrinks back with no empty space.
 - [ ] Close → hides to tray (notice once); tray click toggles; Quit exits; second launch raises
       the window; `--minimized` starts hidden.
 - [ ] Launch1 cycles the performance mode with a notification; RotateWindows flips and restores
       on quit (KDE).
-- [ ] Start at Login toggles `~/.config/autostart/…`.
+- [ ] Start at login toggles `~/.config/autostart/…`.
 
 When reporting work, separate what was **compiled and run**, what was **checked by tooling**
 (e.g. patch apply-tests) and what was **only hand-reviewed**.

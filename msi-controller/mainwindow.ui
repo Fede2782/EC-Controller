@@ -116,7 +116,7 @@
     <iconset theme="QIcon::ThemeIcon::DocumentProperties"/>
    </property>
    <property name="text">
-    <string>GUI Edit Mode</string>
+    <string>GUI edit mode</string>
    </property>
    <property name="toolTip">
     <string>Rearrange the topic boxes. The layout is saved automatically.</string>
@@ -130,7 +130,7 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Show All Fan Slots</string>
+    <string>Show all fan slots</string>
    </property>
    <property name="toolTip">
     <string>Also show the fan slots that are hidden by default, including any the hardware does not report.</string>
@@ -141,7 +141,7 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Start at Login</string>
+    <string>Start at login</string>
    </property>
    <property name="toolTip">
     <string>Start EC Controller in the system tray when you log in.</string>
@@ -152,7 +152,7 @@
     <iconset theme="QIcon::ThemeIcon::ApplicationExit"/>
    </property>
    <property name="text">
-    <string>Quit Application</string>
+    <string>Quit application</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+Q</string>
@@ -179,7 +179,7 @@
     <iconset theme="QIcon::ThemeIcon::ViewRefresh"/>
    </property>
    <property name="text">
-    <string>Reload GUI &amp;&amp; Backend Connection</string>
+    <string>Reload GUI &amp;&amp; backend connection</string>
    </property>
    <property name="toolTip">
     <string>Reconnect to the backend service and re-read every setting from the hardware.</string>

@@ -10,7 +10,7 @@
 FanCurveDialog::FanCurveDialog(const QString &cpuCurve, const QString &gpuCurve, QWidget *parent)
     : QDialog(parent)
 {
-    setWindowTitle(tr("Advanced Fan Mode"));
+    setWindowTitle(tr("Advanced fan mode"));
 
     auto *layout = new QVBoxLayout(this);
 
@@ -37,8 +37,8 @@ FanCurveDialog::FanCurveDialog(const QString &cpuCurve, const QString &gpuCurve,
                 this, &FanCurveDialog::updateApplyButton);
 
         auto *tabs = new QTabWidget(this);
-        tabs->addTab(m_cpuEditor, tr("CPU Fan"));
-        tabs->addTab(m_gpuEditor, tr("GPU Fan"));
+        tabs->addTab(m_cpuEditor, tr("CPU fan"));
+        tabs->addTab(m_gpuEditor, tr("GPU fan"));
         layout->addWidget(tabs);
     }
 

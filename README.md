@@ -44,7 +44,7 @@ EC Controller queries sysfs dynamically and displays only the features supported
 - **Real-Time Hardware Monitoring:**
   - Live CPU and GPU temperatures.
   - Live fan RPM speeds for up to four fans (CPU, GPU, and auxiliary fans).
-  - "Show All Fan Slots" option to inspect auxiliary or inactive fan channels.
+  - "Show all fan slots" option to inspect auxiliary or inactive fan channels.
 - **Fan Modes & Fan Curve Editor:**
   - Preset modes: *Auto*, *Silent*, *Basic*, and *Advanced*.
   - Selecting *Advanced* opens the fan curve editor featuring a curve chart, synchronized temperature/speed thresholds, and safety constraint validation (strictly increasing temperatures, monotonic fan speeds, and an 85%+ emergency top-speed floor).
