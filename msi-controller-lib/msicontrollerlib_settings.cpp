@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Fede2782
+// SPDX-License-Identifier: GPL-3.0-or-later
 // =============================================================================
 // Persisted state: reading previously-saved attribute values back from the
 // config file (writing is done by MsiControllerBackend, which owns sysfs

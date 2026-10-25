@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Fede2782
+// SPDX-License-Identifier: GPL-3.0-or-later
 #ifndef DISPLAYROTATION_H
 #define DISPLAYROTATION_H
 

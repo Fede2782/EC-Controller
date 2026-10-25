@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Fede2782
+// SPDX-License-Identifier: GPL-3.0-or-later
 // =============================================================================
 // Persisting attribute values to the config file, and restoring them at
 // startup.

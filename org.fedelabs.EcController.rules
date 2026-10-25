@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Fede2782
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 // Rule to allow admin users to call EcControllerAPI.write without having to authenticate
 polkit.addRule(function(action, subject) {
     if (action.id == "org.fedelabs.EcControllerAPI.write" &&

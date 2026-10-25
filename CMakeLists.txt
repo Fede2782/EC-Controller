@@ -1,8 +1,18 @@
+# SPDX-FileCopyrightText: 2026 Fede2782
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 cmake_minimum_required(VERSION 3.20)
 
 # Project identity and the global C++ language level are defined once here so
 # every subdirectory inherits the same clean, predictable build behavior.
-project(msicontroller VERSION 1.0.2 LANGUAGES CXX)
+if(CMAKE_VERSION VERSION_GREATER_EQUAL "4.3")
+    # Define the SPDX_LICENSE parameter when cmake supports it
+    set(CMAKE_PROJECT_SPDX_LICENSE_PARAM SPDX_LICENSE "GPL-3.0-or-later")
+else()
+    set(CMAKE_PROJECT_SPDX_LICENSE_PARAM "")
+endif()
+
+project(msicontroller VERSION 1.0.2 LANGUAGES CXX ${CMAKE_PROJECT_SPDX_LICENSE_PARAM})
 
 # Pass the project version to C++ sources so CMake remains the single source of truth.
 add_compile_definitions(PROJECT_VERSION="${PROJECT_VERSION}")
@@ -279,7 +289,7 @@ set(CPACK_DEBIAN_PACKAGE_CONTROL_STRICT_PERMISSION TRUE)
 
 set(CPACK_RPM_FILE_NAME RPM-DEFAULT)
 set(CPACK_RPM_PACKAGE_RELEASE "${MSI_CONTROLLER_PACKAGE_RELEASE}")
-set(CPACK_RPM_PACKAGE_LICENSE "GPL-3.0-only")
+set(CPACK_RPM_PACKAGE_LICENSE "GPL-3.0-or-later")
 set(CPACK_RPM_POST_INSTALL_SCRIPT_FILE "${CMAKE_CURRENT_SOURCE_DIR}/packaging/postinst.rpm")
 set(CPACK_RPM_PRE_UNINSTALL_SCRIPT_FILE "${CMAKE_CURRENT_SOURCE_DIR}/packaging/prerm.rpm")
 set(CPACK_RPM_POST_UNINSTALL_SCRIPT_FILE "${CMAKE_CURRENT_SOURCE_DIR}/packaging/postun.rpm")

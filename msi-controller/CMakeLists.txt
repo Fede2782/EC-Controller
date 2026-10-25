@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Fede2782
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # GUI executable sources stay in one place, while the generated DBus interface
 # from the service build tree is appended automatically.
 add_executable(msi-controller)

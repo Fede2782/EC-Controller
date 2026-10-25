@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Fede2782
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # Backend service sources and the generated D-Bus XML stay together here.
 add_executable(msi-controller-service
     main.cpp

@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE policyconfig PUBLIC "-//freedesktop//DTD polkit Policy Configuration 1.0//EN"
 "http://www.freedesktop.org/software/polkit/policyconfig-1.dtd">
+
+<!--
+  SPDX-FileCopyrightText: 2026 Fede2782
+  SPDX-License-Identifier: GPL-3.0-or-later
+-->
+
 <policyconfig>
 
   <vendor>ec-controller</vendor>

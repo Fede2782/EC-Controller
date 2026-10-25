@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Fede2782
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "featuregroupbox.h"
 
 FeatureGroupBox::FeatureGroupBox(const QString &boxId, const QString &title, QWidget *parent)

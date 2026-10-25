@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Fede2782
+// SPDX-License-Identifier: GPL-3.0-or-later
 #ifndef FANCURVECHART_H
 #define FANCURVECHART_H
 
