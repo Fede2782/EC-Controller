@@ -525,19 +525,19 @@ Usa Ricarica (F5) per provare nuovamente appena il servizio è in esecuzione.</t
         <translation>Interrompi la ricarica a (%):</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1161"/>
-        <source>Cooler Boost</source>
-        <translation></translation>
+        <location filename="../mainwindow.cpp" line="1163"/>
+        <source>Maximum cooling</source>
+        <translation>Raffreddamento massimo</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1165"/>
-        <source>Enable Cooler Boost?</source>
-        <translation>Attiva Cooler Boost?</translation>
+        <location filename="../mainwindow.cpp" line="1167"/>
+        <source>Enable maximum cooling?</source>
+        <translation>Attiva raffreddamento massimo?</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1166"/>
-        <source>Cooler Boost will spin the fans up to their maximum speed. Continue?</source>
-        <translation>Cooler Boost imposterà le ventole alla loro massima velocità. Continuare?</translation>
+        <location filename="../mainwindow.cpp" line="1168"/>
+        <source>Maximum cooling will spin the fans up to their maximum speed. Continue?</source>
+        <translation>Il raffreddamento massimo imposterà le ventole alla loro massima velocità. Continuare?</translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="1169"/>

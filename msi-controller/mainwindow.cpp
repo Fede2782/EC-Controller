@@ -1160,12 +1160,12 @@ void MainWindow::setupToggles()
     // boolean besides WebcamBlock, but only "Block Webcam" was ever asked
     // for, so Webcam itself stays unused.
     const QList<ToggleSpec> toggles = {
-        { tr("Cooler Boost"), MsiEcAttribute::CoolerBoost, [this](bool checked) {
+        { tr("Maximum cooling"), MsiEcAttribute::CoolerBoost, [this](bool checked) {
               if (!checked) {
                   return true; // no confirmation needed when turning it off
               }
-              return QMessageBox::question(this, tr("Enable Cooler Boost?"),
-                  tr("Cooler Boost will spin the fans up to their maximum speed. Continue?"),
+              return QMessageBox::question(this, tr("Enable maximum cooling?"),
+                  tr("Maximum cooling will spin the fans up to their maximum speed. Continue?"),
                   QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes;
           } },
         { tr("Swap Fn/Win keys"), MsiEcAttribute::FnWinSwap },

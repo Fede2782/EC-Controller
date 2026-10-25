@@ -268,7 +268,7 @@ failure already reported). On failure, just stop: don't report again. See
 If a change needs confirmation or extra input, ask **before** sending anything, and on cancel
 **resync the control** so it shows the real state again. Examples:
 
-- Cooler Boost asks "Enable Cooler Boost?" (the `confirmChange` callback of `setupToggle()`);
+- Maximum cooling asks "Enable maximum cooling?" (the `confirmChange` callback of `setupToggle()`);
   declining unchecks the box.
 - Battery "Custom…" opens `QInputDialog::getInt`; cancelling calls `syncBattery()`.
 - Advanced fan mode opens `FanCurveDialog`; cancelling calls `syncModeSelection()`.
@@ -308,7 +308,7 @@ or the window stays stretched.
 | `fanMode` | Fan Mode | Mode dropdown | `FanMode` | `setMode(<fan mode key>)`; Advanced → fan curve flow (§6.4) |
 | `performanceMode` | Performance Mode | Mode dropdown | `ShiftMode` | `setMode(<shift mode key>)` |
 | `battery` | Battery | Charge Limit dropdown + two info labels | `ChargeEnd` | `setAttrValue("ChargeEnd", int)` |
-| `hardwareToggles` | Hardware Toggles | Cooler Boost, Swap Fn/Win Keys, Block Webcam, USB PowerShare | each attribute | `setAttrValue(<attr key>, bool)` |
+| `hardwareToggles` | Hardware Toggles | Maximum cooling, Swap Fn/Win Keys, Block Webcam, USB PowerShare | each attribute | `setAttrValue(<attr key>, bool)` |
 | `keyboardBacklightMode` | Keyboard Backlight Mode | Mode dropdown | `KbdBacklightMode` | `setMode(<kbd mode key>)` |
 | `keyboardBacklightBrightness` | Keyboard Backlight Brightness | Slider | UPower | UPower `SetBrightness` (not the backend) |
 
@@ -330,7 +330,7 @@ Comfort → Turbo → Eco → Sport.
 
 A list of `{ label, attribute, optional confirmChange }`. Each supported entry becomes a checkbox
 row, synced from `getAttrValue(attr, bool*)`, writing on `clicked` with
-`setAttrValue(key, bool)`. `confirmChange(checked)` can veto (Cooler Boost asks only when
+`setAttrValue(key, bool)`. `confirmChange(checked)` can veto (Maximum cooling asks only when
 turning it **on**). Super Battery is deliberately absent (deprecated). `Webcam` exists in the
 library but only `WebcamBlock` is shown.
 

@@ -54,7 +54,7 @@ EC Controller queries sysfs dynamically and displays only the features supported
   - Charge thresholds: *100% (Full Charge)*, *80% (Balanced)*, *60% (Maximum Lifespan)*, or custom thresholds.
   - Automatically manages the hardware charge start threshold delta (10%) to minimize battery wear.
 - **Hardware Toggles:**
-  - *Cooler Boost* (instant maximum cooling).
+  - *Maximum cooling* (instant maximum fan speed).
   - *Fn / Windows Key Swap*.
   - *Webcam Lock* (hardware-level camera disable).
   - *USB PowerShare* (power USB devices while laptop is sleeping or off).

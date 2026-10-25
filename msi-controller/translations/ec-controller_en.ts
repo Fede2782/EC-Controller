@@ -519,18 +519,18 @@ Use Reload (F5) to try again once the service is running.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1161"/>
-        <source>Cooler Boost</source>
+        <location filename="../mainwindow.cpp" line="1163"/>
+        <source>Maximum cooling</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1165"/>
-        <source>Enable Cooler Boost?</source>
+        <location filename="../mainwindow.cpp" line="1167"/>
+        <source>Enable maximum cooling?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1166"/>
-        <source>Cooler Boost will spin the fans up to their maximum speed. Continue?</source>
+        <location filename="../mainwindow.cpp" line="1168"/>
+        <source>Maximum cooling will spin the fans up to their maximum speed. Continue?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

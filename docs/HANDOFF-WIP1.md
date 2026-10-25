@@ -135,7 +135,7 @@ titles below are as delivered; the repository history is authoritative.
 | M1 | Read-only overview: CPU/GPU temperature, up to 4 fan RPMs (hwmon) | `FeatureGroupBox`, `HardwareMonitor` (1 s poll via lib), `FanSpeedMonitor` (1 s poll of `fanN_input`) |
 | M2 | Fan mode dropdown | `setupModeDropdown()` shared by every "mode" attribute |
 | M3 | Performance (shift) mode + battery charge limit | Battery presets Max/Medium/Low + Custom dialog; writes **ChargeEnd** (see §9 G15) |
-| M4 | Toggles: Cooler Boost (with confirmation), Swap Fn/Win, Block Webcam, USB PowerShare | `setupToggle()`; Super Battery intentionally omitted (deprecated) |
+| M4 | Toggles: Maximum cooling (with confirmation), Swap Fn/Win, Block Webcam, USB PowerShare | `setupToggle()`; Super Battery intentionally omitted (deprecated) |
 | M5 | Keyboard backlight mode + brightness slider synced with UPower | `KbdBacklightBrightnessClient` (UPower `KbdBacklight` D-Bus, `BrightnessChanged`) |
 | M6 | Generic failure reporting | One `QMessageBox::warning` for any failed command |
 
@@ -215,7 +215,7 @@ order that defines the **default box order**.
 | `fanMode` | Dropdown of supported fan modes | `setMode(<ModeKey>)` |
 | `performanceMode` | Dropdown of supported shift modes | `setMode(<ModeKey>)` |
 | `battery` | Charge limit presets + Custom… (dialog) | `setAttrValue("ChargeEnd", int)` |
-| `hardwareToggles` | Cooler Boost (confirm on enable), Swap Fn/Win, Block Webcam, USB PowerShare | `setAttrValue(<Attr>, bool)` |
+| `hardwareToggles` | Maximum cooling (confirm on enable), Swap Fn/Win, Block Webcam, USB PowerShare | `setAttrValue(<Attr>, bool)` |
 | `keyboardBacklightMode` | Dropdown | `setMode(<ModeKey>)` |
 | `keyboardBacklightBrightness` | Slider (UPower, not the backend) | UPower `SetBrightness` |
 
