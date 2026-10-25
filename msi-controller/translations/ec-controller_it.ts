@@ -477,22 +477,22 @@ Usa Ricarica (F5) per provare nuovamente appena il servizio è in esecuzione.</t
     <message>
         <location filename="../mainwindow.cpp" line="1070"/>
         <source>Max — stop at %1%</source>
-        <translation>Massima — interrompi a %1%</translation>
+        <translation>Massimo — interrompi a %1%</translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="1071"/>
         <source>Medium — stop at %1%</source>
-        <translation>Media — interrompi a %1%</translation>
+        <translation>Medio — interrompi a %1%</translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="1072"/>
         <source>Low — stop at %1%</source>
-        <translation>Bassa — interrompi a %1%</translation>
+        <translation>Basso — interrompi a %1%</translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="1073"/>
         <source>Custom…</source>
-        <translation>Personalizzata...</translation>
+        <translation>Personalizzato...</translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="1102"/>
@@ -502,7 +502,7 @@ Usa Ricarica (F5) per provare nuovamente appena il servizio è in esecuzione.</t
     <message>
         <location filename="../mainwindow.cpp" line="1108"/>
         <source>Stops at %1%</source>
-        <translation>Interrompi a %1%</translation>
+        <translation>Interrompe a %1%</translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="1114"/>
@@ -512,7 +512,7 @@ Usa Ricarica (F5) per provare nuovamente appena il servizio è in esecuzione.</t
     <message>
         <location filename="../mainwindow.cpp" line="1115"/>
         <source>Charge limit</source>
-        <translation>Limita ricarica</translation>
+        <translation>Limite ricarica</translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="1129"/>
