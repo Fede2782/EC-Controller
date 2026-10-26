@@ -509,6 +509,8 @@ menu opens. The entry is disabled if the system file isn't installed.
 - **Settings:** Start at login.
 - **Help:** Reload GUI & backend connection (F5), —, About EC Controller, About Qt, Quit application (Ctrl+Q).
 
+About EC Controller displays application version, description, trademark notice, a link to the project GitHub repository (`https://github.com/Fede2782/EC-Controller`), and a clickable license link opening a dialog with the full GPLv3 LICENSE text.
+
 Actions live in `mainwindow.ui` with `action…` names. `actionEsci` is the legacy Italian name of
 Quit — keep it. Don't give menu-action enabled state a meaning users rely on (on the owner's
 desktop, runtime enable/disable of menu entries didn't show reliably); put state-dependent

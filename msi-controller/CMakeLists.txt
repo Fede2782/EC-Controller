@@ -42,6 +42,8 @@ set(MSI_CONTROLLER_GUI_SOURCES
     fancurveeditor.h
     fancurvedialog.cpp
     fancurvedialog.h
+    aboutdialog.cpp
+    aboutdialog.h
 )
 
 qt_add_dbus_interface(
@@ -65,6 +67,13 @@ qt_add_resources(msi-controller "fallback_icons"
     FILES
         "${MSI_CONTROLLER_ICON_ROOT}/apps/ec-controller.svg"
         "${MSI_CONTROLLER_ICON_ROOT}/status/ec-controller-tray.svg"
+)
+
+qt_add_resources(msi-controller "license_resource"
+    PREFIX "/legal"
+    BASE "${PROJECT_SOURCE_DIR}"
+    FILES
+        "${PROJECT_SOURCE_DIR}/LICENSE"
 )
 
 if(TARGET Qt6::lrelease)

@@ -8,6 +8,7 @@
 #include "displayrotation.h"
 #include "autostart.h"
 #include "fancurvedialog.h"
+#include "aboutdialog.h"
 
 #include <QApplication>
 #include <QCloseEvent>
@@ -220,14 +221,8 @@ void MainWindow::onExitTriggered()
 
 void MainWindow::onAboutTriggered()
 {
-    // The version is the one main.cpp gives the application, so it's the
-    // same number "ec-controller --version" prints.
-    QMessageBox::about(this, tr("About EC Controller"),
-        tr("EC Controller\nVersion %1\n\n"
-           "A GUI for controlling MSI laptop hardware via the msi-ec kernel driver.\n\n"
-           "MSI is a trademark of Micro-Star International Co., Ltd. EC Controller is an unofficial, "
-           "independent project. It is not affiliated with, endorsed by or supported by MSI.")
-            .arg(QCoreApplication::applicationVersion()));
+    AboutDialog dialog(this);
+    dialog.exec();
 }
 
 void MainWindow::onAboutQtTriggered()

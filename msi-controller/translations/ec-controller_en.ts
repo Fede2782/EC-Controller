@@ -2,6 +2,39 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="en_US">
 <context>
+    <name>AboutDialog</name>
+    <message>
+        <location filename="../aboutdialog.cpp" line="19"/>
+        <source>About EC Controller</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../aboutdialog.cpp" line="48"/>
+        <source>Version %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../aboutdialog.cpp" line="59"/>
+        <source>A GUI for controlling MSI laptop hardware via the msi-ec kernel driver.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../aboutdialog.cpp" line="65"/>
+        <source>MSI is a trademark of Micro-Star International Co., Ltd. EC Controller is an unofficial, independent project. It is not affiliated with, endorsed by or supported by MSI.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../aboutdialog.cpp" line="82"/>
+        <source>License: GNU General Public License, version 3</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../aboutdialog.cpp" line="98"/>
+        <source>Close</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>BackendClient</name>
     <message>
         <location filename="../backendclient.cpp" line="19"/>
@@ -134,6 +167,24 @@
     </message>
 </context>
 <context>
+    <name>LicenseDialog</name>
+    <message>
+        <location filename="../aboutdialog.cpp" line="107"/>
+        <source>License agreement — %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../aboutdialog.cpp" line="117"/>
+        <source>This program is distributed under the terms of the GPL v3 license.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../aboutdialog.cpp" line="139"/>
+        <source>Close</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>MainWindow</name>
     <message>
         <location filename="../mainwindow.ui" line="14"/>
@@ -202,7 +253,6 @@
     </message>
     <message>
         <location filename="../mainwindow.ui" line="166"/>
-        <location filename="../mainwindow.cpp" line="223"/>
         <source>About EC Controller</source>
         <translation type="unfinished"></translation>
     </message>
@@ -225,16 +275,6 @@
     <message>
         <location filename="../mainwindow.ui" line="188"/>
         <source>F5</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../mainwindow.cpp" line="224"/>
-        <source>EC Controller
-Version %1
-
-A GUI for controlling MSI laptop hardware via the msi-ec kernel driver.
-
-MSI is a trademark of Micro-Star International Co., Ltd. EC Controller is an unofficial, independent project. It is not affiliated with, endorsed by or supported by MSI.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
