@@ -506,9 +506,7 @@ Severity: 🔴 likely to bite · 🟠 real but contained · 🟡 cosmetic / hygi
   notification uses a "pending" flag; any command finishing in between would
   be taken as the answer. Fix together with B5, or tag calls in
   `BackendClient`.
-- 🟠 **G4 — Reload doesn't rebuild the UI.** Features that become supported
-  after start (driver loaded late) need an app restart. A rebuild means
-  tearing down boxes, write controls and resync callbacks.
+- 🟢 **G4 — Reload doesn't rebuild the UI.** (Resolved: Reload reinitializes the entire GUI via `clearGui()` and `buildGui()`, recreating hardware monitors and rebuilding topic boxes for features that appeared or changed after startup).
 - 🟠 **G5 — `FanSpeedMonitor` picks the first hwmon with `fan1_input`**,
   which may not be msi-ec's. Match the hwmon `name` instead.
 - 🟠 **G8 — translations are not wired.** Strings are wrapped in `tr()`, but

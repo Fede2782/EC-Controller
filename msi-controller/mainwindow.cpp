@@ -429,11 +429,14 @@ void MainWindow::setupGlobalShortcuts()
     // machine, like every other feature in the window.
 
     const bool hasShiftModes = std::any_of(shiftModes().cbegin(), shiftModes().cend(), isModeSupported);
-    if (hasShiftModes && !findChild<QAction *>(QStringLiteral("cycle-performance-mode"))) {
+    auto *existingCycleAction = findChild<QAction *>(QStringLiteral("cycle-performance-mode"));
+    if (hasShiftModes && !existingCycleAction) {
         auto *cycleAction = new QAction(tr("Cycle performance mode"), this);
         cycleAction->setObjectName(QStringLiteral("cycle-performance-mode"));
         KGlobalAccel::setGlobalShortcut(cycleAction, QKeySequence(Qt::Key_Launch1));
         connect(cycleAction, &QAction::triggered, this, &MainWindow::cycleShiftMode);
+    } else if (!hasShiftModes && existingCycleAction) {
+        delete existingCycleAction;
     }
 
     if (!displayRotation && DisplayRotation::isAvailable()) {

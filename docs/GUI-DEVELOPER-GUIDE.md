@@ -211,8 +211,7 @@ feature must follow them.
 - **A box is created only if at least one of its rows is supported**; otherwise it isn't added to
   the window at all. A dropdown contains only supported modes. Never show a control that can't
   work on this machine.
-- Support is decided once, when the window is built (Reload doesn't rebuild boxes — known issue
-  G4, §13).
+- Support is decided when the window is built, and re-evaluated on Reload (Reload clears and rebuilds the UI so features appearing after start, like a kernel driver loaded later, are picked up without restarting).
 
 ### 5.2 Reading
 
@@ -957,7 +956,7 @@ None of these are approved work — propose, don't just do (§9.2).
 | Id | Issue | Direction |
 |---|---|---|
 | G3 | `commandFinished(bool)` doesn't say *which* command finished (the shift-mode notification relies on a pending flag) | tag calls in `BackendClient`, or wait for B5 |
-| G4 | Reload doesn't rebuild boxes: a feature that appears after start (driver loaded later) needs a restart | make Reload rebuild |
+| G4 | Reload doesn't rebuild boxes: a feature that appears after start (driver loaded later) needs a restart | resolved: reload clears and rebuilds GUI, re-probes hardware monitors, and updates window geometry |
 | G5 | `FanSpeedMonitor` takes the first hwmon with `fan1_input`, which may not be msi-ec's | match hwmon by name |
 | G6 | Polling (1 s) continues while hidden in the tray | resolved: paused via hideEvent/showEvent |
 | G8 | Strings are in `tr()` but no translation is ever generated or loaded | resolved: added Qt Linguist pipeline and runtime loader |
