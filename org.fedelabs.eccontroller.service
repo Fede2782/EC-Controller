@@ -4,7 +4,8 @@
 [Unit]
 Description=EC Controller Service
 Requires=dbus.service
-After=dbus.service
+After=dbus.service systemd-modules-load.service
+Wants=systemd-modules-load.service
 
 [Service]
 Type=dbus

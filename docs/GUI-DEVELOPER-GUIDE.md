@@ -979,7 +979,7 @@ None of these are approved work — propose, don't just do (§9.2).
 | B3 | Charge start/end gap is never validated |
 | B4 / B5 | No change signals; results are only `bool` (can't tell "denied" from "failed") — the root of G3/G18 and of resync-everything |
 | B6 | Polkit rule covers only group `wheel` (Debian/Ubuntu admins use `sudo`) | resolved: allowed active members of group `sudo` in addition to `wheel` |
-| B9 | Restore order is implicit (enum order) and the service doesn't wait for the driver |
+| B9 | Restore order is implicit (enum order) and the service doesn't wait for the driver | resolved: systemd unit waits for systemd-modules-load.service |
 | B10 | No re-apply of fan mode/curve after resume (the driver leaves it to userspace) |
 | L5 / L6 | Curves are plain strings; the entry count is derived from reading the current curve |
 
