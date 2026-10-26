@@ -5,7 +5,7 @@ Version:        1.0.2
 Release:        1%{?dist}
 Summary:        Control MSI laptop hardware through the msi-ec driver
 
-License:        GPL-3.0-only
+License:        GPL-3.0-or-later
 URL:            https://github.com/Fede2782/EC-Controller
 Source0:        %{name}-%{version}.tar.gz
 
