@@ -473,9 +473,7 @@ Severity: 🔴 likely to bite · 🟠 real but contained · 🟡 cosmetic / hygi
   say *why* something failed (polkit denied vs validation vs driver). Add
   richer variants (e.g. `setAttrValueChecked(s,v) → (b, s reason)`) alongside
   the existing ones.
-- 🟠 **B6 — polkit rule only covers `wheel`.** Debian/Ubuntu admins are in
-  `sudo`, so they get a password prompt (then 5 min `auth_admin_keep`). Add
-  `sudo` to `org.fedelabs.MsiController.rules` if that's the intent.
+- 🟢 **B6 — polkit rule covers both `wheel` and `sudo`.** (Resolved: Added `sudo` group to polkit rule for Debian and Ubuntu admin sessions).
 - 🟡 **B7 — versions disagree.** Service reports `0.3`, GUI `0.1`, project
   `0.3`. Generate both from `project(VERSION)`.
 - 🟡 **B8 — `restoreState()` restores every saved RW attribute**, including
@@ -629,7 +627,7 @@ System bus  org.fedelabs.MsiController  /MsiController  org.fedelabs.MsiControll
   setAttrValue(s attrKey, b value) → b      attrKey = MsiEcAttribute key, e.g. "CoolerBoost"
   setAttrValue(s attrKey, s value) → b
   setAttrValue(s attrKey, i value) → b      e.g. ("ChargeEnd", 80)
-  polkit action: org.fedelabs.MsiControllerAPI.write  (active: auth_admin_keep; wheel: yes)
+  polkit action: org.fedelabs.MsiControllerAPI.write  (active: auth_admin_keep; wheel/sudo: yes)
 
 Session bus  org.fedelabs.MsiController.App  /App  org.fedelabs.MsiController.App
   activate(s xdgActivationToken)            show the running GUI
