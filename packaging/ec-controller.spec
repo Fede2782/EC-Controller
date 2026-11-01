@@ -48,6 +48,7 @@ DESTDIR=%{buildroot} cmake --install build
 
 %check
 desktop-file-validate %{buildroot}%{_datadir}/applications/org.fedelabs.EcController.desktop
+desktop-file-validate %{buildroot}%{_sysconfdir}/xdg/autostart/org.fedelabs.EcController.desktop
 
 %post
 %systemd_post org.fedelabs.eccontroller.service
@@ -69,7 +70,7 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/org.fedelabs.EcContro
 %{_unitdir}/org.fedelabs.eccontroller.service
 %{_datadir}/applications/org.fedelabs.EcController.desktop
 %{_datadir}/metainfo/org.fedelabs.EcController.metainfo.xml
-%config(noreplace) %{_sysconfdir}/xdg/autostart/ec-controller-autostart.desktop
+%config(noreplace) %{_sysconfdir}/xdg/autostart/org.fedelabs.EcController.desktop
 %{_datadir}/icons/hicolor/*/*/ec-controller*
 %{_datadir}/icons/breeze/*/*/ec-controller*
 %{_datadir}/icons/breeze-dark/*/*/ec-controller*

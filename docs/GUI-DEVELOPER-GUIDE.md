@@ -125,7 +125,7 @@ packaging/                         postinst, prerm (.deb), postinst.rpm, prerm.r
 .github/workflows/packages.yml     CI: builds .deb and .rpm, publishes releases
 docs/                              HANDOFF-WIP1.md (history of the GUI chapter)
 org.fedelabs.EcController.{conf,policy,rules}, org.fedelabs.eccontroller.service
-org.fedelabs.EcController.desktop, ec-controller-autostart.desktop
+org.fedelabs.EcController.desktop, autostart/org.fedelabs.EcController.desktop
 ```
 
 GUI files (`msi-controller/`), about 3,850 lines in total:
@@ -497,11 +497,14 @@ Shortcuts under "EC Controller":
 
 ### 6.13 Start at login
 
-System entry `/etc/xdg/autostart/ec-controller-autostart.desktop` (`Exec=ec-controller
---minimized`) starts it for every user. *Settings → Start at Login* writes
-`~/.config/autostart/ec-controller-autostart.desktop` with `Hidden=true` to opt out, and deletes
-it to opt back in (the same file KDE's Autostart page edits). The state is re-read every time the
-menu opens. The entry is disabled if the system file isn't installed.
+System entry `/etc/xdg/autostart/org.fedelabs.EcController.desktop` (`Exec=ec-controller
+--minimized`) starts it for every user. The file name matches `org.fedelabs.EcController.desktop`
+so KDE System Settings detects and associates the entry with the application.
+On clean start, `~/.config/autostart/org.fedelabs.EcController.desktop` is ensured to be present
+in the user directory (migrating and removing any legacy `ec-controller-autostart.desktop`).
+*Settings → Start at Login* toggles `Hidden=true` in `~/.config/autostart/org.fedelabs.EcController.desktop`
+to disable autostart, and removes the `Hidden` flag when enabled (matching KDE Plasma's autostart
+behavior without deleting the desktop entry). The state is re-read every time the menu opens.
 
 ### 6.14 Menus
 
@@ -545,7 +548,7 @@ exported), and the GUI's proxy from that XML. **Every public slot of the service
 | `~/.config/FedeLabs/ec-controller.conf` (GUI) | `GUI/topicBoxOrder` | `QStringList` of box ids |
 | | `GUI/showAllFanSlots` | bool |
 | | `GUI/trayHintShown` | bool |
-| `~/.config/autostart/ec-controller-autostart.desktop` | `Hidden=true` | user opted out of start at login |
+| `~/.config/autostart/org.fedelabs.EcController.desktop` | `Hidden=true` | user opted out of start at login |
 | kglobalaccel | component `ec-controller` | shortcut bindings |
 
 ### 7.3 sysfs used by the GUI (all via the library unless noted)

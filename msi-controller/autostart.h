@@ -5,23 +5,27 @@
 
 // Start-at-login, the XDG autostart way.
 //
-// The system-wide entry (ec-controller-autostart.desktop in
-// /etc/xdg/autostart, installed by the top-level CMakeLists.txt) makes
-// every user start the application at login by default. A user opts out
-// with an entry of the same name in their own ~/.config/autostart that
-// says Hidden=true - the same override KDE's Autostart settings page
-// writes, so the two always agree.
+// The autostart entry is installed as org.fedelabs.EcController.desktop in
+// /etc/xdg/autostart and mirrored in ~/.config/autostart with an identical file
+// name to /usr/share/applications/org.fedelabs.EcController.desktop so that KDE
+// System Settings can recognize and manage it. The file is kept always present
+// in the user's autostart directory; toggling start-at-login switches the
+// Freedesktop "Hidden=true" disable flag.
 namespace Autostart {
 
-// Whether the system-wide entry is installed. Without it there's nothing
-// to switch on or off.
+// Ensures the user's autostart desktop entry file exists in ~/.config/autostart.
+// If it does not exist, it is created (enabled by default). Any legacy
+// ec-controller-autostart.desktop file is migrated and removed.
+bool ensureUserEntry();
+
+// Whether the autostart feature is available on the system.
 bool isAvailable();
 
 // Whether the application will start at the next login for this user.
 bool isEnabled();
 
-// Writes or removes this user's override. Returns false if the file
-// couldn't be written or removed.
+// Sets whether autostart is enabled by adding or removing the Hidden=true flag.
+// The desktop file remains present in the user autostart directory.
 bool setEnabled(bool enabled);
 
 }

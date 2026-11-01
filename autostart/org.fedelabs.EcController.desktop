@@ -9,3 +9,5 @@ Exec=ec-controller --minimized
 Icon=ec-controller
 Type=Application
 Terminal=false
+StartupWMClass=org.fedelabs.EcController
+Categories=Qt;KDE;System;HardwareSettings;Settings;

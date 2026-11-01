@@ -379,8 +379,10 @@ bool MainWindow::canHideToTray() const
 
 void MainWindow::setupAutostart()
 {
-    // Without the system-wide entry installed (e.g. running from the build
-    // tree) there's nothing to switch, so the entry is greyed out.
+    // Ensure the autostart entry exists in ~/.config/autostart/ so KDE System Settings
+    // and other autostart managers detect and display it.
+    Autostart::ensureUserEntry();
+
     ui->actionStartAtLogin->setEnabled(Autostart::isAvailable());
 
     // Re-read every time the menu opens: KDE's Autostart settings page

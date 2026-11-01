@@ -8,9 +8,10 @@
 #include <QStandardPaths>
 
 namespace {
-// Must match the file the top-level CMakeLists.txt installs: the XDG
-// override only applies to an entry with exactly the same name.
-const QString entryFileName = QStringLiteral("ec-controller-autostart.desktop");
+// Must match the application desktop file name in /usr/share/applications/
+// so KDE System Settings can associate the autostart entry with the application.
+const QString entryFileName = QStringLiteral("org.fedelabs.EcController.desktop");
+const QString legacyEntryFileName = QStringLiteral("ec-controller-autostart.desktop");
 
 QString userConfigDir()
 {
@@ -22,7 +23,12 @@ QString userEntryPath()
     return userConfigDir() + QStringLiteral("/autostart/") + entryFileName;
 }
 
-// The system-wide entry, from the config dirs other than the user's own
+QString legacyUserEntryPath()
+{
+    return userConfigDir() + QStringLiteral("/autostart/") + legacyEntryFileName;
+}
+
+// The system-wide entry, from config dirs other than the user's own
 // ($XDG_CONFIG_DIRS, normally /etc/xdg).
 QString systemEntryPath()
 {
@@ -39,12 +45,10 @@ QString systemEntryPath()
     return QString();
 }
 
-// Whether the user's override disables the entry. Read by hand rather
-// than with QSettings, which doesn't handle desktop files (it would read
-// the group name, but can't write one with a space in it).
-bool userEntryHides()
+// Whether a desktop entry file has Hidden=true under [Desktop Entry].
+bool fileHides(const QString &filePath)
 {
-    QFile file(userEntryPath());
+    QFile file(filePath);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         return false;
     }
@@ -66,28 +70,47 @@ bool userEntryHides()
 
 namespace Autostart {
 
-bool isAvailable()
-{
-    return !systemEntryPath().isEmpty();
-}
-
-bool isEnabled()
-{
-    return isAvailable() && !userEntryHides();
-}
-
-bool setEnabled(bool enabled)
+bool ensureUserEntry()
 {
     const QString path = userEntryPath();
-
-    if (enabled) {
-        // Removing the override brings the system-wide entry back into
-        // effect.
-        return !QFile::exists(path) || QFile::remove(path);
+    if (QFile::exists(path)) {
+        return true;
     }
 
-    if (!QDir().mkpath(QFileInfo(path).absolutePath())) {
+    // Check if a legacy ec-controller-autostart.desktop file exists, and preserve its disabled state
+    const QString oldPath = legacyUserEntryPath();
+    bool wasDisabled = false;
+    if (QFile::exists(oldPath)) {
+        wasDisabled = fileHides(oldPath);
+        QFile::remove(oldPath);
+    }
+
+    const QFileInfo fi(path);
+    if (!QDir().mkpath(fi.absolutePath())) {
         return false;
+    }
+
+    // Use system-wide template if installed; otherwise write default template
+    QByteArray content;
+    const QString sysPath = systemEntryPath();
+    if (!sysPath.isEmpty()) {
+        QFile sysFile(sysPath);
+        if (sysFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            content = sysFile.readAll();
+        }
+    }
+
+    if (content.isEmpty()) {
+        content = "[Desktop Entry]\n"
+                  "Name=EC Controller\n"
+                  "Comment=Get full control of your MSI Laptop\n"
+                  "Comment[it]=Ottieni il controllo completo del tuo portatile MSI\n"
+                  "Exec=ec-controller --minimized\n"
+                  "Icon=ec-controller\n"
+                  "Type=Application\n"
+                  "Terminal=false\n"
+                  "StartupWMClass=org.fedelabs.EcController\n"
+                  "Categories=Qt;KDE;System;HardwareSettings;Settings;\n";
     }
 
     QFile file(path);
@@ -95,13 +118,91 @@ bool setEnabled(bool enabled)
         return false;
     }
 
-    // Name and Type keep the entry readable in KDE's Autostart settings;
-    // Hidden=true is what actually disables it.
-    const QByteArray content = "[Desktop Entry]\n"
-                               "Type=Application\n"
-                               "Name=EC Controller\n"
-                               "Hidden=true\n";
-    return file.write(content) == content.size();
+    if (file.write(content) != content.size()) {
+        return false;
+    }
+    file.close();
+
+    if (wasDisabled) {
+        setEnabled(false);
+    }
+
+    return true;
+}
+
+bool isAvailable()
+{
+    return QFile::exists(userEntryPath()) || !systemEntryPath().isEmpty() || ensureUserEntry();
+}
+
+bool isEnabled()
+{
+    ensureUserEntry();
+    return !fileHides(userEntryPath());
+}
+
+bool setEnabled(bool enabled)
+{
+    ensureUserEntry();
+
+    const QString path = userEntryPath();
+    QFile file(path);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        return false;
+    }
+
+    QStringList lines;
+    bool inDesktopEntry = false;
+    bool foundHiddenLine = false;
+    int desktopEntryIndex = -1;
+
+    while (!file.atEnd()) {
+        const QString line = QString::fromUtf8(file.readLine());
+        const QString trimmed = line.trimmed();
+
+        if (trimmed.startsWith(QLatin1Char('['))) {
+            inDesktopEntry = (trimmed == QLatin1String("[Desktop Entry]"));
+            if (inDesktopEntry) {
+                desktopEntryIndex = lines.size();
+            }
+            lines.append(line);
+            continue;
+        }
+
+        if (inDesktopEntry && trimmed.startsWith(QLatin1String("Hidden="))) {
+            foundHiddenLine = true;
+            if (!enabled) {
+                lines.append(QStringLiteral("Hidden=true\n"));
+            }
+            // When enabled, drop the Hidden= line
+            continue;
+        }
+
+        lines.append(line);
+    }
+    file.close();
+
+    // If disabling and no Hidden= line existed in [Desktop Entry], insert it
+    if (!enabled && !foundHiddenLine) {
+        if (desktopEntryIndex >= 0) {
+            lines.insert(desktopEntryIndex + 1, QStringLiteral("Hidden=true\n"));
+        } else {
+            lines.prepend(QStringLiteral("[Desktop Entry]\nHidden=true\n"));
+        }
+    }
+
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text)) {
+        return false;
+    }
+
+    for (const QString &l : lines) {
+        const QByteArray bytes = l.toUtf8();
+        if (file.write(bytes) != bytes.size()) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 }

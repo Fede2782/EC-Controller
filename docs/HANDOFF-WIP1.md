@@ -528,9 +528,7 @@ Severity: 🔴 likely to bite · 🟠 real but contained · 🟡 cosmetic / hygi
   relies on Qt's StatusNotifierItem activation-token support.
 - 🟡 **G11** — display rotation is only restored on a clean quit (not after a
   crash or `kill -9`; pressing the key again still flips back).
-- 🟡 **G13** — re-enabling autostart deletes the user's override file, losing
-  any custom edits in it. The toggle is disabled when the system entry lives
-  somewhere XDG doesn't read (e.g. `/usr/local/etc`).
+- 🟢 **G13** — resolved: autostart file is named `org.fedelabs.EcController.desktop` matching the application ID in `/usr/share/applications`, is always present in `~/.config/autostart/`, and toggles `Hidden=true` rather than deleting the file.
 - 🟡 **G14** — `KdePowerManagementWatcher` is KDE-only; other desktops don't get
   external battery-threshold updates.
 - 🟡 **G16** — single-instance: tiny race at simultaneous start; X11

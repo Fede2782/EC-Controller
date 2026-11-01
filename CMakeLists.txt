@@ -206,7 +206,8 @@ find_program(MSI_CONTROLLER_DESKTOP_FILE_VALIDATE desktop-file-validate)
 if(MSI_CONTROLLER_DESKTOP_FILE_VALIDATE)
     add_custom_target(validate-desktop ALL
         COMMAND "${MSI_CONTROLLER_DESKTOP_FILE_VALIDATE}" "${CMAKE_CURRENT_SOURCE_DIR}/org.fedelabs.EcController.desktop"
-        COMMENT "Validating org.fedelabs.EcController.desktop"
+        COMMAND "${MSI_CONTROLLER_DESKTOP_FILE_VALIDATE}" "${CMAKE_CURRENT_SOURCE_DIR}/autostart/org.fedelabs.EcController.desktop"
+        COMMENT "Validating desktop entries"
     )
 endif()
 
@@ -215,12 +216,13 @@ install(FILES
     DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/metainfo"
 )
 
-# Start the application at every user's login, hidden in the tray. Users
-# opt out from Settings > Start at Login (or KDE's Autostart settings),
-# which writes a Hidden=true override of this same file name into their
-# own ~/.config/autostart. SYSCONFDIR is /etc for a /usr prefix.
+# Start the application at every user's login, hidden in the tray.
+# The entry file name matches org.fedelabs.EcController.desktop so KDE System Settings
+# associates it with the application. Users opt out from Settings > Start at Login
+# (or KDE's Autostart settings), which toggles Hidden=true in ~/.config/autostart.
+# SYSCONFDIR is /etc for a /usr prefix.
 install(FILES
-    "${CMAKE_CURRENT_SOURCE_DIR}/ec-controller-autostart.desktop"
+    "${CMAKE_CURRENT_SOURCE_DIR}/autostart/org.fedelabs.EcController.desktop"
     DESTINATION "${CMAKE_INSTALL_FULL_SYSCONFDIR}/xdg/autostart"
 )
 
