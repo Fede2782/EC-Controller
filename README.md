@@ -50,6 +50,7 @@ EC Controller queries sysfs dynamically and displays only the features supported
   - Selecting *Advanced* opens the fan curve editor featuring a curve chart, synchronized temperature/speed thresholds, and safety constraint validation (strictly increasing temperatures, monotonic fan speeds, and an 85%+ emergency top-speed floor).
 - **Performance Modes (Shift Modes):**
   - Switch between *Comfort*, *Turbo*, *Eco*, and *Sport* profiles.
+  - **Automatic Eco Mode on Battery:** Automatically switch to *Eco* mode when disconnected from AC power, restoring your previous performance profile upon reconnection. Manual profile adjustments made while on battery are preserved. Desktop notifications announce transitions across all supported desktop environments.
 - **Battery Health Management:**
   - Charge thresholds: *100% (Full Charge)*, *80% (Balanced)*, *60% (Maximum Lifespan)*, or custom thresholds.
   - Automatically manages the hardware charge start threshold delta (10%) to minimize battery wear.
@@ -64,7 +65,9 @@ EC Controller queries sysfs dynamically and displays only the features supported
   - The [Fede2782/msi-ec](https://github.com/Fede2782/msi-ec) driver reports brightness changes to userspace so your desktop environment can display on-screen graphics (OSD notifications) when brightness is changed.
 - **Desktop & System Integration:**
   - **System Tray:** Minimizes to tray on close with custom Breeze and Breeze Dark SVG themes.
-  - **Start at Login:** Automatically launches minimized into the system tray at user login (configurable in Settings).
+  - **Start at Login:** Automatically launches minimized into the system tray at user login via an XDG autostart entry (`org.fedelabs.EcController.desktop`) that integrates directly with KDE Plasma System Settings and other desktop autostart managers.
+  - **Localization & Multi-Language Support:** Includes built-in English and Italian translations, automatically selected based on system locale.
+  - **About & License Viewer:** In-app About dialog featuring project repository links and an interactive GPLv3 license viewer dialog.
   - **State Persistence:** Settings are saved to `/etc/eccontroller.conf` by the backend and automatically restored across system reboots.
   - **KDE Plasma Extras:**
     - Pre-mapped keyboard shortcuts for cycling performance (Shift) modes (with desktop notifications) and flipping the display 180° via `kscreen-doctor` (with orientation restored on quit).
@@ -92,6 +95,7 @@ EC Controller uses a split, privilege-separated design:
   - Qt 6 (≥ 6.8.0: Core, Widgets, DBus).
   - KDE Frameworks 6 (≥ 6.13.0: CoreAddons, GlobalAccel, Notifications).
   - Polkit-Qt6 (`polkit-qt6-1`).
+  - UPower (`org.freedesktop.UPower`).
   - systemd, D-Bus, and Polkit daemons.
 
 ---
@@ -228,6 +232,7 @@ Contributions of any kind are welcomed!
 
 Special thanks to the developers and projects that make this work possible:
 
+- **[dmitry-s93/MControlCenter](https://github.com/dmitry-s93/MControlCenter)** — For the idea of the application.
 - **[BeardOverflow](https://github.com/BeardOverflow)** — Author of the foundational [`msi-ec`](https://github.com/BeardOverflow/msi-ec) Linux kernel driver.
 - **[BeardOverflow/msi-ec PR #143](https://github.com/BeardOverflow/msi-ec/pull/143)** — Implementation of the fan curve sysfs interface.
 - **[RisenID](https://github.com/RisenID)** — Collaborator and contributor.
