@@ -609,6 +609,31 @@ Usa Ricarica (F5) per provare nuovamente appena il servizio è in esecuzione.</t
         <source>Brightness</source>
         <translation>Intensità</translation>
     </message>
+    <message>
+        <location filename="../mainwindow.cpp" line="384"/>
+        <source>Couldn't switch performance mode automatically.</source>
+        <translation>Impossibile cambiare automaticamente la modalità prestazioni.</translation>
+    </message>
+    <message>
+        <location filename="../mainwindow.cpp" line="547"/>
+        <source>%1 (on battery)</source>
+        <translation>%1 (a batteria)</translation>
+    </message>
+    <message>
+        <location filename="../mainwindow.cpp" line="548"/>
+        <source>%1 (plugged in)</source>
+        <translation>%1 (alimentato)</translation>
+    </message>
+    <message>
+        <location filename="../mainwindow.cpp" line="1126"/>
+        <source>Switch to Eco on battery</source>
+        <translation>Passa a Eco a batteria</translation>
+    </message>
+    <message>
+        <location filename="../mainwindow.cpp" line="1128"/>
+        <source>Automatically switch to Eco performance mode when device is unplugged from charge, and restore the previous mode when reattached.</source>
+        <translation>Passa automaticamente alla modalità prestazioni Eco quando il dispositivo è scollegato dall'alimentazione e ripristina la modalità precedente al ricollegamento.</translation>
+    </message>
 </context>
 <context>
     <name>TopicBoxArea</name>

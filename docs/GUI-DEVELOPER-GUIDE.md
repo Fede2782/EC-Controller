@@ -423,12 +423,23 @@ the user edits it.
 "CPU Fan" / "GPU Fan" tab pair. Apply is enabled only while every editor is valid; otherwise a
 message states the rules. Fixed size (§5.6). **It writes nothing.**
 
-### 6.5 Performance mode shortcut and notification
+### 6.5 Performance mode, automatic Eco switch on battery, and notifications
 
 `cycle-performance-mode` (default `Qt::Key_Launch1`) moves to the next supported shift mode
 after the one the hardware reports. The notification is shown only after
 `commandFinished(true)` (flag `shiftModeCyclePending`), with the text read back from sysfs,
 closed after 3 s, and replaced by a newer press.
+
+When Eco mode is supported by the driver, the Performance mode feature box offers a
+"Switch to Eco on battery" checkbox (persisted as `GUI/ecoOnBattery`). When enabled:
+- When the device is unplugged from charge (`PowerStateWatcher`), if the current mode is not Eco,
+  the current mode is saved and the application automatically switches to Eco mode, sending a notification
+  ("%1 (on battery)").
+- When the device is reattached to charge, the previously saved mode is restored and announced
+  via notification ("%1 (plugged in)").
+- If the mode is manually changed (via the dropdown or the global shortcut) while running on battery,
+  the automatic restoration is invalidated and the mode will not be reverted on plug-in.
+- Power state changes are monitored through `org.freedesktop.UPower` on the system D-Bus (zero polling overhead).
 
 ### 6.6 Battery
 
@@ -548,6 +559,8 @@ exported), and the GUI's proxy from that XML. **Every public slot of the service
 | `~/.config/FedeLabs/ec-controller.conf` (GUI) | `GUI/topicBoxOrder` | `QStringList` of box ids |
 | | `GUI/showAllFanSlots` | bool |
 | | `GUI/trayHintShown` | bool |
+| | `GUI/ecoOnBattery` | bool (automatically switch to Eco mode on battery) |
+| | `GUI/savedShiftModeBeforeEco` | QString (mode to restore when reattached to AC) |
 | `~/.config/autostart/org.fedelabs.EcController.desktop` | `Hidden=true` | user opted out of start at login |
 | kglobalaccel | component `ec-controller` | shortcut bindings |
 

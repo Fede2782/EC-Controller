@@ -31,6 +31,7 @@ class FeatureGroupBox;
 class QPushButton;
 class DisplayRotation;
 class KNotification;
+class PowerStateWatcher;
 class TopicBoxArea;
 class TrayIcon;
 
@@ -101,6 +102,10 @@ private:
     // follows once the backend confirms (see onCommandFinished()).
     void cycleShiftMode();
     void notifyCurrentShiftMode();
+    void notifyAutoShiftMode(MsiControllerLib::MsiEcMode mode);
+    void handlePowerStateChanged(bool onBattery);
+    bool isEcoOnBatteryEnabled() const;
+    void invalidateSavedShiftMode();
 
     // Left click on the tray icon: hide the window into the tray if the
     // user was just looking at it, otherwise bring it forward.
@@ -204,6 +209,7 @@ private:
     FanSpeedMonitor *fanSpeedMonitor;
     KbdBacklightBrightnessClient *kbdBacklightBrightness;
     KdePowerManagementWatcher *kdePowerManagementWatcher;
+    PowerStateWatcher *powerWatcher = nullptr;
 
     // Holds every topic box and owns their ordering.
     TopicBoxArea *topicBoxes = nullptr;
@@ -216,6 +222,9 @@ private:
     // Set while a mode change requested from the Launch1 shortcut waits
     // for the backend's answer.
     bool shiftModeCyclePending = false;
+    bool m_autoShiftModePending = false;
+    MsiControllerLib::MsiEcMode m_autoShiftTargetMode = MsiControllerLib::MsiEcMode::EcoShift;
+    QString m_savedShiftModeBeforeEco;
 
     // The performance-mode notification currently on screen, if any. Null
     // once it's closed - KNotification deletes itself.

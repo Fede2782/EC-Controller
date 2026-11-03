@@ -24,6 +24,8 @@ set(MSI_CONTROLLER_GUI_SOURCES
     kbdbacklightbrightnessclient.h
     kdepowermanagementwatcher.cpp
     kdepowermanagementwatcher.h
+    powerstatewatcher.cpp
+    powerstatewatcher.h
     featuregroupbox.cpp
     featuregroupbox.h
     topicboxarea.cpp

@@ -608,6 +608,31 @@ Use Reload (F5) to try again once the service is running.</source>
         <source>Brightness</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <location filename="../mainwindow.cpp" line="384"/>
+        <source>Couldn't switch performance mode automatically.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../mainwindow.cpp" line="547"/>
+        <source>%1 (on battery)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../mainwindow.cpp" line="548"/>
+        <source>%1 (plugged in)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../mainwindow.cpp" line="1126"/>
+        <source>Switch to Eco on battery</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../mainwindow.cpp" line="1128"/>
+        <source>Automatically switch to Eco performance mode when device is unplugged from charge, and restore the previous mode when reattached.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>TopicBoxArea</name>

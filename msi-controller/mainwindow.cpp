@@ -9,6 +9,7 @@
 #include "autostart.h"
 #include "fancurvedialog.h"
 #include "aboutdialog.h"
+#include "powerstatewatcher.h"
 
 #include <QApplication>
 #include <QCloseEvent>
@@ -70,6 +71,12 @@ const QString showAllFanSlotsSettingsKey = QStringLiteral("GUI/showAllFanSlots")
 // shown once, ever: after that, closing into the tray is expected.
 const QString trayHintShownSettingsKey = QStringLiteral("GUI/trayHintShown");
 
+// Settings key for automatic Eco mode switch when running on battery.
+const QString ecoOnBatterySettingsKey = QStringLiteral("GUI/ecoOnBattery");
+
+// Persisted mode to restore when reconnecting to AC power.
+const QString savedShiftModeBeforeEcoSettingsKey = QStringLiteral("GUI/savedShiftModeBeforeEco");
+
 // How recently the window may have lost focus for a tray click to count as
 // "the user was just looking at it". Generous on purpose - a slow click is
 // still well under a second, while deliberately switching away and then
@@ -85,9 +92,12 @@ MainWindow::MainWindow(QWidget *parent)
     , fanSpeedMonitor(new FanSpeedMonitor(this))
     , kbdBacklightBrightness(new KbdBacklightBrightnessClient(this))
     , kdePowerManagementWatcher(new KdePowerManagementWatcher(this))
+    , powerWatcher(new PowerStateWatcher(this))
     , trayIcon(new TrayIcon(this))
 {
     ui->setupUi(this);
+    m_savedShiftModeBeforeEco = QSettings().value(savedShiftModeBeforeEcoSettingsKey).toString();
+    connect(powerWatcher, &PowerStateWatcher::powerStateChanged, this, &MainWindow::handlePowerStateChanged);
     setupStatusBar();
     setupTray();
 
@@ -365,7 +375,20 @@ void MainWindow::onCommandFinished(bool success)
         }
     }
 
-    if (!success) {
+    const bool wasAutoShift = m_autoShiftModePending;
+    if (m_autoShiftModePending) {
+        m_autoShiftModePending = false;
+        if (success) {
+            notifyAutoShiftMode(m_autoShiftTargetMode);
+        } else {
+            invalidateSavedShiftMode();
+            KNotification::event(KNotification::Warning, tr("Performance mode"),
+                                 tr("Couldn't switch performance mode automatically."),
+                                 notificationIconName);
+        }
+    }
+
+    if (!success && !wasAutoShift) {
         QMessageBox::warning(this, tr("Couldn't apply change"),
             tr("The change couldn't be applied. Check that the msi-ec driver is loaded and up to date, "
                "and check the service logs for details."));
@@ -457,6 +480,10 @@ void MainWindow::setupGlobalShortcuts()
 
 void MainWindow::cycleShiftMode()
 {
+    if (powerWatcher && powerWatcher->isOnBattery()) {
+        invalidateSavedShiftMode();
+    }
+
     // The shortcut works with the window hidden in the tray, so the answer
     // has to come as a notification rather than anything in the window.
     if (!backend->isConnected()) {
@@ -508,6 +535,76 @@ void MainWindow::notifyCurrentShiftMode()
     // Tied to the notification: if it's closed and deleted first (by the
     // user, or by the desktop's own timeout), the timer goes with it.
     QTimer::singleShot(shiftModeNotificationTimeoutMs, shiftModeNotification.data(), &KNotification::close);
+}
+
+void MainWindow::notifyAutoShiftMode(MsiEcMode mode)
+{
+    if (shiftModeNotification) {
+        shiftModeNotification->close();
+    }
+
+    const QString text = (mode == MsiEcMode::EcoShift)
+        ? tr("%1 (on battery)").arg(modeLabel(mode))
+        : tr("%1 (plugged in)").arg(modeLabel(mode));
+
+    shiftModeNotification = KNotification::event(KNotification::Notification, tr("Performance mode"),
+                                                 text, notificationIconName);
+
+    QTimer::singleShot(shiftModeNotificationTimeoutMs, shiftModeNotification.data(), &KNotification::close);
+}
+
+bool MainWindow::isEcoOnBatteryEnabled() const
+{
+    return QSettings().value(ecoOnBatterySettingsKey, false).toBool();
+}
+
+void MainWindow::invalidateSavedShiftMode()
+{
+    if (!m_savedShiftModeBeforeEco.isEmpty()) {
+        m_savedShiftModeBeforeEco.clear();
+        QSettings().remove(savedShiftModeBeforeEcoSettingsKey);
+    }
+}
+
+void MainWindow::handlePowerStateChanged(bool onBattery)
+{
+    if (!isEcoOnBatteryEnabled() || !isModeSupported(MsiEcMode::EcoShift)) {
+        return;
+    }
+
+    if (onBattery) {
+        // Device was unplugged from charge
+        QString currentModeName;
+        if (!getAttrValue(MsiEcAttribute::ShiftMode, &currentModeName)) {
+            return;
+        }
+
+        const MsiEcMode currentMode = parseModeName(currentModeName);
+        if (currentMode != MsiEcMode::EcoShift) {
+            // Save the mode before switching to Eco
+            m_savedShiftModeBeforeEco = currentModeName;
+            QSettings().setValue(savedShiftModeBeforeEcoSettingsKey, m_savedShiftModeBeforeEco);
+
+            m_autoShiftModePending = true;
+            m_autoShiftTargetMode = MsiEcMode::EcoShift;
+            backend->setMode(getModeKey(MsiEcMode::EcoShift));
+        } else {
+            // Already in Eco mode; no restoration needed
+            invalidateSavedShiftMode();
+        }
+    } else {
+        // Device was reattached to charge
+        if (!m_savedShiftModeBeforeEco.isEmpty()) {
+            const MsiEcMode modeToRestore = parseModeName(m_savedShiftModeBeforeEco);
+            invalidateSavedShiftMode();
+
+            if (isModeSupported(modeToRestore)) {
+                m_autoShiftModePending = true;
+                m_autoShiftTargetMode = modeToRestore;
+                backend->setMode(getModeKey(modeToRestore));
+            }
+        }
+    }
 }
 
 void MainWindow::setupStatusBar()
@@ -595,6 +692,10 @@ void MainWindow::toggleFromTray()
 
 void MainWindow::showAndActivate()
 {
+    if (powerWatcher) {
+        powerWatcher->checkPowerState();
+    }
+
     // Clearing only the minimized bit, rather than showNormal(), keeps a
     // maximized window maximized.
     if (isMinimized()) {
@@ -986,8 +1087,63 @@ void MainWindow::applyAdvancedFanMode(const QString &cpuCurve, const QString &gp
 
 void MainWindow::setupShiftMode()
 {
-    setupModeDropdown(QStringLiteral("performanceMode"), tr("Performance mode"), MsiEcAttribute::ShiftMode,
-                      shiftModes());
+    static const QList<MsiEcMode> modes = shiftModes();
+    auto *combo = new QComboBox(this);
+    for (MsiEcMode mode : modes) {
+        if (isModeSupported(mode)) {
+            combo->addItem(modeLabel(mode), getModeKey(mode));
+        }
+    }
+
+    if (combo->count() == 0) {
+        delete combo;
+        return;
+    }
+
+    syncModeSelection(combo, MsiEcAttribute::ShiftMode);
+
+    auto *box = new FeatureGroupBox(QStringLiteral("performanceMode"), tr("Performance mode"), this);
+    box->addRow(tr("Mode"), combo);
+
+    // activated() only fires on direct user interaction, unlike
+    // currentIndexChanged() - so syncing the selection never triggers a
+    // write on its own, whether at startup or after a failed command.
+    connect(combo, &QComboBox::activated, this, [this, combo](int index) {
+        if (powerWatcher && powerWatcher->isOnBattery()) {
+            invalidateSavedShiftMode();
+        }
+        const QString modeKey = combo->itemData(index).toString();
+        backend->setMode(modeKey);
+    });
+
+    registerWriteControl(combo, [this, combo]() {
+        syncModeSelection(combo, MsiEcAttribute::ShiftMode);
+    });
+
+    // The automatic switch option is only shown if Eco mode is supported.
+    if (isModeSupported(MsiEcMode::EcoShift)) {
+        auto *ecoCheckBox = new QCheckBox(this);
+        ecoCheckBox->setChecked(isEcoOnBatteryEnabled());
+        ecoCheckBox->setToolTip(
+            tr("Automatically switch to Eco performance mode when device is unplugged from charge, "
+               "and restore the previous mode when reattached."));
+
+        connect(ecoCheckBox, &QCheckBox::clicked, this, [this](bool checked) {
+            QSettings().setValue(ecoOnBatterySettingsKey, checked);
+            if (!checked) {
+                invalidateSavedShiftMode();
+            }
+        });
+
+        box->addRow(tr("Switch to Eco on battery"), ecoCheckBox);
+
+        registerWriteControl(ecoCheckBox, [this, ecoCheckBox]() {
+            const QSignalBlocker blocker(ecoCheckBox);
+            ecoCheckBox->setChecked(isEcoOnBatteryEnabled());
+        });
+    }
+
+    topicBoxes->addBox(box);
 }
 
 QComboBox *MainWindow::setupModeDropdown(const QString &boxId, const QString &boxTitle, MsiEcAttribute attr,
