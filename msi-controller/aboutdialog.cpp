@@ -107,7 +107,7 @@ LicenseDialog::LicenseDialog(QWidget *parent)
     setWindowTitle(tr("License agreement — %1").arg(QStringLiteral("EC Controller")));
     setWindowIcon(QIcon::fromTheme(QStringLiteral("ec-controller"),
                                   QIcon(QStringLiteral(":/icons/apps/ec-controller.svg"))));
-    resize(640, 520);
+    resize(680, 520);
 
     auto *layout = new QVBoxLayout(this);
     layout->setContentsMargins(16, 16, 16, 16);
