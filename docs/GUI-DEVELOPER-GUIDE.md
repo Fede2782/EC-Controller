@@ -132,7 +132,7 @@ GUI files (`msi-controller/`), about 3,850 lines in total:
 
 | Class / unit | Files | Lines (h+cpp) | Responsibility |
 |---|---|---|---|
-| `main()` | `main.cpp` | 99 | App metadata, `--minimized`, single-instance via `KDBusService`, creates `MainWindow` |
+| `main()` | `main.cpp` | 112 | App metadata, `--minimized`, single-instance via `KDBusService`, creates `MainWindow` |
 | `MainWindow` | `mainwindow.{h,cpp,ui}` | 1,430 + 185 `.ui` | Builds every box, owns every helper, write-control registry, Edit mode, window sizing, tray/lifecycle, shortcuts, menus, status bar |
 | `BackendClient` | `backendclient.*` | 161 | Wraps the generated D-Bus proxy: connection state, async `setMode` / `setAttrValue`, `commandFinished(bool)` |
 | `FeatureGroupBox` | `featuregroupbox.*` | 70 | One titled box of "label: widget" rows, with a stable `boxId()`; `addRow()`, `setRowVisible()` |
@@ -157,10 +157,11 @@ D-Bus XML (`qt_add_dbus_interface` in `msi-controller/CMakeLists.txt`); it isn't
 
 ### 4.1 `main.cpp`
 
-1. Sets application name `ec-controller`, organization `FedeLabs`, organization domain `fedelabs.org`
-   (organization and application names decide the QSettings file: `~/.config/FedeLabs/ec-controller.conf`),
-   display name, version, desktop file name (`org.fedelabs.EcController`, which is the Wayland app id)
-   and the window icon (theme icon `ec-controller`, with an embedded fallback).
+1. Sets application name `EcController`, organization `FedeLabs`, organization domain `fedelabs.org`
+   (organization and application names decide the QSettings file: `~/.config/FedeLabs/EcController.conf`,
+   migrated automatically from legacy `ec-controller.conf` if present), display name, version,
+   desktop file name (`org.fedelabs.EcController`, which is the Wayland app id) and the window icon
+   (theme icon `ec-controller`, with an embedded fallback).
 2. `setQuitOnLastWindowClosed(false)`: the window hides into the tray, so the app quits only
    explicitly (§6.11).
 3. Parses `--minimized` / `-m` (used by the login autostart entry).
@@ -556,7 +557,7 @@ exported), and the GUI's proxy from that XML. **Every public slot of the service
 | Where | Key | Meaning |
 |---|---|---|
 | `/etc/eccontroller.conf` (service, INI) | `<group>/<sysfs name>`; groups `root`, `cpu`, `gpu`, `kbdbacklight`, `battery` | last written value of every attribute, restored at service start |
-| `~/.config/FedeLabs/ec-controller.conf` (GUI) | `GUI/topicBoxOrder` | `QStringList` of box ids |
+| `~/.config/FedeLabs/EcController.conf` (GUI) | `GUI/topicBoxOrder` | `QStringList` of box ids (migrated from legacy `ec-controller.conf` if present) |
 | | `GUI/showAllFanSlots` | bool |
 | | `GUI/trayHintShown` | bool |
 | | `GUI/ecoOnBattery` | bool (automatically switch to Eco mode on battery) |

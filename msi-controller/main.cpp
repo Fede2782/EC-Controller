@@ -7,19 +7,32 @@
 #include <QApplication>
 #include <QCommandLineParser>
 #include <QDebug>
+#include <QDir>
+#include <QFile>
+#include <QFileInfo>
 #include <QIcon>
 #include <QLocale>
+#include <QSettings>
 #include <QTranslator>
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 
-    a.setApplicationName("ec-controller");
-    a.setOrganizationName("FedeLabs");
+    a.setApplicationName(QStringLiteral("EcController"));
+    a.setOrganizationName(QStringLiteral("FedeLabs"));
     a.setOrganizationDomain(QStringLiteral("fedelabs.org"));
-    a.setApplicationDisplayName("EC Controller");
+    a.setApplicationDisplayName(QStringLiteral("EC Controller"));
     a.setApplicationVersion(QStringLiteral(PROJECT_VERSION));
+
+    // Migrate existing configuration from the legacy ec-controller.conf if present.
+    const QString currentConfigFile = QSettings().fileName();
+    if (!QFile::exists(currentConfigFile)) {
+        const QString oldConfigFile = QFileInfo(currentConfigFile).dir().filePath(QStringLiteral("ec-controller.conf"));
+        if (QFile::exists(oldConfigFile)) {
+            QFile::copy(oldConfigFile, currentConfigFile);
+        }
+    }
 
     QTranslator translator;
     QStringList uiLanguages = QLocale::system().uiLanguages();
