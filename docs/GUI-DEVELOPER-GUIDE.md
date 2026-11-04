@@ -132,7 +132,7 @@ GUI files (`msi-controller/`), about 3,850 lines in total:
 
 | Class / unit | Files | Lines (h+cpp) | Responsibility |
 |---|---|---|---|
-| `main()` | `main.cpp` | 101 | App metadata, `--minimized`, single-instance check, creates `MainWindow` and `AppActivationService` |
+| `main()` | `main.cpp` | 99 | App metadata, `--minimized`, single-instance via `KDBusService`, creates `MainWindow` |
 | `MainWindow` | `mainwindow.{h,cpp,ui}` | 1,430 + 185 `.ui` | Builds every box, owns every helper, write-control registry, Edit mode, window sizing, tray/lifecycle, shortcuts, menus, status bar |
 | `BackendClient` | `backendclient.*` | 161 | Wraps the generated D-Bus proxy: connection state, async `setMode` / `setAttrValue`, `commandFinished(bool)` |
 | `FeatureGroupBox` | `featuregroupbox.*` | 70 | One titled box of "label: widget" rows, with a stable `boxId()`; `addRow()`, `setRowVisible()` |
@@ -145,7 +145,6 @@ GUI files (`msi-controller/`), about 3,850 lines in total:
 | `FanCurveEditor` | `fancurveeditor.*` | 227 | Edits **one** fan curve: a chart on top, one row of spin boxes per speed, and keeps the curve in order while it's edited |
 | `FanCurveDialog` | `fancurvedialog.*` | 126 | Shows the CPU (and GPU) curve editors, Apply/Cancel; writes nothing |
 | `TrayIcon` | `trayicon.*` | 135 | `QSystemTrayIcon`, menu, tooltip, `isUsable()` |
-| `AppActivationService` | `appactivationservice.*` | 103 | Session-bus `activate(token)` so a second launch raises the first instance |
 | `DisplayRotation` | `displayrotation.*` | 276 | `kscreen-doctor` 180° flip, restore on exit |
 | `Autostart` (namespace) | `autostart.*` | 132 | XDG autostart opt-out file |
 
@@ -158,17 +157,18 @@ D-Bus XML (`qt_add_dbus_interface` in `msi-controller/CMakeLists.txt`); it isn't
 
 ### 4.1 `main.cpp`
 
-1. Sets application name `ec-controller`, organization `FedeLabs` (these decide the QSettings
-   file: `~/.config/FedeLabs/ec-controller.conf`), display name, version, desktop file name
-   (`ec-controller`, which is the Wayland app id) and the window icon (theme icon
-   `ec-controller`, with an embedded fallback).
+1. Sets application name `ec-controller`, organization `FedeLabs`, organization domain `fedelabs.org`
+   (organization and application names decide the QSettings file: `~/.config/FedeLabs/ec-controller.conf`),
+   display name, version, desktop file name (`org.fedelabs.EcController`, which is the Wayland app id)
+   and the window icon (theme icon `ec-controller`, with an embedded fallback).
 2. `setQuitOnLastWindowClosed(false)`: the window hides into the tray, so the app quits only
    explicitly (§6.11).
 3. Parses `--minimized` / `-m` (used by the login autostart entry).
-4. **Single instance** on the session bus: if `org.fedelabs.EcController.App` is taken, it calls
-   `activate(XDG_ACTIVATION_TOKEN)` on the running instance and exits. With `--minimized` it exits
-   silently instead.
-5. Creates `MainWindow` and exports `AppActivationService` (`activate` → `showAndActivate()`).
+4. **Single instance** on the session bus via KF6 `KDBusService` (`KDBusService::Unique`):
+   enforces a single instance, automatically forwarding arguments and the Wayland `XDG_ACTIVATION_TOKEN`.
+   If another instance is launched, the running instance receives `activateRequested`; if `--minimized`
+   was passed, it remains hidden, otherwise `showAndActivate()` raises and activates the window.
+5. Creates `MainWindow` and connects `service.activateRequested` to `showAndActivate()`.
 6. Shows the window unless started minimized **and** a tray is available.
 
 The backend being unreachable is **not** fatal: the window starts anyway and shows the
@@ -859,7 +859,7 @@ cmake --build build --parallel
 sudo cmake --install build
 ```
 
-- Dependencies: Qt6 (Core, Widgets, DBus), KF6 (CoreAddons, GlobalAccel, Notifications), ECM,
+- Dependencies: Qt6 (Core, Widgets, DBus), KF6 (CoreAddons, DBusAddons, GlobalAccel, Notifications), ECM,
   PolkitQt6-1 (service). `cmake_minimum_required(3.20)` is load-bearing (install rules run in
   file order).
 - Build order: library → service (generates the D-Bus XML) → GUI (generates its proxy from that

@@ -93,7 +93,7 @@ EC Controller uses a split, privilege-separated design:
 - **Runtime Dependencies:**
   - Linux Kernel with the [Fede2782/msi-ec](https://github.com/Fede2782/msi-ec) driver loaded.
   - Qt 6 (≥ 6.8.0: Core, Widgets, DBus).
-  - KDE Frameworks 6 (≥ 6.13.0: CoreAddons, GlobalAccel, Notifications).
+  - KDE Frameworks 6 (≥ 6.13.0: CoreAddons, DBusAddons, GlobalAccel, Notifications).
   - Polkit-Qt6 (`polkit-qt6-1`).
   - UPower (`org.freedesktop.UPower`).
   - systemd, D-Bus, and Polkit daemons.
@@ -149,7 +149,7 @@ sudo apt install -y --no-install-recommends \
     build-essential cmake dpkg-dev file \
     extra-cmake-modules qt6-base-dev qt6-base-dev-tools \
     qt6-tools-dev qt6-tools-dev-tools \
-    libkf6coreaddons-dev libkf6globalaccel-dev libkf6notifications-dev \
+    libkf6coreaddons-dev libkf6dbusaddons-dev libkf6globalaccel-dev libkf6notifications-dev \
     libpolkit-qt6-1-dev
 ```
 
@@ -158,7 +158,7 @@ sudo apt install -y --no-install-recommends \
 sudo dnf install -y \
     gcc-c++ make cmake rpm-build desktop-file-utils systemd-rpm-macros \
     extra-cmake-modules qt6-qtbase-devel qt6-qttools-devel \
-    kf6-kcoreaddons-devel kf6-kglobalaccel-devel kf6-knotifications-devel \
+    kf6-kcoreaddons-devel kf6-kdbusaddons-devel kf6-kglobalaccel-devel kf6-knotifications-devel \
     polkit-qt6-1-devel
 ```
 

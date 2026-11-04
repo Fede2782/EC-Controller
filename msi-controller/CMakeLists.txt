@@ -32,8 +32,6 @@ set(MSI_CONTROLLER_GUI_SOURCES
     topicboxarea.h
     trayicon.cpp
     trayicon.h
-    appactivationservice.cpp
-    appactivationservice.h
     displayrotation.cpp
     displayrotation.h
     autostart.cpp
@@ -92,6 +90,7 @@ target_link_libraries(msi-controller PRIVATE
     Qt6::Widgets
     Qt6::DBus
     KF6::CoreAddons
+    KF6::DBusAddons
     KF6::GlobalAccel
     KF6::Notifications
     msi-controller-lib

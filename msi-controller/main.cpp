@@ -1,12 +1,11 @@
 // SPDX-FileCopyrightText: 2026 Fede2782
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "mainwindow.h"
-#include "appactivationservice.h"
+
+#include <KDBusService>
 
 #include <QApplication>
 #include <QCommandLineParser>
-#include <QDBusConnection>
-#include <QDBusConnectionInterface>
 #include <QDebug>
 #include <QIcon>
 #include <QLocale>
@@ -18,6 +17,7 @@ int main(int argc, char *argv[])
 
     a.setApplicationName("ec-controller");
     a.setOrganizationName("FedeLabs");
+    a.setOrganizationDomain(QStringLiteral("fedelabs.org"));
     a.setApplicationDisplayName("EC Controller");
     a.setApplicationVersion(QStringLiteral(PROJECT_VERSION));
 
@@ -67,50 +67,26 @@ int main(int argc, char *argv[])
     parser.process(a);
     const bool startMinimized = parser.isSet(minimizedOption);
 
-    // A single running instance is enforced on the session bus. Reachability
-    // of the system-bus backend is no longer checked here: MainWindow starts
-    // regardless and shows its own connection status, so "Reload GUI &
-    // Backend Connection" has something to actually recover from without
-    // restarting the whole application.
-    QDBusConnection sessionBus = QDBusConnection::sessionBus();
-
-    if (!sessionBus.isConnected()) {
-        qCritical() << "Cannot connect to Session Bus. Aborting initialization";
-        return 1;
-    }
-
-    if (sessionBus.interface()->isServiceRegistered(AppActivationService::serviceName)) {
-        // An autostart launch finding the application already running has
-        // nothing to do - and must not pop its window up.
-        if (startMinimized) {
-            return 0;
-        }
-
-        // Most likely the other instance is hidden in the tray, and this
-        // launch is how the user is trying to get it back - so bring it
-        // forward rather than just refusing to start.
-        if (AppActivationService::activateRunningInstance(sessionBus)) {
-            return 0;
-        }
-        qCritical() << "Another instance is already running but didn't respond. Aborting initialization";
-        return 1;
-    }
-
-    if (!sessionBus.registerService(AppActivationService::serviceName)) {
-        qCritical() << "Unable to register the service on the Session Bus. Aborting initialization";
-        return 1;
-    }
+    // Enforce a single running instance on the session bus via KDBusService.
+    // If another instance is already running, KDBusService forwards arguments
+    // and the Wayland XDG_ACTIVATION_TOKEN to the existing instance, which
+    // triggers activateRequested, and this process exits immediately.
+    KDBusService service(KDBusService::Unique);
 
     MainWindow w;
 
-    AppActivationService activationService;
-    QObject::connect(&activationService, &AppActivationService::activationRequested, &w,
-                     &MainWindow::showAndActivate);
-    if (!activationService.registerOn(sessionBus)) {
-        // Not fatal: this instance works fine, a second launch just can't
-        // bring it forward.
-        qWarning() << "Unable to export the activation interface on the Session Bus";
-    }
+    QObject::connect(&service, &KDBusService::activateRequested, &w,
+                     [&w, minimizedOption](const QStringList &arguments, const QString &) {
+        if (!arguments.isEmpty()) {
+            QCommandLineParser callParser;
+            callParser.addOption(minimizedOption);
+            callParser.parse(arguments);
+            if (callParser.isSet(minimizedOption)) {
+                return;
+            }
+        }
+        w.showAndActivate();
+    });
 
     // Without a tray to hide into (none running yet, or a desktop without
     // one), starting hidden would leave no way to reach the window, so it
