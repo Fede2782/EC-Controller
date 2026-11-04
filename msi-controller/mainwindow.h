@@ -93,6 +93,10 @@ private:
     // Wires Settings > Start at Login to the XDG autostart entry.
     void setupAutostart();
 
+    // Wires Settings > Close to System Tray to toggle between hiding in tray and exiting.
+    void setupCloseToTray();
+    bool isCloseToTrayEnabled() const;
+
     // Registers the KDE global shortcuts (Milestone 10): Launch1 cycles the
     // performance mode, RotateWindows flips the display 180°. Does nothing
     // unless KDE's shortcut service is running.

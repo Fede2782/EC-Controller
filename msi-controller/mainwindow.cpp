@@ -71,6 +71,9 @@ const QString showAllFanSlotsSettingsKey = QStringLiteral("GUI/showAllFanSlots")
 // shown once, ever: after that, closing into the tray is expected.
 const QString trayHintShownSettingsKey = QStringLiteral("GUI/trayHintShown");
 
+// Whether closing the window leaves the application in the system tray or exits.
+const QString closeToTraySettingsKey = QStringLiteral("GUI/closeToTray");
+
 // Settings key for automatic Eco mode switch when running on battery.
 const QString ecoOnBatterySettingsKey = QStringLiteral("GUI/ecoOnBattery");
 
@@ -112,6 +115,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     setupGlobalShortcuts();
     setupAutostart();
+    setupCloseToTray();
 
     buildGui();
 
@@ -427,6 +431,26 @@ void MainWindow::setupAutostart()
     });
 }
 
+void MainWindow::setupCloseToTray()
+{
+    auto refresh = [this]() {
+        const QSignalBlocker blocker(ui->actionCloseToTray);
+        ui->actionCloseToTray->setEnabled(trayIcon->isUsable());
+        ui->actionCloseToTray->setChecked(isCloseToTrayEnabled());
+    };
+    refresh();
+    connect(ui->menuSettings, &QMenu::aboutToShow, this, refresh);
+
+    connect(ui->actionCloseToTray, &QAction::toggled, this, [](bool enabled) {
+        QSettings().setValue(closeToTraySettingsKey, enabled);
+    });
+}
+
+bool MainWindow::isCloseToTrayEnabled() const
+{
+    return QSettings().value(closeToTraySettingsKey, true).toBool();
+}
+
 void MainWindow::setupGlobalShortcuts()
 {
     // Global shortcuts are a KDE service. Outside Plasma, calling KGlobalAccel
@@ -731,9 +755,9 @@ void MainWindow::closeEvent(QCloseEvent *event)
         return;
     }
 
-    if (!trayIcon->isUsable()) {
-        // Nowhere to hide: closing the window is the only way the user can
-        // tell us to exit, so treat it as one.
+    if (!trayIcon->isUsable() || !isCloseToTrayEnabled()) {
+        // Nowhere to hide or close-to-tray is disabled: closing the window
+        // is the only way the user can tell us to exit, so treat it as one.
         event->accept();
         quitApplication();
         return;

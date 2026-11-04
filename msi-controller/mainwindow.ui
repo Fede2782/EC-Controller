@@ -76,6 +76,7 @@
      <string>Settings</string>
     </property>
     <addaction name="actionStartAtLogin"/>
+    <addaction name="actionCloseToTray"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="tearOffEnabled">
@@ -145,6 +146,17 @@
    </property>
    <property name="toolTip">
     <string>Start EC Controller in the system tray when you log in.</string>
+   </property>
+  </action>
+  <action name="actionCloseToTray">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Close to system tray</string>
+   </property>
+   <property name="toolTip">
+    <string>Keep running in the system tray when the window is closed.</string>
    </property>
   </action>
   <action name="actionEsci">

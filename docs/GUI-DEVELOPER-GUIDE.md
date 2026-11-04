@@ -133,7 +133,7 @@ GUI files (`msi-controller/`), about 3,850 lines in total:
 | Class / unit | Files | Lines (h+cpp) | Responsibility |
 |---|---|---|---|
 | `main()` | `main.cpp` | 112 | App metadata, `--minimized`, single-instance via `KDBusService`, creates `MainWindow` |
-| `MainWindow` | `mainwindow.{h,cpp,ui}` | 1,430 + 185 `.ui` | Builds every box, owns every helper, write-control registry, Edit mode, window sizing, tray/lifecycle, shortcuts, menus, status bar |
+| `MainWindow` | `mainwindow.{h,cpp,ui}` | 1,449 + 206 `.ui` | Builds every box, owns every helper, write-control registry, Edit mode, window sizing, tray/lifecycle, shortcuts, menus, status bar |
 | `BackendClient` | `backendclient.*` | 161 | Wraps the generated D-Bus proxy: connection state, async `setMode` / `setAttrValue`, `commandFinished(bool)` |
 | `FeatureGroupBox` | `featuregroupbox.*` | 70 | One titled box of "label: widget" rows, with a stable `boxId()`; `addRow()`, `setRowVisible()` |
 | `TopicBoxArea` | `topicboxarea.*` | 372 | The vertical stack of boxes and their order: saved order, Edit session (`beginEdit` / `commitEdit` / `cancelEdit` / `resetOrder`), move buttons |
@@ -560,6 +560,7 @@ exported), and the GUI's proxy from that XML. **Every public slot of the service
 | `~/.config/FedeLabs/EcController.conf` (GUI) | `GUI/topicBoxOrder` | `QStringList` of box ids (migrated from legacy `ec-controller.conf` if present) |
 | | `GUI/showAllFanSlots` | bool |
 | | `GUI/trayHintShown` | bool |
+| | `GUI/closeToTray` | bool (default true; whether closing the window hides into tray or exits) |
 | | `GUI/ecoOnBattery` | bool (automatically switch to Eco mode on battery) |
 | | `GUI/savedShiftModeBeforeEco` | QString (mode to restore when reattached to AC) |
 | `~/.config/autostart/org.fedelabs.EcController.desktop` | `Hidden=true` | user opted out of start at login |

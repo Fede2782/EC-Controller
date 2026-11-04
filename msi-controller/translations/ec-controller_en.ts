@@ -243,6 +243,16 @@
     </message>
     <message>
         <location filename="../mainwindow.ui" line="155"/>
+        <source>Close to system tray</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../mainwindow.ui" line="158"/>
+        <source>Keep running in the system tray when the window is closed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../mainwindow.ui" line="155"/>
         <source>Quit application</source>
         <translation type="unfinished"></translation>
     </message>
