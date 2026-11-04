@@ -6,7 +6,7 @@
 <component type="desktop-application">
   <id>org.fedelabs.EcController</id>
   <metadata_license>CC0-1.0</metadata_license>
-  <project_license>GPL-3.0-only</project_license>
+  <project_license>GPL-3.0-or-later</project_license>
   <name>EC Controller</name>
   <summary>Control MSI laptop hardware through the msi-ec driver</summary>
   <developer_name>FedeLabs</developer_name>
@@ -58,6 +58,16 @@
   <content_rating type="oars-1.1" />
 
   <releases>
+    <release version="1.0.3" date="2026-11-04">
+      <description>
+        <p>New features and improvements.</p>
+        <ul>
+          <li>Code improvements and fixes</li>
+          <li>Allow to always close instead of system tray</li>
+          <li>Auto Eco on Battery feature</li>
+        </ul>
+      </description>
+    </release>
     <release version="1.0.2" date="2026-10-24">
       <description>
         <p>Improve strings, Italian localization, performance improvements and About Qt page.</p>
