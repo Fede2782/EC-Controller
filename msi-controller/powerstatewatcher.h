@@ -20,6 +20,7 @@ public:
     explicit PowerStateWatcher(QObject *parent = nullptr);
 
     bool isOnBattery() const;
+    bool hasInitialState() const;
 
 public slots:
     void checkPowerState();
@@ -32,6 +33,7 @@ private slots:
                                  const QVariantMap &changedProperties,
                                  const QStringList &invalidatedProperties);
     void handleChanged();
+    void handlePrepareForSleep(bool sleep);
 
 private:
     bool queryOnBattery(bool *ok = nullptr) const;

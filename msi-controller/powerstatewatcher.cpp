@@ -4,12 +4,16 @@
 
 #include <QDBusConnection>
 #include <QDBusInterface>
+#include <QTimer>
 
 namespace {
 const QString upowerService = QStringLiteral("org.freedesktop.UPower");
 const QString upowerPath = QStringLiteral("/org/freedesktop/UPower");
 const QString upowerInterface = QStringLiteral("org.freedesktop.UPower");
 const QString propertiesInterface = QStringLiteral("org.freedesktop.DBus.Properties");
+const QString login1Service = QStringLiteral("org.freedesktop.login1");
+const QString login1Path = QStringLiteral("/org/freedesktop/login1");
+const QString login1ManagerInterface = QStringLiteral("org.freedesktop.login1.Manager");
 }
 
 PowerStateWatcher::PowerStateWatcher(QObject *parent)
@@ -39,6 +43,13 @@ PowerStateWatcher::PowerStateWatcher(QObject *parent)
         this,
         SLOT(handlePropertiesChanged(QString, QVariantMap, QStringList)));
 
+    // 4. systemd-logind PrepareForSleep signal to detect resume from suspend/hibernate
+    QDBusConnection::systemBus().connect(
+        login1Service, login1Path, login1ManagerInterface,
+        QStringLiteral("PrepareForSleep"),
+        this,
+        SLOT(handlePrepareForSleep(bool)));
+
     // Read initial state
     bool ok = false;
     const bool onBattery = queryOnBattery(&ok);
@@ -53,6 +64,11 @@ bool PowerStateWatcher::isOnBattery() const
     return m_onBattery;
 }
 
+bool PowerStateWatcher::hasInitialState() const
+{
+    return m_hasInitialState;
+}
+
 void PowerStateWatcher::checkPowerState()
 {
     bool ok = false;
@@ -64,6 +80,7 @@ void PowerStateWatcher::checkPowerState()
     if (!m_hasInitialState) {
         m_hasInitialState = true;
         m_onBattery = onBattery;
+        emit powerStateChanged(m_onBattery);
         return;
     }
 
@@ -88,6 +105,16 @@ void PowerStateWatcher::handlePropertiesChanged(const QString &interfaceName,
 void PowerStateWatcher::handleChanged()
 {
     checkPowerState();
+}
+
+void PowerStateWatcher::handlePrepareForSleep(bool sleep)
+{
+    if (!sleep) {
+        // System resumed from suspend/hibernate: check power state immediately,
+        // and re-check shortly after in case UPower was delayed in updating.
+        checkPowerState();
+        QTimer::singleShot(500, this, &PowerStateWatcher::checkPowerState);
+    }
 }
 
 bool PowerStateWatcher::queryOnBattery(bool *ok) const

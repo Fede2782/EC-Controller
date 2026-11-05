@@ -147,6 +147,7 @@ GUI files (`msi-controller/`), about 3,850 lines in total:
 | `TrayIcon` | `trayicon.*` | 135 | `QSystemTrayIcon`, menu, tooltip, `isUsable()` |
 | `DisplayRotation` | `displayrotation.*` | 276 | `kscreen-doctor` 180° flip, restore on exit |
 | `Autostart` (namespace) | `autostart.*` | 132 | XDG autostart opt-out file |
+| `PowerStateWatcher` | `powerstatewatcher.*` | 182 | Monitors UPower AC power / on-battery state and systemd sleep/resume |
 
 `msicontrollerbackend_interface.h` is **generated** at build time from the service's
 D-Bus XML (`qt_add_dbus_interface` in `msi-controller/CMakeLists.txt`); it isn't in the tree.
@@ -438,9 +439,13 @@ When Eco mode is supported by the driver, the Performance mode feature box offer
   ("%1 (on battery)").
 - When the device is reattached to charge, the previously saved mode is restored and announced
   via notification ("%1 (plugged in)").
+- At application startup or system boot, the active power state is synchronized:
+  - If started on battery and in a non-Eco mode, it saves the current mode and switches to Eco.
+  - If started plugged in after having switched to Eco before shutting down, the saved original mode is restored.
 - If the mode is manually changed (via the dropdown or the global shortcut) while running on battery,
-  the automatic restoration is invalidated and the mode will not be reverted on plug-in.
-- Power state changes are monitored through `org.freedesktop.UPower` on the system D-Bus (zero polling overhead).
+  or if the mode was changed externally before waking up, the automatic restoration is invalidated.
+- Power state changes and wake-from-sleep events are monitored through `org.freedesktop.UPower`
+  and `org.freedesktop.login1`'s `PrepareForSleep` signal on the system D-Bus (zero polling overhead).
 
 ### 6.6 Battery
 

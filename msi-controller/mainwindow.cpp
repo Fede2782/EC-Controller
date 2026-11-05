@@ -353,10 +353,12 @@ void MainWindow::onShowAllFanSlotsToggled(bool showAll)
 
 void MainWindow::onBackendConnectionStateChanged(bool connected)
 {
-    Q_UNUSED(connected)
-
     updateConnectionStatus();
     updateWriteControlsEnabled();
+
+    if (connected) {
+        applyPowerStatePolicy(/*isInitialSync=*/true);
+    }
 }
 
 void MainWindow::onCommandFinished(bool success)
@@ -504,9 +506,7 @@ void MainWindow::setupGlobalShortcuts()
 
 void MainWindow::cycleShiftMode()
 {
-    if (powerWatcher && powerWatcher->isOnBattery()) {
-        invalidateSavedShiftMode();
-    }
+    invalidateSavedShiftMode();
 
     // The shortcut works with the window hidden in the tray, so the answer
     // has to come as a notification rather than anything in the window.
@@ -592,18 +592,35 @@ void MainWindow::invalidateSavedShiftMode()
 
 void MainWindow::handlePowerStateChanged(bool onBattery)
 {
+    Q_UNUSED(onBattery)
+    applyPowerStatePolicy(/*isInitialSync=*/false);
+}
+
+void MainWindow::applyPowerStatePolicy(bool isInitialSync)
+{
     if (!isEcoOnBatteryEnabled() || !isModeSupported(MsiEcMode::EcoShift)) {
+        if (!isEcoOnBatteryEnabled()) {
+            invalidateSavedShiftMode();
+        }
         return;
     }
 
-    if (onBattery) {
-        // Device was unplugged from charge
-        QString currentModeName;
-        if (!getAttrValue(MsiEcAttribute::ShiftMode, &currentModeName)) {
-            return;
-        }
+    if (!backend->isConnected() || m_autoShiftModePending) {
+        return;
+    }
 
-        const MsiEcMode currentMode = parseModeName(currentModeName);
+    if (!powerWatcher || !powerWatcher->hasInitialState()) {
+        return;
+    }
+
+    QString currentModeName;
+    if (!getAttrValue(MsiEcAttribute::ShiftMode, &currentModeName)) {
+        return;
+    }
+    const MsiEcMode currentMode = parseModeName(currentModeName);
+
+    if (powerWatcher->isOnBattery()) {
+        // Device is running on battery power
         if (currentMode != MsiEcMode::EcoShift) {
             // Save the mode before switching to Eco
             m_savedShiftModeBeforeEco = currentModeName;
@@ -612,20 +629,37 @@ void MainWindow::handlePowerStateChanged(bool onBattery)
             m_autoShiftModePending = true;
             m_autoShiftTargetMode = MsiEcMode::EcoShift;
             backend->setMode(getModeKey(MsiEcMode::EcoShift));
-        } else {
-            // Already in Eco mode; no restoration needed
+        } else if (!isInitialSync) {
+            // Transitioned to battery at runtime while already in Eco mode:
+            // the user chose Eco while on AC, so there is no previous non-Eco mode to restore.
             invalidateSavedShiftMode();
         }
+        // Note: on initial sync while already in Eco, do not invalidate m_savedShiftModeBeforeEco.
+        // It may contain the pre-shutdown plugged mode that should be restored upon next AC connection.
     } else {
-        // Device was reattached to charge
+        // Device is running on AC power
         if (!m_savedShiftModeBeforeEco.isEmpty()) {
             const MsiEcMode modeToRestore = parseModeName(m_savedShiftModeBeforeEco);
-            invalidateSavedShiftMode();
 
-            if (isModeSupported(modeToRestore)) {
+            if (!isModeSupported(modeToRestore)) {
+                invalidateSavedShiftMode();
+                return;
+            }
+
+            if (currentMode == MsiEcMode::EcoShift) {
+                // Device woke up or was reattached to charge while still in Eco mode:
+                // restore the saved mode.
+                invalidateSavedShiftMode();
                 m_autoShiftModePending = true;
                 m_autoShiftTargetMode = modeToRestore;
                 backend->setMode(getModeKey(modeToRestore));
+            } else if (currentMode == modeToRestore) {
+                // Hardware is already in the restored mode; just clear the saved state.
+                invalidateSavedShiftMode();
+            } else {
+                // Current hardware mode is neither Eco nor modeToRestore (e.g. user changed
+                // it externally while shut down/unplugged); invalidate the saved state.
+                invalidateSavedShiftMode();
             }
         }
     }
@@ -1133,9 +1167,7 @@ void MainWindow::setupShiftMode()
     // currentIndexChanged() - so syncing the selection never triggers a
     // write on its own, whether at startup or after a failed command.
     connect(combo, &QComboBox::activated, this, [this, combo](int index) {
-        if (powerWatcher && powerWatcher->isOnBattery()) {
-            invalidateSavedShiftMode();
-        }
+        invalidateSavedShiftMode();
         const QString modeKey = combo->itemData(index).toString();
         backend->setMode(modeKey);
     });
@@ -1156,6 +1188,8 @@ void MainWindow::setupShiftMode()
             QSettings().setValue(ecoOnBatterySettingsKey, checked);
             if (!checked) {
                 invalidateSavedShiftMode();
+            } else {
+                applyPowerStatePolicy(/*isInitialSync=*/false);
             }
         });
 

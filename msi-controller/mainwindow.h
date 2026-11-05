@@ -108,6 +108,7 @@ private:
     void notifyCurrentShiftMode();
     void notifyAutoShiftMode(MsiControllerLib::MsiEcMode mode);
     void handlePowerStateChanged(bool onBattery);
+    void applyPowerStatePolicy(bool isInitialSync);
     bool isEcoOnBatteryEnabled() const;
     void invalidateSavedShiftMode();
 
