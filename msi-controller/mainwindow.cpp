@@ -606,7 +606,7 @@ void MainWindow::applyPowerStatePolicy(bool isInitialSync)
         return;
     }
 
-    if (!powerWatcher || !powerWatcher->hasInitialState()) {
+    if (!powerWatcher->hasInitialState()) {
         return;
     }
 
@@ -747,10 +747,6 @@ void MainWindow::toggleFromTray()
 
 void MainWindow::showAndActivate()
 {
-    if (powerWatcher) {
-        powerWatcher->checkPowerState();
-    }
-
     // Clearing only the minimized bit, rather than showNormal(), keeps a
     // maximized window maximized.
     if (isMinimized()) {
