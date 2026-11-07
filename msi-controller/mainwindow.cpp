@@ -53,6 +53,12 @@ const QList<MsiEcMode> &shiftModes()
 
 const QString notificationIconName = QStringLiteral("ec-controller");
 
+// The events of EcController.notifyrc. KNotification's standard events
+// would be shorter, but they are defined by Plasma's own notifyrc, so on
+// other desktops KNotification drops them without showing anything.
+const QString shiftModeEventId = QStringLiteral("performanceModeChanged");
+const QString warningEventId = QStringLiteral("warning");
+
 // KDE's global shortcut daemon (kglobalacceld; part of KWin on Plasma
 // Wayland), which every KGlobalAccel call talks to.
 const QString kglobalaccelServiceName = QStringLiteral("org.kde.kglobalaccel");
@@ -385,7 +391,7 @@ void MainWindow::onCommandFinished(bool success)
             notifyAutoShiftMode(m_autoShiftTargetMode);
         } else {
             invalidateSavedShiftMode();
-            KNotification::event(KNotification::Warning, tr("Performance mode"),
+            KNotification::event(warningEventId, tr("Performance mode"),
                                  tr("Couldn't switch performance mode automatically."),
                                  notificationIconName);
         }
@@ -491,7 +497,7 @@ void MainWindow::setupGlobalShortcuts()
         connect(rotateAction, &QAction::triggered, displayRotation, &DisplayRotation::flip);
 
         connect(displayRotation, &DisplayRotation::failed, this, [](const QString &reason) {
-            KNotification::event(KNotification::Warning, tr("Couldn't flip the display"), reason,
+            KNotification::event(warningEventId, tr("Couldn't flip the display"), reason,
                                  notificationIconName);
         });
 
@@ -508,7 +514,7 @@ void MainWindow::cycleShiftMode()
     // The shortcut works with the window hidden in the tray, so the answer
     // has to come as a notification rather than anything in the window.
     if (!backend->isConnected()) {
-        KNotification::event(KNotification::Warning, tr("Performance mode"),
+        KNotification::event(warningEventId, tr("Performance mode"),
                              tr("Not connected to the backend."), notificationIconName);
         return;
     }
@@ -550,7 +556,7 @@ void MainWindow::notifyCurrentShiftMode()
         shiftModeNotification->close();
     }
 
-    shiftModeNotification = KNotification::event(KNotification::Notification, tr("Performance mode"),
+    shiftModeNotification = KNotification::event(shiftModeEventId, tr("Performance mode"),
                                                  modeLabel(parseModeName(currentModeName)), notificationIconName);
 
     // Tied to the notification: if it's closed and deleted first (by the
@@ -568,7 +574,7 @@ void MainWindow::notifyAutoShiftMode(MsiEcMode mode)
         ? tr("%1 (on battery)").arg(modeLabel(mode))
         : tr("%1 (plugged in)").arg(modeLabel(mode));
 
-    shiftModeNotification = KNotification::event(KNotification::Notification, tr("Performance mode"),
+    shiftModeNotification = KNotification::event(shiftModeEventId, tr("Performance mode"),
                                                  text, notificationIconName);
 
     QTimer::singleShot(shiftModeNotificationTimeoutMs, shiftModeNotification.data(), &KNotification::close);

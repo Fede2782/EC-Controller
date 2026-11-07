@@ -76,6 +76,15 @@ qt_add_resources(msi-controller "license_resource"
         "${PROJECT_SOURCE_DIR}/LICENSE"
 )
 
+# The notification events. KNotification also looks for them in the
+# program's resources, as :/knotifications6/<application name>.notifyrc,
+# so the file needs no install rule.
+qt_add_resources(msi-controller "notification_events"
+    PREFIX "/knotifications6"
+    FILES
+        EcController.notifyrc
+)
+
 if(TARGET Qt6::lrelease)
     qt_add_translations(msi-controller
         TS_FILES

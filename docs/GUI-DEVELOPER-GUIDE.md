@@ -438,6 +438,11 @@ after the one the hardware reports. The notification is shown only after
 `commandFinished(true)` (flag `shiftModeCyclePending`), with the text read back from sysfs,
 closed after 3 s, and replaced by a newer press.
 
+Notifications are the application's own KNotification events, `performanceModeChanged` and
+`warning`, defined in `msi-controller/EcController.notifyrc` and embedded as a Qt resource (the
+file name must match the application name). KNotification's standard events aren't used: they
+are defined by Plasma's own notifyrc, so on other desktops they would never be shown.
+
 When Eco mode is supported by the driver, the Performance mode feature box offers a
 "Switch to Eco on battery" checkbox (persisted as `GUI/ecoOnBattery`). When enabled:
 - When the device is unplugged from charge (`PowerStateWatcher`), if the current mode is not Eco,

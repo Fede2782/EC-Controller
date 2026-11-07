@@ -1,0 +1,22 @@
+# SPDX-FileCopyrightText: 2026 Fede2782
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# The notifications EC Controller sends. KNotification looks for
+# knotifications6/<application name>.notifyrc in the data directories and in
+# the program's Qt resources; this file is embedded there (see
+# CMakeLists.txt), so it is found wherever the program runs. The file name
+# must match QCoreApplication::applicationName() set in main.cpp.
+
+[Global]
+IconName=ec-controller
+Name=EC Controller
+
+[Event/performanceModeChanged]
+Name=Performance mode changed
+Comment=The performance mode was changed with the shortcut or by the Eco switch on battery
+Action=Popup
+
+[Event/warning]
+Name=Warning
+Comment=Something EC Controller was asked to do couldn't be done
+Action=Popup
