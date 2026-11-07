@@ -3,22 +3,13 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include <QMainWindow>
-#include <QLabel>
-#include <QMap>
-#include <QComboBox>
-#include <QCheckBox>
-#include <QSlider>
-#include <QList>
 #include <QElapsedTimer>
+#include <QList>
+#include <QMainWindow>
+#include <QMap>
 #include <QPointer>
 #include <functional>
 
-#include "backendclient.h"
-#include "hardwaremonitor.h"
-#include "fanspeedmonitor.h"
-#include "kbdbacklightbrightnessclient.h"
-#include "kdepowermanagementwatcher.h"
 #include "msicontrollerlib.h"
 
 QT_BEGIN_NAMESPACE
@@ -27,21 +18,36 @@ class MainWindow;
 }
 QT_END_NAMESPACE
 
-class FeatureGroupBox;
-class QPushButton;
+class BackendClient;
 class DisplayRotation;
+class FanSpeedMonitor;
+class FeatureGroupBox;
+class HardwareMonitor;
+class KbdBacklightBrightnessClient;
+class KdePowerManagementWatcher;
 class KNotification;
 class PowerStateWatcher;
+class QCheckBox;
+class QComboBox;
+class QLabel;
+class QPushButton;
 class TopicBoxArea;
 class TrayIcon;
 
+// The application window. It builds one topic box per feature this machine
+// supports (one setupXxx() per feature, in default box order), owns every
+// helper - backend client, monitors, tray, watchers - and handles the
+// window's lifecycle. Every control that writes follows one pattern: it is
+// registered with registerWriteControl(), writes only on user-originated
+// signals, and is resynced from the hardware after every command (developer
+// guide, §5).
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    MainWindow(QWidget *parent = nullptr);
-    ~MainWindow();
+    explicit MainWindow(QWidget *parent = nullptr);
+    ~MainWindow() override;
 
     // Whether there's a tray the window can hide into right now.
     bool canHideToTray() const;
@@ -111,8 +117,17 @@ private:
     void notifyCurrentShiftMode();
     void notifyAutoShiftMode(MsiControllerLib::MsiEcMode mode);
     void handlePowerStateChanged(bool onBattery);
+
+    // The "Switch to Eco on battery" option: on battery, saves the current
+    // performance mode and switches to Eco; on AC power, goes back to the
+    // saved mode if the hardware is still in Eco. isInitialSync is set for
+    // the check at startup or (re)connection, where an Eco mode found on
+    // battery keeps the mode saved before shutting down.
     void applyPowerStatePolicy(bool isInitialSync);
     bool isEcoOnBatteryEnabled() const;
+
+    // Forgets the mode to go back to - when the mode is chosen by hand, or
+    // the option is turned off.
     void invalidateSavedShiftMode();
 
     // Left click on the tray icon: hide the window into the tray if the
@@ -219,18 +234,18 @@ private:
     // each command and by Reload.
     void resyncAllControls();
 
-    Ui::MainWindow *ui;
-    BackendClient *backend;
-    HardwareMonitor *hardwareMonitor;
-    FanSpeedMonitor *fanSpeedMonitor;
-    KbdBacklightBrightnessClient *kbdBacklightBrightness;
-    KdePowerManagementWatcher *kdePowerManagementWatcher;
+    Ui::MainWindow *ui = nullptr;
+    BackendClient *backend = nullptr;
+    HardwareMonitor *hardwareMonitor = nullptr;
+    FanSpeedMonitor *fanSpeedMonitor = nullptr;
+    KbdBacklightBrightnessClient *kbdBacklightBrightness = nullptr;
+    KdePowerManagementWatcher *kdePowerManagementWatcher = nullptr;
     PowerStateWatcher *powerWatcher = nullptr;
 
     // Holds every topic box and owns their ordering.
     TopicBoxArea *topicBoxes = nullptr;
 
-    TrayIcon *trayIcon;
+    TrayIcon *trayIcon = nullptr;
 
     // Null when kscreen-doctor isn't installed.
     DisplayRotation *displayRotation = nullptr;
@@ -238,9 +253,15 @@ private:
     // Set while a mode change requested from the Launch1 shortcut waits
     // for the backend's answer.
     bool shiftModeCyclePending = false;
-    bool m_autoShiftModePending = false;
-    MsiControllerLib::MsiEcMode m_autoShiftTargetMode = MsiControllerLib::MsiEcMode::EcoShift;
-    QString m_savedShiftModeBeforeEco;
+
+    // Set while a change made by the Eco-on-battery option waits for the
+    // backend's answer, with the mode it asked for.
+    bool autoShiftModePending = false;
+    MsiControllerLib::MsiEcMode autoShiftTargetMode = MsiControllerLib::MsiEcMode::EcoShift;
+
+    // The mode to go back to on AC power, as its sysfs name; empty when
+    // there's none. Also kept in QSettings, so it survives a restart.
+    QString savedShiftModeBeforeEco;
 
     // The performance-mode notification currently on screen, if any. Null
     // once it's closed - KNotification deletes itself.

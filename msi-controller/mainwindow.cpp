@@ -10,9 +10,16 @@
 #include "fancurvedialog.h"
 #include "aboutdialog.h"
 #include "powerstatewatcher.h"
+#include "backendclient.h"
+#include "hardwaremonitor.h"
+#include "fanspeedmonitor.h"
+#include "kbdbacklightbrightnessclient.h"
+#include "kdepowermanagementwatcher.h"
 
 #include <QApplication>
+#include <QCheckBox>
 #include <QCloseEvent>
+#include <QComboBox>
 #include <QDBusConnection>
 #include <QDBusConnectionInterface>
 #include <QDebug>
@@ -20,17 +27,20 @@
 #include <QGuiApplication>
 #include <QHBoxLayout>
 #include <QInputDialog>
+#include <QLabel>
 #include <QMessageBox>
 #include <QPushButton>
 #include <QScreen>
 #include <QScrollArea>
 #include <QSettings>
+#include <QSlider>
 #include <QStandardItemModel>
 #include <QStyle>
 #include <QTimer>
 #include <QWindow>
 #include <algorithm>
 #include <optional>
+#include <utility>
 
 #include <KGlobalAccel>
 #include <KNotification>
@@ -106,7 +116,7 @@ MainWindow::MainWindow(QWidget *parent)
     , trayIcon(new TrayIcon(this))
 {
     ui->setupUi(this);
-    m_savedShiftModeBeforeEco = QSettings().value(savedShiftModeBeforeEcoSettingsKey).toString();
+    savedShiftModeBeforeEco = QSettings().value(savedShiftModeBeforeEcoSettingsKey).toString();
     connect(powerWatcher, &PowerStateWatcher::powerStateChanged, this, &MainWindow::handlePowerStateChanged);
     setupStatusBar();
     setupTray();
@@ -384,11 +394,11 @@ void MainWindow::onCommandFinished(bool success)
         }
     }
 
-    const bool wasAutoShift = m_autoShiftModePending;
-    if (m_autoShiftModePending) {
-        m_autoShiftModePending = false;
+    const bool wasAutoShift = autoShiftModePending;
+    if (autoShiftModePending) {
+        autoShiftModePending = false;
         if (success) {
-            notifyAutoShiftMode(m_autoShiftTargetMode);
+            notifyAutoShiftMode(autoShiftTargetMode);
         } else {
             invalidateSavedShiftMode();
             KNotification::event(warningEventId, tr("Performance mode"),
@@ -587,8 +597,8 @@ bool MainWindow::isEcoOnBatteryEnabled() const
 
 void MainWindow::invalidateSavedShiftMode()
 {
-    if (!m_savedShiftModeBeforeEco.isEmpty()) {
-        m_savedShiftModeBeforeEco.clear();
+    if (!savedShiftModeBeforeEco.isEmpty()) {
+        savedShiftModeBeforeEco.clear();
         QSettings().remove(savedShiftModeBeforeEcoSettingsKey);
     }
 }
@@ -608,7 +618,7 @@ void MainWindow::applyPowerStatePolicy(bool isInitialSync)
         return;
     }
 
-    if (!backend->isConnected() || m_autoShiftModePending) {
+    if (!backend->isConnected() || autoShiftModePending) {
         return;
     }
 
@@ -626,23 +636,23 @@ void MainWindow::applyPowerStatePolicy(bool isInitialSync)
         // Device is running on battery power
         if (currentMode != MsiEcMode::EcoShift) {
             // Save the mode before switching to Eco
-            m_savedShiftModeBeforeEco = currentModeName;
-            QSettings().setValue(savedShiftModeBeforeEcoSettingsKey, m_savedShiftModeBeforeEco);
+            savedShiftModeBeforeEco = currentModeName;
+            QSettings().setValue(savedShiftModeBeforeEcoSettingsKey, savedShiftModeBeforeEco);
 
-            m_autoShiftModePending = true;
-            m_autoShiftTargetMode = MsiEcMode::EcoShift;
+            autoShiftModePending = true;
+            autoShiftTargetMode = MsiEcMode::EcoShift;
             backend->setMode(getModeKey(MsiEcMode::EcoShift));
         } else if (!isInitialSync) {
             // Transitioned to battery at runtime while already in Eco mode:
             // the user chose Eco while on AC, so there is no previous non-Eco mode to restore.
             invalidateSavedShiftMode();
         }
-        // Note: on initial sync while already in Eco, do not invalidate m_savedShiftModeBeforeEco.
+        // Note: on initial sync while already in Eco, do not invalidate savedShiftModeBeforeEco.
         // It may contain the pre-shutdown plugged mode that should be restored upon next AC connection.
     } else {
         // Device is running on AC power
-        if (!m_savedShiftModeBeforeEco.isEmpty()) {
-            const MsiEcMode modeToRestore = parseModeName(m_savedShiftModeBeforeEco);
+        if (!savedShiftModeBeforeEco.isEmpty()) {
+            const MsiEcMode modeToRestore = parseModeName(savedShiftModeBeforeEco);
 
             if (!isModeSupported(modeToRestore)) {
                 invalidateSavedShiftMode();
@@ -653,8 +663,8 @@ void MainWindow::applyPowerStatePolicy(bool isInitialSync)
                 // Device woke up or was reattached to charge while still in Eco mode:
                 // restore the saved mode.
                 invalidateSavedShiftMode();
-                m_autoShiftModePending = true;
-                m_autoShiftTargetMode = modeToRestore;
+                autoShiftModePending = true;
+                autoShiftTargetMode = modeToRestore;
                 backend->setMode(getModeKey(modeToRestore));
             } else if (currentMode == modeToRestore) {
                 // Hardware is already in the restored mode; just clear the saved state.
@@ -719,7 +729,7 @@ void MainWindow::registerWriteControl(QWidget *widget, std::function<void()> res
 
 void MainWindow::resyncAllControls()
 {
-    for (const auto &resync : resyncCallbacks) {
+    for (const auto &resync : std::as_const(resyncCallbacks)) {
         resync();
     }
 }
@@ -727,7 +737,7 @@ void MainWindow::resyncAllControls()
 void MainWindow::updateWriteControlsEnabled()
 {
     const bool usable = backend->isConnected() && !topicBoxes->isEditing();
-    for (QWidget *widget : writeControls) {
+    for (QWidget *widget : std::as_const(writeControls)) {
         widget->setEnabled(usable);
     }
 }
