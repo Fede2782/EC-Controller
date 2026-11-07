@@ -6,7 +6,7 @@
 #include <QObject>
 
 // Watches org.kde.Solid.PowerManagement (session bus) for
-// chargeStartThresholdChanged and chargeEndThresholdChanged: KDE's own Power
+// chargeStartThresholdChanged and chargeStopThresholdChanged: KDE's own Power
 // Management settings can change the battery thresholds independently of
 // this app, and this is how the battery box notices. The new value carried
 // by either signal isn't used - re-reading ChargeEnd through

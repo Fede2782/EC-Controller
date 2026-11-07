@@ -15,7 +15,7 @@ KdePowerManagementWatcher::KdePowerManagementWatcher(QObject *parent)
     : QObject(parent)
 {
     watchSignal(QStringLiteral("chargeStartThresholdChanged"));
-    watchSignal(QStringLiteral("chargeEndThresholdChanged"));
+    watchSignal(QStringLiteral("chargeStopThresholdChanged"));
 }
 
 void KdePowerManagementWatcher::watchSignal(const QString &signalName)
