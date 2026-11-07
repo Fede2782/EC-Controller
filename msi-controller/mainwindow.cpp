@@ -350,6 +350,10 @@ void MainWindow::onBackendConnectionStateChanged(bool connected)
     updateWriteControlsEnabled();
 
     if (connected) {
+        // The service re-applies its saved state whenever it starts (an
+        // upgrade restarts it, for one), so the hardware may have changed
+        // while it was away.
+        resyncAllControls();
         applyPowerStatePolicy(/*isInitialSync=*/true);
     }
 }

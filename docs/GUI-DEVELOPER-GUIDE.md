@@ -253,6 +253,9 @@ When **any** command finishes, `BackendClient` emits `commandFinished(bool succe
 
 *Reload* (F5) = reinitializes the whole GUI (`clearGui()`, probes hardware monitors anew, `buildGui()`, `backend->connectToBackend()`, and `fitWindowToContents()`).
 
+The controls are also resynced whenever the backend (re)appears on the bus: the service
+re-applies its saved state when it starts, before it claims its name.
+
 ### 5.4 Chained writes (when one write depends on another)
 
 D-Bus calls are asynchronous (polkit may prompt for a password), so "do B only if A succeeded"
