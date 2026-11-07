@@ -34,22 +34,12 @@ int main(int argc, char *argv[])
         }
     }
 
+    // Tries every UI language of the system locale in order of preference,
+    // each from its full name ("it_IT") down to the language ("it").
     QTranslator translator;
-    QStringList uiLanguages = QLocale::system().uiLanguages();
-    if (uiLanguages.isEmpty()) {
-        uiLanguages.append(QLocale::system().name());
-    }
-    for (const QString &locale : uiLanguages) {
-        const QString baseName = QStringLiteral("ec-controller_") + QLocale(locale).name();
-        if (translator.load(QStringLiteral(":/i18n/") + baseName)) {
-            a.installTranslator(&translator);
-            break;
-        }
-        const QString shortName = QStringLiteral("ec-controller_") + QLocale(locale).name().section(QLatin1Char('_'), 0, 0);
-        if (translator.load(QStringLiteral(":/i18n/") + shortName)) {
-            a.installTranslator(&translator);
-            break;
-        }
+    if (translator.load(QLocale(), QStringLiteral("ec-controller"), QStringLiteral("_"),
+                        QStringLiteral(":/i18n"))) {
+        a.installTranslator(&translator);
     }
 
     // On Wayland the window is identified by its desktop file, which is
