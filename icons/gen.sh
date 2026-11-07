@@ -17,10 +17,6 @@
 # Plasma recolours them to the panel anyway; the fixed colours matter for
 # everything else.
 #
-# ec-controller-flattened.svg is not used. Its path carries the
-# ColorScheme-Text class but a hardcoded fill (#0d8773), so it would not
-# recolour the way a symbolic icon should.
-#
 # Output: icons/icons/{hicolor,breeze,breeze-dark,pixmaps}, rebuilt from
 # scratch on every run so no stale file survives a layout change. That tree
 # is committed and installed as-is by the top-level CMakeLists.txt, so
@@ -163,11 +159,6 @@ for name in "$APP_NAME-tray" "$APP_NAME-tray-symbolic"; do
         render "$TRAY_FOR_DARK_PANELS_SVG" "$size" "$STAGE/hicolor/${size}x${size}/status/$name.png"
     done
 done
-
-# Older names for the tray glyph, kept so nothing that still looks them up
-# breaks. The current GUI only uses ec-controller-tray.
-place "$TRAY_FOR_DARK_PANELS_SVG"  "$STAGE/hicolor/scalable/apps/${APP_NAME}indicator.svg"
-place "$TRAY_FOR_LIGHT_PANELS_SVG" "$STAGE/hicolor/scalable/apps/${APP_NAME}indicatordark.svg"
 
 # -------------------------------------------------------------------
 # breeze / breeze-dark - KDE's own themes
