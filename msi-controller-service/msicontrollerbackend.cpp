@@ -112,7 +112,7 @@ bool MsiControllerBackend::setAttrValue(QString attrKey, int value) {
 bool MsiControllerBackend::setMode(MsiEcMode mode) {
     // Only resolves which attribute this mode belongs to; setAttrValue()
     // does the actual support/read-only/validity checks and the write.
-    MsiEcAttribute currentModeAttr;
+    MsiEcAttribute currentModeAttr = MsiEcAttribute::InvalidAttribute;
 
     switch (mode) {
         case MsiEcMode::AutoFan:

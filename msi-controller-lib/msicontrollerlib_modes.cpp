@@ -40,7 +40,7 @@ QString MsiControllerLib::getModeName(MsiEcMode mode) {
 }
 
 bool MsiControllerLib::isModeSupported(MsiEcMode mode) {
-    MsiEcAttribute availableModesAttr;
+    MsiEcAttribute availableModesAttr = MsiEcAttribute::InvalidAttribute;
 
     switch (mode) {
         case MsiEcMode::AutoFan:
