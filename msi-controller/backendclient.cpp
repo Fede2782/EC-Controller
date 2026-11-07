@@ -5,6 +5,9 @@
 #include <QDBusConnection>
 #include <QDBusConnectionInterface>
 #include <QDBusPendingCallWatcher>
+#include <QDebug>
+
+#include <limits>
 
 const QString BackendClient::serviceName = QStringLiteral("org.fedelabs.EcController");
 const QString BackendClient::objectPath = QStringLiteral("/EcController");
@@ -16,6 +19,12 @@ BackendClient::BackendClient(QObject *parent)
     , m_interface(new OrgFedelabsEcControllerAPIInterface(serviceName, objectPath,
                                                              QDBusConnection::systemBus(), this))
 {
+    // A write can wait for the user to answer a polkit password prompt.
+    // With D-Bus' default 25 s timeout, a slower answer was reported as a
+    // failure while the prompt was still open, and the write then happened
+    // anyway. INT_MAX is libdbus' "no timeout".
+    m_interface->setTimeout(std::numeric_limits<int>::max());
+
     connect(m_watcher, &QDBusServiceWatcher::serviceRegistered, this, &BackendClient::setConnected);
     connect(m_watcher, &QDBusServiceWatcher::serviceUnregistered, this, [this]() {
         setDisconnected(tr("The ec-controller-service backend disconnected."));
@@ -66,6 +75,11 @@ void BackendClient::watchReply(const QDBusPendingReply<bool> &reply,
     connect(watcher, &QDBusPendingCallWatcher::finished, this,
             [this, onFinished](QDBusPendingCallWatcher *watcher) {
         const QDBusPendingReply<bool> reply = *watcher;
+        // The service logs why it refused a write; errors of the call
+        // itself (no reply, access denied by the bus) only show up here.
+        if (reply.isError()) {
+            qWarning() << Q_FUNC_INFO << reply.error();
+        }
         const bool success = !reply.isError() && reply.value();
         emit commandFinished(success);
         if (onFinished) {
