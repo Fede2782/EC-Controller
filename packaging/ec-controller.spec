@@ -86,15 +86,15 @@ fi
 %{_datadir}/pixmaps/ec-controller*
 
 %changelog
-* Thu Nov 7 2026 Fede2782 <78815152+Fede2782@users.noreply.github.com> - 1.1.0-1
+* Sat Nov 7 2026 Fede2782 <78815152+Fede2782@users.noreply.github.com> - 1.1.0-1
 - Stability improvements and fixes
 
-* Thu Nov 4 2026 Fede2782 <78815152+Fede2782@users.noreply.github.com> - 1.0.3-1
+* Wed Nov 4 2026 Fede2782 <78815152+Fede2782@users.noreply.github.com> - 1.0.3-1
 - Auto Eco on Battery feature
 - Allow to always close instead of system tray
 - Code improvements and fixes
 
-* Thu Oct 24 2026 Fede2782 <78815152+Fede2782@users.noreply.github.com> - 1.0.2-1
+* Sat Oct 24 2026 Fede2782 <78815152+Fede2782@users.noreply.github.com> - 1.0.2-1
 - Improve strings formatting
 - Add About Qt menu
 - Italian localization
