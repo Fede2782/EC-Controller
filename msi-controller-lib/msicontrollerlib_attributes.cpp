@@ -298,10 +298,10 @@ QString MsiControllerLib::getAttrKey(MsiEcAttribute attr) {
 }
 
 bool MsiControllerLib::isValidBatteryThreshold(MsiEcAttribute attr, int threshold) {
-    // The EC/driver also enforces a minimum gap between the start and end
-    // thresholds (batteryModeChargeStartEndDelta); that check needs both
-    // values at once, so it is left to the caller that has them both
-    // (see MsiControllerBackend::restoreState / setAttrValue).
+    // msi-ec keeps both thresholds in one EC value: the start threshold
+    // always reads as the end one minus batteryModeChargeStartEndDelta, and
+    // writing either moves the other with it. The pair can't disagree, so
+    // each threshold only needs its own range checked.
     if (attr == MsiEcAttribute::ChargeStart)
         return threshold >= batteryModeLowestLevel &&
                threshold <= batteryModeMaxChargeEnd - batteryModeChargeStartEndDelta;
