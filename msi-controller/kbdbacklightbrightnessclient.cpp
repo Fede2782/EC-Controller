@@ -32,10 +32,11 @@ KbdBacklightBrightnessClient::KbdBacklightBrightnessClient(QObject *parent)
         m_brightness = currentReply.value();
     }
 
-    // QDBusInterface is a dynamic proxy with no compile-time signal to take
-    // an address of, so this needs the old SIGNAL/SLOT string syntax rather
-    // than the usual function-pointer connect used everywhere else.
-    connect(&m_interface, SIGNAL(BrightnessChanged(int)), this, SLOT(handleBrightnessChanged(int)));
+    // QtDBus has no pointer-to-member form for D-Bus signals, so this takes
+    // the slot as a SLOT() string.
+    QDBusConnection::systemBus().connect(serviceName, objectPath, interfaceName,
+                                         QStringLiteral("BrightnessChanged"), this,
+                                         SLOT(handleBrightnessChanged(int)));
 }
 
 bool KbdBacklightBrightnessClient::isAvailable() const

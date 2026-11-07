@@ -824,7 +824,9 @@ What that has meant in practice in this project (lessons from rejected or redone
   Forward-declare Qt classes in headers where possible.
 - Qt 6 idioms: `QStringLiteral(...)`, `u' '` char literals, pointer-to-member `connect()` or a
   lambda (never `SIGNAL()`/`SLOT()`), `nullptr`, `explicit` single-argument constructors,
-  `override`, range-for over `const` containers.
+  `override`, range-for over `const` containers. The one exception to the `connect()` rule is
+  `QDBusConnection::connect()` for D-Bus signals: QtDBus has no pointer-to-member form, so it
+  takes a `SLOT()` string (say so in a comment where it's used).
 - File-local constants: `constexpr` in an anonymous `namespace { }` at the top of the `.cpp` —
   not `#define`, not class statics.
 - QObject parent ownership; `QPointer` for objects that delete themselves (`KNotification`).

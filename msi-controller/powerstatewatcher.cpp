@@ -15,6 +15,8 @@ const QString propertiesInterface = QStringLiteral("org.freedesktop.DBus.Propert
 PowerStateWatcher::PowerStateWatcher(QObject *parent)
     : QObject(parent)
 {
+    // QtDBus has no pointer-to-member form for D-Bus signals, so this takes
+    // the slot as a SLOT() string.
     QDBusConnection::systemBus().connect(
         upowerService, upowerPath, propertiesInterface,
         QStringLiteral("PropertiesChanged"),

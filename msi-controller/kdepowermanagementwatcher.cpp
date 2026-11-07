@@ -20,6 +20,8 @@ KdePowerManagementWatcher::KdePowerManagementWatcher(QObject *parent)
 
 void KdePowerManagementWatcher::watchSignal(const QString &signalName)
 {
+    // QtDBus has no pointer-to-member form for D-Bus signals, so this takes
+    // the slot as a SLOT() string.
     const bool connected = QDBusConnection::sessionBus().connect(
         serviceName, objectPath, interfaceName, signalName, this, SLOT(handleThresholdChanged(int)));
 
