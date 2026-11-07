@@ -54,6 +54,12 @@ desktop-file-validate %{buildroot}%{_sysconfdir}/xdg/autostart/org.fedelabs.EcCo
 
 %post
 %systemd_post org.fedelabs.eccontroller.service
+# The preset has just enabled the service; on a first install also start
+# it, so the application works without a reboot. Upgrades restart it from
+# the postun scriptlet.
+if [ $1 -eq 1 ] && [ -d /run/systemd/system ]; then
+    systemctl start org.fedelabs.eccontroller.service || :
+fi
 
 %preun
 %systemd_preun org.fedelabs.eccontroller.service
@@ -70,6 +76,7 @@ desktop-file-validate %{buildroot}%{_sysconfdir}/xdg/autostart/org.fedelabs.EcCo
 %{_datadir}/polkit-1/actions/org.fedelabs.EcController.policy
 %{_datadir}/polkit-1/rules.d/49-org.fedelabs.EcController.rules
 %{_unitdir}/org.fedelabs.eccontroller.service
+%{_presetdir}/50-ec-controller.preset
 %{_datadir}/applications/org.fedelabs.EcController.desktop
 %{_datadir}/metainfo/org.fedelabs.EcController.metainfo.xml
 %config(noreplace) %{_sysconfdir}/xdg/autostart/org.fedelabs.EcController.desktop

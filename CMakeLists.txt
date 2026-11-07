@@ -78,6 +78,7 @@ set(MSI_CONTROLLER_DBUS_SYSTEM_DIR "${CMAKE_INSTALL_DATAROOTDIR}/dbus-1/system.d
 set(MSI_CONTROLLER_POLKIT_ACTIONS_DIR "${CMAKE_INSTALL_DATAROOTDIR}/polkit-1/actions")
 set(MSI_CONTROLLER_POLKIT_RULES_DIR "${CMAKE_INSTALL_DATAROOTDIR}/polkit-1/rules.d")
 set(MSI_CONTROLLER_SYSTEMD_UNIT_DIR "${CMAKE_INSTALL_PREFIX}/lib/systemd/system")
+set(MSI_CONTROLLER_SYSTEMD_PRESET_DIR "${CMAKE_INSTALL_PREFIX}/lib/systemd/system-preset")
 
 # The systemd unit needs the real install-time path to the backend executable,
 # so we configure it once from the source template.
@@ -113,6 +114,13 @@ install(FILES
 install(FILES
     "${CMAKE_CURRENT_BINARY_DIR}/org.fedelabs.eccontroller.service"
     DESTINATION "${MSI_CONTROLLER_SYSTEMD_UNIT_DIR}"
+)
+
+# The preset enables the unit where the package manager applies presets
+# instead of enabling units itself (the RPM's %systemd_post).
+install(FILES
+    "${CMAKE_CURRENT_SOURCE_DIR}/packaging/50-ec-controller.preset"
+    DESTINATION "${MSI_CONTROLLER_SYSTEMD_PRESET_DIR}"
 )
 
 # Start the backend service automatically: enable it for every boot and

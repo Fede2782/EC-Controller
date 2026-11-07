@@ -1,0 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Fede2782
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Enables the backend on distributions whose packages apply systemd presets
+# (Fedora's %systemd_post); their default preset disables every unit it
+# doesn't list. The service restores the saved hardware state at boot.
+enable org.fedelabs.eccontroller.service

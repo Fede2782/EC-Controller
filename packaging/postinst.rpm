@@ -1,1 +1,7 @@
 %systemd_post org.fedelabs.eccontroller.service
+# The preset has just enabled the service; on a first install also start
+# it, so the application works without a reboot. Upgrades restart it from
+# the postun scriptlet.
+if [ $1 -eq 1 ] && [ -d /run/systemd/system ]; then
+    systemctl start org.fedelabs.eccontroller.service || :
+fi

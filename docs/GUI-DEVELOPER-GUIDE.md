@@ -896,7 +896,8 @@ sudo cmake --install build
 
 GUI binary `ec-controller`; service binary `ec-controller-service` and its systemd unit
 `org.fedelabs.eccontroller.service`
-(`Type=dbus`, in `<prefix>/lib/systemd/system`); the D-Bus system-bus policy
+(`Type=dbus`, in `<prefix>/lib/systemd/system`) with the preset `50-ec-controller.preset` that
+enables it (`<prefix>/lib/systemd/system-preset`); the D-Bus system-bus policy
 (`org.fedelabs.EcController.conf`); the polkit action and rule (rule installed as
 `49-org.fedelabs.EcController.rules`); `org.fedelabs.EcController.desktop`; the
 autostart entry (`<sysconfdir>/xdg/autostart`); all generated icons (hicolor, breeze,
@@ -914,7 +915,8 @@ Don't regenerate the committed PNGs unless asked.
   (`qt6-svg-plugins`/`qt6-qtsvg`, `qt6-wayland`/`qt6-qtwayland`, `upower`,
   `libkscreen-bin`/`libkscreen`). `packaging/postinst` / `prerm` (for .deb) and
   `postinst.rpm` / `prerm.rpm` / `postun.rpm` (using systemd macros for .rpm) enable/restart/disable the
-  service.
+  service. `%systemd_post` only applies presets, so the .rpm enables the service through the
+  preset and starts it once on the first install; the COPR spec does the same.
 - `.github/workflows/packages.yml`: `.deb` built in `ubuntu:26.04`, `.rpm` in `fedora:44`.
   - Push to the default branch → replaces the rolling **`continuous`** prerelease.
   - Push a `v*` tag → a normal GitHub release named after the tag.
