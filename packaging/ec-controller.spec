@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 
 Name:           ec-controller
-Version:        1.0.3
+Version:        1.1.0
 Release:        1%{?dist}
 Summary:        Control MSI laptop hardware through the msi-ec driver
 
@@ -86,11 +86,13 @@ fi
 %{_datadir}/pixmaps/ec-controller*
 
 %changelog
+* Thu Nov 7 2026 Fede2782 <78815152+Fede2782@users.noreply.github.com> - 1.1.0-1
+- Stability improvements and fixes
+
 * Thu Nov 4 2026 Fede2782 <78815152+Fede2782@users.noreply.github.com> - 1.0.3-1
 - Auto Eco on Battery feature
 - Allow to always close instead of system tray
 - Code improvements and fixes
-
 
 * Thu Oct 24 2026 Fede2782 <78815152+Fede2782@users.noreply.github.com> - 1.0.2-1
 - Improve strings formatting

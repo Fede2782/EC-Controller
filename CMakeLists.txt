@@ -12,7 +12,7 @@ else()
     set(CMAKE_PROJECT_SPDX_LICENSE_PARAM "")
 endif()
 
-project(msicontroller VERSION 1.0.3 LANGUAGES CXX ${CMAKE_PROJECT_SPDX_LICENSE_PARAM})
+project(msicontroller VERSION 1.1.0 LANGUAGES CXX ${CMAKE_PROJECT_SPDX_LICENSE_PARAM})
 
 # Pass the project version to C++ sources so CMake remains the single source of truth.
 add_compile_definitions(PROJECT_VERSION="${PROJECT_VERSION}")
