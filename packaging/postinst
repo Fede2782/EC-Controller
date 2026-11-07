@@ -1,6 +1,6 @@
 #!/bin/sh
-# Runs after the package is installed or upgraded - as the Debian postinst
-# and as the RPM %post, so it must not depend on either one's arguments.
+# Debian postinst: runs after the package is installed or upgraded. (The
+# RPM uses the systemd macros in postinst.rpm, prerm.rpm and postun.rpm.)
 #
 # Enables the backend service for every boot and (re)starts it, so the
 # application works right away and an upgrade runs the new binary. Skipped
