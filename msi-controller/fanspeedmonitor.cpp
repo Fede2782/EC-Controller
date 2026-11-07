@@ -5,6 +5,8 @@
 #include <QDir>
 #include <QFile>
 
+#include <utility>
+
 namespace {
 constexpr int pollIntervalMs = 1000;
 }
@@ -66,7 +68,7 @@ QString FanSpeedMonitor::findFanHwmonPath() const
 
 void FanSpeedMonitor::poll()
 {
-    for (int fan : m_populatedFans) {
+    for (int fan : std::as_const(m_populatedFans)) {
         QFile file(QStringLiteral("%1/fan%2_input").arg(m_hwmonPath).arg(fan));
         if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
             continue;

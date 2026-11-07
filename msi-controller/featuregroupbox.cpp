@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "featuregroupbox.h"
 
+#include <QFormLayout>
+
 FeatureGroupBox::FeatureGroupBox(const QString &boxId, const QString &title, QWidget *parent)
     : QGroupBox(title, parent)
     , m_boxId(boxId)

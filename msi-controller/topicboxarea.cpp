@@ -9,6 +9,7 @@
 #include <QVBoxLayout>
 
 #include <algorithm>
+#include <utility>
 
 namespace {
 // QSettings key for the persisted layout. QApplication's organization and
@@ -82,7 +83,7 @@ void TopicBoxArea::applySavedOrder()
     QList<FeatureGroupBox *> remaining = currentOrder();
     QList<FeatureGroupBox *> ordered;
 
-    for (const QString &boxId : m_savedOrder) {
+    for (const QString &boxId : std::as_const(m_savedOrder)) {
         const auto match = std::find_if(remaining.begin(), remaining.end(),
                                         [&boxId](FeatureGroupBox *box) { return box->boxId() == boxId; });
         if (match != remaining.end()) {
@@ -114,7 +115,7 @@ void TopicBoxArea::beginEdit()
     m_editing = true;
     m_orderBeforeEdit = currentOrder();
 
-    for (const BoxRow &entry : m_rows) {
+    for (const BoxRow &entry : std::as_const(m_rows)) {
         entry.moveButtons->setVisible(true);
     }
     updateMoveButtons();
@@ -129,7 +130,7 @@ void TopicBoxArea::commitEdit()
     m_editing = false;
     m_orderBeforeEdit.clear();
 
-    for (const BoxRow &entry : m_rows) {
+    for (const BoxRow &entry : std::as_const(m_rows)) {
         entry.moveButtons->setVisible(false);
     }
 
@@ -144,7 +145,7 @@ void TopicBoxArea::cancelEdit()
 
     m_editing = false;
 
-    for (const BoxRow &entry : m_rows) {
+    for (const BoxRow &entry : std::as_const(m_rows)) {
         entry.moveButtons->setVisible(false);
     }
 
@@ -205,7 +206,7 @@ void TopicBoxArea::applyOrder(const QList<FeatureGroupBox *> &order)
 
     // Defensive: never drop a row just because the requested order forgot
     // to mention it.
-    for (const BoxRow &entry : m_rows) {
+    for (const BoxRow &entry : std::as_const(m_rows)) {
         const auto known = std::find_if(reordered.cbegin(), reordered.cend(),
                                         [&entry](const BoxRow &kept) { return kept.box == entry.box; });
         if (known == reordered.cend()) {
@@ -222,10 +223,10 @@ void TopicBoxArea::rebuildLayout()
     // The widgets keep their parent throughout, so nothing is re-created
     // and no state (or keyboard focus) is lost - only their position in the
     // layout changes.
-    for (const BoxRow &entry : m_rows) {
+    for (const BoxRow &entry : std::as_const(m_rows)) {
         m_layout->removeWidget(entry.row);
     }
-    for (const BoxRow &entry : m_rows) {
+    for (const BoxRow &entry : std::as_const(m_rows)) {
         m_layout->addWidget(entry.row);
     }
     updateMoveButtons();
@@ -248,7 +249,7 @@ void TopicBoxArea::updateMoveButtons()
 void TopicBoxArea::saveOrder()
 {
     QStringList order;
-    for (const BoxRow &entry : m_rows) {
+    for (const BoxRow &entry : std::as_const(m_rows)) {
         order.append(entry.box->boxId());
     }
 
@@ -257,7 +258,7 @@ void TopicBoxArea::saveOrder()
     // layout. They can only be appended, so such a box comes back at the
     // bottom and has to be repositioned once - which beats the alternative
     // of losing every other box's position.
-    for (const QString &boxId : m_savedOrder) {
+    for (const QString &boxId : std::as_const(m_savedOrder)) {
         if (!order.contains(boxId)) {
             order.append(boxId);
         }

@@ -3,19 +3,19 @@
 #ifndef BACKENDCLIENT_H
 #define BACKENDCLIENT_H
 
-#include <QObject>
-#include <QDBusServiceWatcher>
 #include <QDBusPendingReply>
+#include <QObject>
 
 #include <functional>
 
-#include "msicontrollerbackend_interface.h"
+class OrgFedelabsEcControllerAPIInterface;
+class QDBusServiceWatcher;
 
 // Thin wrapper around the generated D-Bus proxy for the msi-controller-service
 // backend. It owns the connection to the system bus, tracks whether the
 // backend is currently reachable (via QDBusServiceWatcher), and exposes the
-// feature calls (setMode, setAttrValue, ...) as they get implemented -
-// keeping all D-Bus glue in one place instead of spread across the UI code.
+// backend's calls (setMode, setAttrValue) - keeping all D-Bus glue in one
+// place instead of spread across the UI code.
 class BackendClient : public QObject
 {
     Q_OBJECT
@@ -53,11 +53,8 @@ private:
     void watchReply(const QDBusPendingReply<bool> &reply,
                     std::function<void(bool success)> onFinished = nullptr);
 
-    static const QString serviceName;
-    static const QString objectPath;
-
-    QDBusServiceWatcher *m_watcher;
-    OrgFedelabsEcControllerAPIInterface *m_interface;
+    QDBusServiceWatcher *m_watcher = nullptr;
+    OrgFedelabsEcControllerAPIInterface *m_interface = nullptr;
     bool m_connected = false;
     QString m_lastError;
 };

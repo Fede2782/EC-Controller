@@ -3,9 +3,9 @@
 #ifndef FANSPEEDMONITOR_H
 #define FANSPEEDMONITOR_H
 
+#include <QList>
 #include <QObject>
 #include <QTimer>
-#include <QVector>
 
 // Reads fan speed in RPM straight from the kernel's standard hwmon
 // interface (fanN_input) instead of msi-controller-lib: msi-ec exposes up
@@ -47,7 +47,7 @@ private:
     QString findFanHwmonPath() const;
 
     QString m_hwmonPath;
-    QVector<int> m_populatedFans;
+    QList<int> m_populatedFans;
     QTimer m_timer;
 };
 

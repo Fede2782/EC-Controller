@@ -55,7 +55,7 @@ signals:
     void quitRequested();
 
 private:
-    QSystemTrayIcon *m_trayIcon;
+    QSystemTrayIcon *m_trayIcon = nullptr;
 
     // Owned here rather than parented: QMenu wants a QWidget parent, and
     // QSystemTrayIcon::setContextMenu() doesn't take ownership.

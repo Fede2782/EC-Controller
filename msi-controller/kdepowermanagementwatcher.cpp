@@ -26,9 +26,10 @@ void KdePowerManagementWatcher::watchSignal(const QString &signalName)
         serviceName, objectPath, interfaceName, signalName, this, SLOT(handleThresholdChanged(int)));
 
     if (connected) {
-        qInfo() << "Watching KDE Solid PowerManagement signal" << signalName;
+        qInfo() << Q_FUNC_INFO << "Watching KDE Solid PowerManagement signal" << signalName;
     } else {
-        qInfo() << "KDE Solid PowerManagement signal" << signalName << "not available (not running KDE?)";
+        qInfo() << Q_FUNC_INFO << "KDE Solid PowerManagement signal" << signalName
+                << "not available (not running KDE?)";
     }
 }
 

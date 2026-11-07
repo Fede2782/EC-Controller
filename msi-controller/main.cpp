@@ -28,7 +28,8 @@ int main(int argc, char *argv[])
     // Migrate existing configuration from the legacy ec-controller.conf if present.
     const QString currentConfigFile = QSettings().fileName();
     if (!QFile::exists(currentConfigFile)) {
-        const QString oldConfigFile = QFileInfo(currentConfigFile).dir().filePath(QStringLiteral("ec-controller.conf"));
+        const QString oldConfigFile =
+            QFileInfo(currentConfigFile).dir().filePath(QStringLiteral("ec-controller.conf"));
         if (QFile::exists(oldConfigFile)) {
             QFile::copy(oldConfigFile, currentConfigFile);
         }

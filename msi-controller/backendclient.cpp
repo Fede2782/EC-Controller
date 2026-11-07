@@ -1,16 +1,20 @@
 // SPDX-FileCopyrightText: 2026 Fede2782
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "backendclient.h"
+#include "msicontrollerbackend_interface.h"
 
 #include <QDBusConnection>
 #include <QDBusConnectionInterface>
 #include <QDBusPendingCallWatcher>
+#include <QDBusServiceWatcher>
 #include <QDebug>
 
 #include <limits>
 
-const QString BackendClient::serviceName = QStringLiteral("org.fedelabs.EcController");
-const QString BackendClient::objectPath = QStringLiteral("/EcController");
+namespace {
+const QString serviceName = QStringLiteral("org.fedelabs.EcController");
+const QString objectPath = QStringLiteral("/EcController");
+}
 
 BackendClient::BackendClient(QObject *parent)
     : QObject(parent)

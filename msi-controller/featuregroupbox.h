@@ -4,7 +4,8 @@
 #define FEATUREGROUPBOX_H
 
 #include <QGroupBox>
-#include <QFormLayout>
+
+class QFormLayout;
 
 // A titled box holding a simple list of label/value rows. Every topic box
 // in the main window (temperatures, fan speeds, and whatever later
@@ -39,7 +40,7 @@ public:
 
 private:
     QString m_boxId;
-    QFormLayout *m_layout;
+    QFormLayout *m_layout = nullptr;
 };
 
 #endif // FEATUREGROUPBOX_H

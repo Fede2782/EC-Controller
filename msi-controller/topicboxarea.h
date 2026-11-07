@@ -91,7 +91,7 @@ private:
     void updateMoveButtons();
     void saveOrder();
 
-    QVBoxLayout *m_layout;
+    QVBoxLayout *m_layout = nullptr;
 
     // Current display order, the registration order, the order the current
     // editing session started from, and the order as stored on disk - which

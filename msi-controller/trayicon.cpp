@@ -8,9 +8,10 @@
 
 namespace {
 // The installed theme icon (icons/gen.sh generates it for hicolor, breeze
-// and breeze-dark; the top-level CMakeLists.txt installs all three). Loading it by name matters on Plasma: Qt then hands the
-// tray the icon *name*, and Plasma recolours the SVG's ColorScheme-Text
-// class to match light and dark panels.
+// and breeze-dark; the top-level CMakeLists.txt installs all three).
+// Loading it by name matters on Plasma: Qt then hands the tray the icon
+// *name*, and Plasma recolours the SVG's ColorScheme-Text class to match
+// light and dark panels.
 const QString trayIconName = QStringLiteral("ec-controller-tray");
 
 // Embedded copy, used only when the theme lookup fails - running straight
