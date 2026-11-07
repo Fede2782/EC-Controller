@@ -44,6 +44,8 @@ set(MSI_CONTROLLER_GUI_SOURCES
     fancurvedialog.h
     aboutdialog.cpp
     aboutdialog.h
+    licensedialog.cpp
+    licensedialog.h
 )
 
 qt_add_dbus_interface(

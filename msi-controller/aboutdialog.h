@@ -5,20 +5,15 @@
 
 #include <QDialog>
 
+// Help > About EC Controller: name, version, description, the trademark
+// notice (keep it if the text is ever reworded), the repository link, and a
+// link that opens the license in a LicenseDialog.
 class AboutDialog : public QDialog
 {
     Q_OBJECT
 
 public:
     explicit AboutDialog(QWidget *parent = nullptr);
-};
-
-class LicenseDialog : public QDialog
-{
-    Q_OBJECT
-
-public:
-    explicit LicenseDialog(QWidget *parent = nullptr);
 };
 
 #endif // ABOUTDIALOG_H

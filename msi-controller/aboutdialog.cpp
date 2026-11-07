@@ -1,15 +1,13 @@
 // SPDX-FileCopyrightText: 2026 Fede2782
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "aboutdialog.h"
+#include "licensedialog.h"
 
 #include <QCoreApplication>
 #include <QDialogButtonBox>
-#include <QFile>
-#include <QFontDatabase>
 #include <QHBoxLayout>
 #include <QIcon>
 #include <QLabel>
-#include <QPlainTextEdit>
 #include <QPushButton>
 #include <QVBoxLayout>
 
@@ -17,8 +15,6 @@ AboutDialog::AboutDialog(QWidget *parent)
     : QDialog(parent)
 {
     setWindowTitle(tr("About EC Controller"));
-    setWindowIcon(QIcon::fromTheme(QStringLiteral("ec-controller"),
-                                  QIcon(QStringLiteral(":/icons/apps/ec-controller.svg"))));
 
     auto *mainLayout = new QVBoxLayout(this);
     mainLayout->setContentsMargins(20, 20, 20, 20);
@@ -29,6 +25,7 @@ AboutDialog::AboutDialog(QWidget *parent)
     auto *headerLayout = new QHBoxLayout();
     headerLayout->setSpacing(16);
 
+    // The application's icon, which main() sets for every window.
     auto *iconLabel = new QLabel(this);
     const QIcon appIcon = windowIcon();
     iconLabel->setPixmap(appIcon.pixmap(64, 64));
@@ -70,16 +67,19 @@ AboutDialog::AboutDialog(QWidget *parent)
     mainLayout->addSpacing(4);
 
     // GitHub repository link
-    auto *repoLabel = new QLabel(
-        QStringLiteral("<a href=\"https://github.com/Fede2782/EC-Controller\">https://github.com/Fede2782/EC-Controller</a>"), this);
+    auto *repoLabel = new QLabel(QStringLiteral("<a href=\"https://github.com/Fede2782/EC-Controller\">"
+                                                "https://github.com/Fede2782/EC-Controller</a>"),
+                                 this);
     repoLabel->setTextFormat(Qt::RichText);
     repoLabel->setTextInteractionFlags(Qt::TextBrowserInteraction);
     repoLabel->setOpenExternalLinks(true);
     mainLayout->addWidget(repoLabel);
 
     // License clickable link
-    auto *licenseLabel = new QLabel(
-        QStringLiteral("<a href=\"#license\">") + tr("License: GNU General Public License, version 3") + QStringLiteral("</a>"), this);
+    auto *licenseLabel = new QLabel(QStringLiteral("<a href=\"#license\">")
+                                        + tr("License: GNU General Public License, version 3")
+                                        + QStringLiteral("</a>"),
+                                    this);
     licenseLabel->setTextFormat(Qt::RichText);
     licenseLabel->setTextInteractionFlags(Qt::TextBrowserInteraction);
     connect(licenseLabel, &QLabel::linkActivated, this, [this](const QString &link) {
@@ -99,45 +99,4 @@ AboutDialog::AboutDialog(QWidget *parent)
     }
     connect(buttonBox, &QDialogButtonBox::rejected, this, &QDialog::accept);
     mainLayout->addWidget(buttonBox);
-}
-
-LicenseDialog::LicenseDialog(QWidget *parent)
-    : QDialog(parent)
-{
-    setWindowTitle(tr("License agreement — %1").arg(QStringLiteral("EC Controller")));
-    setWindowIcon(QIcon::fromTheme(QStringLiteral("ec-controller"),
-                                  QIcon(QStringLiteral(":/icons/apps/ec-controller.svg"))));
-    resize(680, 520);
-
-    auto *layout = new QVBoxLayout(this);
-    layout->setContentsMargins(16, 16, 16, 16);
-    layout->setSpacing(10);
-
-    auto *topLabel = new QLabel(
-        tr("This program is distributed under the terms of the GPL v3 license."), this);
-    topLabel->setWordWrap(true);
-    layout->addWidget(topLabel);
-
-    auto *licenseTextEdit = new QPlainTextEdit(this);
-    licenseTextEdit->setReadOnly(true);
-    licenseTextEdit->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
-
-    QFile file(QStringLiteral(":/legal/LICENSE"));
-    if (!file.exists()) {
-        file.setFileName(QStringLiteral("LICENSE"));
-    }
-    if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        licenseTextEdit->setPlainText(QString::fromUtf8(file.readAll()));
-    } else {
-        licenseTextEdit->setPlainText(QStringLiteral("GNU GENERAL PUBLIC LICENSE\nVersion 3, 29 June 2007\n\nhttps://www.gnu.org/licenses/gpl-3.0.txt"));
-    }
-
-    layout->addWidget(licenseTextEdit);
-
-    auto *buttonBox = new QDialogButtonBox(QDialogButtonBox::Close, this);
-    if (auto *closeButton = buttonBox->button(QDialogButtonBox::Close)) {
-        closeButton->setText(tr("Close"));
-    }
-    connect(buttonBox, &QDialogButtonBox::rejected, this, &QDialog::accept);
-    layout->addWidget(buttonBox);
 }

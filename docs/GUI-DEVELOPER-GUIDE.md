@@ -144,6 +144,8 @@ GUI files (`msi-controller/`), about 3,850 lines in total:
 | `FanCurveChart` | `fancurvechart.*` | 168 | Draws one fan curve (temperature across, speed up). Display only |
 | `FanCurveEditor` | `fancurveeditor.*` | 227 | Edits **one** fan curve: a chart on top, one row of spin boxes per speed, and keeps the curve in order while it's edited |
 | `FanCurveDialog` | `fancurvedialog.*` | 126 | Shows the CPU (and GPU) curve editors, Apply/Cancel; writes nothing |
+| `AboutDialog` | `aboutdialog.*` | 121 | Help → About: version, description, trademark notice, repository and license links |
+| `LicenseDialog` | `licensedialog.*` | 64 | The GPLv3 text, from the `LICENSE` file embedded as a resource |
 | `TrayIcon` | `trayicon.*` | 135 | `QSystemTrayIcon`, menu, tooltip, `isUsable()` |
 | `DisplayRotation` | `displayrotation.*` | 276 | `kscreen-doctor` 180° flip, restore on exit |
 | `Autostart` (namespace) | `autostart.*` | 151 | XDG autostart opt-out file (KF6 `KDesktopFile`) |
