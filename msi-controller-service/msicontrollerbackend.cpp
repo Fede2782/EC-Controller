@@ -7,15 +7,15 @@
 #include "msicontrollerbackend.h"
 
 #include <QMetaEnum>
-#include <QTimer>
 
 MsiControllerBackend::MsiControllerBackend(QObject *parent)
     : QObject{parent}
 {
-    // Re-apply whatever was saved from the last run as soon as the service
-    // comes up, so hardware state (fan mode, charge thresholds, ...) survives
-    // a reboot.
-    QTimer::singleShot(0, this, &MsiControllerBackend::restoreState);
+    // Re-apply whatever was saved from the last run, so hardware state (fan
+    // mode, charge thresholds, ...) survives a reboot. It happens before the
+    // service is on the bus (see main.cpp), so no client ever sees the state
+    // from before the restore.
+    restoreState();
 }
 
 // -------------------------------------------------------------------------

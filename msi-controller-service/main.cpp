@@ -27,18 +27,22 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    qInfo() << "Starting EC Controller Backend";
+
     // Restores the last saved attribute/mode values as part of construction.
     MsiControllerBackend controllerBackend;
 
-    qInfo() << "Starting EC Controller Backend";
-
-    if (!QDBusConnection::systemBus().registerService("org.fedelabs.EcController")) {
-        qCritical() << QDBusConnection::systemBus().lastError().message();
+    // The object is exported before the name is claimed: clients (and
+    // systemd, for this Type=dbus unit) take the name appearing as "the
+    // service is ready", so the object must already be there by then.
+    if (!QDBusConnection::systemBus().registerObject("/EcController", &controllerBackend,
+                                                     QDBusConnection::ExportAllSlots)) {
+        qCritical() << "Unable to register the service object on D-Bus";
         return 1;
     }
 
-    if (!QDBusConnection::systemBus().registerObject("/EcController", &controllerBackend, QDBusConnection::ExportAllSlots)) {
-        qCritical() << "Unable to register the service object on D-Bus";
+    if (!QDBusConnection::systemBus().registerService("org.fedelabs.EcController")) {
+        qCritical() << QDBusConnection::systemBus().lastError().message();
         return 1;
     }
 
