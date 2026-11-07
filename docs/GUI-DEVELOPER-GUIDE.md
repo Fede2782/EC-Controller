@@ -444,7 +444,8 @@ file name must match the application name). KNotification's standard events aren
 are defined by Plasma's own notifyrc, so on other desktops they would never be shown.
 
 When Eco mode is supported by the driver, the Performance mode feature box offers a
-"Switch to Eco on battery" checkbox (persisted as `GUI/ecoOnBattery`). When enabled:
+"Switch to Eco on battery" checkbox (persisted as `GUI/ecoOnBattery`), a second row that
+`setupShiftMode()` adds to the box `setupModeDropdown()` built. When enabled:
 - When the device is unplugged from charge (`PowerStateWatcher`), if the current mode is not Eco,
   the current mode is saved and the application automatically switches to Eco mode, sending a notification
   ("%1 (on battery)").

@@ -1160,63 +1160,46 @@ void MainWindow::applyAdvancedFanMode(const QString &cpuCurve, const QString &gp
 
 void MainWindow::setupShiftMode()
 {
-    static const QList<MsiEcMode> modes = shiftModes();
-    auto *combo = new QComboBox(this);
-    for (MsiEcMode mode : modes) {
-        if (isModeSupported(mode)) {
-            combo->addItem(modeLabel(mode), getModeKey(mode));
-        }
-    }
-
-    if (combo->count() == 0) {
-        delete combo;
+    const QString boxId = QStringLiteral("performanceMode");
+    QComboBox *combo = setupModeDropdown(boxId, tr("Performance mode"), MsiEcAttribute::ShiftMode,
+                                         shiftModes());
+    if (!combo) {
         return;
     }
 
-    syncModeSelection(combo, MsiEcAttribute::ShiftMode);
-
-    auto *box = new FeatureGroupBox(QStringLiteral("performanceMode"), tr("Performance mode"), this);
-    box->addRow(tr("Mode"), combo);
-
-    // activated() only fires on direct user interaction, unlike
-    // currentIndexChanged() - so syncing the selection never triggers a
-    // write on its own, whether at startup or after a failed command.
-    connect(combo, &QComboBox::activated, this, [this, combo](int index) {
-        invalidateSavedShiftMode();
-        const QString modeKey = combo->itemData(index).toString();
-        backend->setMode(modeKey);
-    });
-
-    registerWriteControl(combo, [this, combo]() {
-        syncModeSelection(combo, MsiEcAttribute::ShiftMode);
-    });
+    // A mode picked by hand replaces the one the automatic Eco switch would
+    // go back to.
+    connect(combo, &QComboBox::activated, this, &MainWindow::invalidateSavedShiftMode);
 
     // The automatic switch option is only shown if Eco mode is supported.
-    if (isModeSupported(MsiEcMode::EcoShift)) {
-        auto *ecoCheckBox = new QCheckBox(this);
-        ecoCheckBox->setChecked(isEcoOnBatteryEnabled());
-        ecoCheckBox->setToolTip(
-            tr("Automatically switch to Eco performance mode when device is unplugged from charge, "
-               "and restore the previous mode when reattached."));
-
-        connect(ecoCheckBox, &QCheckBox::clicked, this, [this](bool checked) {
-            QSettings().setValue(ecoOnBatterySettingsKey, checked);
-            if (!checked) {
-                invalidateSavedShiftMode();
-            } else {
-                applyPowerStatePolicy(/*isInitialSync=*/false);
-            }
-        });
-
-        box->addRow(tr("Switch to Eco on battery"), ecoCheckBox);
-
-        registerWriteControl(ecoCheckBox, [this, ecoCheckBox]() {
-            const QSignalBlocker blocker(ecoCheckBox);
-            ecoCheckBox->setChecked(isEcoOnBatteryEnabled());
-        });
+    if (!isModeSupported(MsiEcMode::EcoShift)) {
+        return;
     }
 
-    topicBoxes->addBox(box);
+    auto *ecoCheckBox = new QCheckBox(this);
+    ecoCheckBox->setChecked(isEcoOnBatteryEnabled());
+    ecoCheckBox->setToolTip(
+        tr("Automatically switch to Eco performance mode when device is unplugged from charge, "
+           "and restore the previous mode when reattached."));
+
+    // clicked() only fires on direct user interaction, so the setChecked()
+    // of the resync below never runs this.
+    connect(ecoCheckBox, &QCheckBox::clicked, this, [this](bool checked) {
+        QSettings().setValue(ecoOnBatterySettingsKey, checked);
+        if (!checked) {
+            invalidateSavedShiftMode();
+        } else {
+            applyPowerStatePolicy(/*isInitialSync=*/false);
+        }
+    });
+
+    // The option is a second row in the box setupModeDropdown() built.
+    auto *box = topicBoxes->findChild<FeatureGroupBox *>(boxId);
+    box->addRow(tr("Switch to Eco on battery"), ecoCheckBox);
+
+    registerWriteControl(ecoCheckBox, [this, ecoCheckBox]() {
+        ecoCheckBox->setChecked(isEcoOnBatteryEnabled());
+    });
 }
 
 QComboBox *MainWindow::setupModeDropdown(const QString &boxId, const QString &boxTitle, MsiEcAttribute attr,
