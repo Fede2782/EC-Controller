@@ -14,11 +14,13 @@
 namespace Autostart {
 
 // Ensures the user's autostart desktop entry file exists in ~/.config/autostart.
-// If it does not exist, it is created (enabled by default). Any legacy
-// ec-controller-autostart.desktop file is migrated and removed.
+// If it does not exist, it is copied from the system-wide entry (enabled,
+// unless a legacy ec-controller-autostart.desktop file had it disabled; that
+// file is removed). Without a system-wide entry nothing is created.
 bool ensureUserEntry();
 
-// Whether the autostart feature is available on the system.
+// Whether the autostart feature is available: there is a user or a
+// system-wide entry.
 bool isAvailable();
 
 // Whether the application will start at the next login for this user.

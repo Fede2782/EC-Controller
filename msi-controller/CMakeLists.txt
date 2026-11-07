@@ -98,6 +98,7 @@ endif()
 target_link_libraries(msi-controller PRIVATE
     Qt6::Widgets
     Qt6::DBus
+    KF6::ConfigCore
     KF6::CoreAddons
     KF6::DBusAddons
     KF6::GlobalAccel

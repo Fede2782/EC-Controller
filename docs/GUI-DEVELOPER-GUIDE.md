@@ -146,7 +146,7 @@ GUI files (`msi-controller/`), about 3,850 lines in total:
 | `FanCurveDialog` | `fancurvedialog.*` | 126 | Shows the CPU (and GPU) curve editors, Apply/Cancel; writes nothing |
 | `TrayIcon` | `trayicon.*` | 135 | `QSystemTrayIcon`, menu, tooltip, `isUsable()` |
 | `DisplayRotation` | `displayrotation.*` | 276 | `kscreen-doctor` 180° flip, restore on exit |
-| `Autostart` (namespace) | `autostart.*` | 132 | XDG autostart opt-out file |
+| `Autostart` (namespace) | `autostart.*` | 151 | XDG autostart opt-out file (KF6 `KDesktopFile`) |
 | `PowerStateWatcher` | `powerstatewatcher.*` | 136 | Follows UPower's `OnBattery` property (AC power / on battery) |
 
 `msicontrollerbackend_interface.h` is **generated** at build time from the service's
@@ -530,7 +530,8 @@ System entry `/etc/xdg/autostart/org.fedelabs.EcController.desktop` (`Exec=ec-co
 --minimized`) starts it for every user. The file name matches `org.fedelabs.EcController.desktop`
 so KDE System Settings detects and associates the entry with the application.
 On clean start, `~/.config/autostart/org.fedelabs.EcController.desktop` is ensured to be present
-in the user directory (migrating and removing any legacy `ec-controller-autostart.desktop`).
+in the user directory, as a copy of the system entry (migrating and removing any legacy
+`ec-controller-autostart.desktop`). The file is read and written with KF6's `KDesktopFile`.
 *Settings → Start at Login* toggles `Hidden=true` in `~/.config/autostart/org.fedelabs.EcController.desktop`
 to disable autostart, and removes the `Hidden` flag when enabled (matching KDE Plasma's autostart
 behavior without deleting the desktop entry). The state is re-read every time the menu opens.
@@ -880,7 +881,7 @@ cmake --build build --parallel
 sudo cmake --install build
 ```
 
-- Dependencies: Qt6 (Core, Widgets, DBus), KF6 (CoreAddons, DBusAddons, GlobalAccel, Notifications), ECM,
+- Dependencies: Qt6 (Core, Widgets, DBus), KF6 (Config, CoreAddons, DBusAddons, GlobalAccel, Notifications), ECM,
   PolkitQt6-1 (service). `cmake_minimum_required(3.20)` is load-bearing (install rules run in
   file order).
 - Build order: library → service (generates the D-Bus XML) → GUI (generates its proxy from that

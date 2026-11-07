@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "autostart.h"
 
+#include <KConfigGroup>
+#include <KDesktopFile>
+
 #include <QDir>
 #include <QFile>
-#include <QFileInfo>
 #include <QStandardPaths>
 
 namespace {
@@ -13,19 +15,22 @@ namespace {
 const QString entryFileName = QStringLiteral("org.fedelabs.EcController.desktop");
 const QString legacyEntryFileName = QStringLiteral("ec-controller-autostart.desktop");
 
+// The XDG key that turns an autostart entry off without removing it.
+const QString hiddenKey = QStringLiteral("Hidden");
+
 QString userConfigDir()
 {
     return QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation);
 }
 
-QString userEntryPath()
+QString userAutostartDir()
 {
-    return userConfigDir() + QStringLiteral("/autostart/") + entryFileName;
+    return userConfigDir() + QStringLiteral("/autostart/");
 }
 
-QString legacyUserEntryPath()
+QString userEntryPath()
 {
-    return userConfigDir() + QStringLiteral("/autostart/") + legacyEntryFileName;
+    return userAutostartDir() + entryFileName;
 }
 
 // The system-wide entry, from config dirs other than the user's own
@@ -45,26 +50,9 @@ QString systemEntryPath()
     return QString();
 }
 
-// Whether a desktop entry file has Hidden=true under [Desktop Entry].
-bool fileHides(const QString &filePath)
+bool isHidden(const QString &entryPath)
 {
-    QFile file(filePath);
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        return false;
-    }
-
-    bool inDesktopEntry = false;
-    while (!file.atEnd()) {
-        const QString line = QString::fromUtf8(file.readLine()).trimmed();
-        if (line.startsWith(QLatin1Char('['))) {
-            inDesktopEntry = (line == QLatin1String("[Desktop Entry]"));
-            continue;
-        }
-        if (inDesktopEntry && line.startsWith(QLatin1String("Hidden="))) {
-            return line.mid(7).trimmed().compare(QLatin1String("true"), Qt::CaseInsensitive) == 0;
-        }
-    }
-    return false;
+    return KDesktopFile(entryPath).desktopGroup().readEntry(hiddenKey, false);
 }
 }
 
@@ -77,54 +65,22 @@ bool ensureUserEntry()
         return true;
     }
 
-    // Check if a legacy ec-controller-autostart.desktop file exists, and preserve its disabled state
-    const QString oldPath = legacyUserEntryPath();
-    bool wasDisabled = false;
-    if (QFile::exists(oldPath)) {
-        wasDisabled = fileHides(oldPath);
-        QFile::remove(oldPath);
-    }
-
-    const QFileInfo fi(path);
-    if (!QDir().mkpath(fi.absolutePath())) {
+    // The user's copy starts as a byte-for-byte copy of the installed entry,
+    // so every translation in it is kept.
+    const QString systemPath = systemEntryPath();
+    if (systemPath.isEmpty() || !QDir().mkpath(userAutostartDir())
+        || !QFile::copy(systemPath, path)) {
         return false;
     }
 
-    // Use system-wide template if installed; otherwise write default template
-    QByteArray content;
-    const QString sysPath = systemEntryPath();
-    if (!sysPath.isEmpty()) {
-        QFile sysFile(sysPath);
-        if (sysFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
-            content = sysFile.readAll();
+    // An opt-out made under the entry's old file name still applies.
+    const QString legacyPath = userAutostartDir() + legacyEntryFileName;
+    if (QFile::exists(legacyPath)) {
+        const bool wasDisabled = isHidden(legacyPath);
+        QFile::remove(legacyPath);
+        if (wasDisabled) {
+            return setEnabled(false);
         }
-    }
-
-    if (content.isEmpty()) {
-        content = "[Desktop Entry]\n"
-                  "Name=EC Controller\n"
-                  "Comment=Get full control of your MSI Laptop\n"
-                  "Comment[it]=Ottieni il controllo completo del tuo portatile MSI\n"
-                  "Exec=ec-controller --minimized\n"
-                  "Icon=ec-controller\n"
-                  "Type=Application\n"
-                  "Terminal=false\n"
-                  "StartupWMClass=org.fedelabs.EcController\n"
-                  "Categories=Qt;KDE;System;HardwareSettings;Settings;\n";
-    }
-
-    QFile file(path);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text)) {
-        return false;
-    }
-
-    if (file.write(content) != content.size()) {
-        return false;
-    }
-    file.close();
-
-    if (wasDisabled) {
-        setEnabled(false);
     }
 
     return true;
@@ -132,77 +88,29 @@ bool ensureUserEntry()
 
 bool isAvailable()
 {
-    return QFile::exists(userEntryPath()) || !systemEntryPath().isEmpty() || ensureUserEntry();
+    return QFile::exists(userEntryPath()) || !systemEntryPath().isEmpty();
 }
 
 bool isEnabled()
 {
     ensureUserEntry();
-    return !fileHides(userEntryPath());
+    return !isHidden(userEntryPath());
 }
 
 bool setEnabled(bool enabled)
 {
-    ensureUserEntry();
-
-    const QString path = userEntryPath();
-    QFile file(path);
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+    if (!ensureUserEntry()) {
         return false;
     }
 
-    QStringList lines;
-    bool inDesktopEntry = false;
-    bool foundHiddenLine = false;
-    int desktopEntryIndex = -1;
-
-    while (!file.atEnd()) {
-        const QString line = QString::fromUtf8(file.readLine());
-        const QString trimmed = line.trimmed();
-
-        if (trimmed.startsWith(QLatin1Char('['))) {
-            inDesktopEntry = (trimmed == QLatin1String("[Desktop Entry]"));
-            if (inDesktopEntry) {
-                desktopEntryIndex = lines.size();
-            }
-            lines.append(line);
-            continue;
-        }
-
-        if (inDesktopEntry && trimmed.startsWith(QLatin1String("Hidden="))) {
-            foundHiddenLine = true;
-            if (!enabled) {
-                lines.append(QStringLiteral("Hidden=true\n"));
-            }
-            // When enabled, drop the Hidden= line
-            continue;
-        }
-
-        lines.append(line);
+    KDesktopFile entry(userEntryPath());
+    KConfigGroup desktopEntry = entry.desktopGroup();
+    if (enabled) {
+        desktopEntry.deleteEntry(hiddenKey);
+    } else {
+        desktopEntry.writeEntry(hiddenKey, true);
     }
-    file.close();
-
-    // If disabling and no Hidden= line existed in [Desktop Entry], insert it
-    if (!enabled && !foundHiddenLine) {
-        if (desktopEntryIndex >= 0) {
-            lines.insert(desktopEntryIndex + 1, QStringLiteral("Hidden=true\n"));
-        } else {
-            lines.prepend(QStringLiteral("[Desktop Entry]\nHidden=true\n"));
-        }
-    }
-
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text)) {
-        return false;
-    }
-
-    for (const QString &l : lines) {
-        const QByteArray bytes = l.toUtf8();
-        if (file.write(bytes) != bytes.size()) {
-            return false;
-        }
-    }
-
-    return true;
+    return entry.sync();
 }
 
 }

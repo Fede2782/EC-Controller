@@ -15,6 +15,7 @@ BuildRequires:  cmake
 BuildRequires:  extra-cmake-modules
 BuildRequires:  qt6-qtbase-devel
 BuildRequires:  qt6-qttools-devel
+BuildRequires:  kf6-kconfig-devel
 BuildRequires:  kf6-kcoreaddons-devel
 BuildRequires:  kf6-kdbusaddons-devel
 BuildRequires:  kf6-kglobalaccel-devel

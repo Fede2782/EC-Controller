@@ -57,6 +57,7 @@ find_package(Qt6 ${MSI_CONTROLLER_QT_MIN_VERSION} CONFIG QUIET COMPONENTS
 )
 
 find_package(KF6 ${MSI_CONTROLLER_KF_MIN_VERSION} REQUIRED COMPONENTS
+    Config
     CoreAddons
     DBusAddons
     GlobalAccel
