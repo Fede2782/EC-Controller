@@ -28,6 +28,7 @@
 #include <QStandardItemModel>
 #include <QStyle>
 #include <QTimer>
+#include <QWindow>
 #include <algorithm>
 #include <optional>
 
@@ -145,15 +146,7 @@ void MainWindow::onReloadTriggered()
     setupGlobalShortcuts();
 
     buildGui();
-
-    if (isVisible()) {
-        if (hardwareMonitor) {
-            hardwareMonitor->resume();
-        }
-        if (fanSpeedMonitor) {
-            fanSpeedMonitor->resume();
-        }
-    }
+    updateMonitorPolling();
 
     // Re-checks that the backend is on the bus; the connection indicator
     // and every write control's enabled state follow through the usual
@@ -900,11 +893,10 @@ void MainWindow::showEvent(QShowEvent *event)
 {
     QMainWindow::showEvent(event);
 
-    if (hardwareMonitor) {
-        hardwareMonitor->resume();
-    }
-    if (fanSpeedMonitor) {
-        fanSpeedMonitor->resume();
+    // The native window exists from the first show on. Installing the
+    // filter again on a later show replaces the earlier installation.
+    if (QWindow *window = windowHandle()) {
+        window->installEventFilter(this);
     }
 
     // The .ui geometry is only a starting point; the real height depends on
@@ -919,10 +911,27 @@ void MainWindow::hideEvent(QHideEvent *event)
 {
     QMainWindow::hideEvent(event);
 
-    if (hardwareMonitor) {
-        hardwareMonitor->pause();
+    // Hiding stops the polling at once, without waiting for the expose
+    // event that the platform sends a little later.
+    updateMonitorPolling();
+}
+
+bool MainWindow::eventFilter(QObject *watched, QEvent *event)
+{
+    if (watched == windowHandle() && event->type() == QEvent::Expose) {
+        updateMonitorPolling();
     }
-    if (fanSpeedMonitor) {
+    return QMainWindow::eventFilter(watched, event);
+}
+
+void MainWindow::updateMonitorPolling()
+{
+    const QWindow *window = windowHandle();
+    if (isVisible() && window && window->isExposed()) {
+        hardwareMonitor->resume();
+        fanSpeedMonitor->resume();
+    } else {
+        hardwareMonitor->pause();
         fanSpeedMonitor->pause();
     }
 }

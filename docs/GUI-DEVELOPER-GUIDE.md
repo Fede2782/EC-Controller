@@ -220,7 +220,10 @@ feature must follow them.
 - Writable values (modes, toggles, battery, curves) are read with `getAttrValue()` when the
   control is built and **every time it's resynced** (§5.3).
 - Live values (temperatures, fan RPM) are polled every second by `HardwareMonitor` and
-  `FanSpeedMonitor`, which emit signals that update labels.
+  `FanSpeedMonitor`, which emit signals that update labels. They poll only while the window is
+  on screen, i.e. while Qt reports it exposed (`MainWindow::updateMonitorPolling()`): hidden in
+  the tray, minimized, on another virtual desktop or behind a locked screen, nothing is read.
+  Exposure, not show/hide, because a minimized window gets no hide event on Wayland.
 - External change signals are used where they exist: UPower for keyboard brightness, KDE
   PowerManagement for battery thresholds.
 
@@ -987,7 +990,7 @@ None of these are approved work — propose, don't just do (§9.2).
 | G3 | `commandFinished(bool)` doesn't say *which* command finished (the shift-mode notification relies on a pending flag) | tag calls in `BackendClient`, or wait for B5 |
 | G4 | Reload doesn't rebuild boxes: a feature that appears after start (driver loaded later) needs a restart | resolved: reload clears and rebuilds GUI, re-probes hardware monitors, and updates window geometry |
 | G5 | `FanSpeedMonitor` takes the first hwmon with `fan1_input`, which may not be msi-ec's | match hwmon by name |
-| G6 | Polling (1 s) continues while hidden in the tray | resolved: paused via hideEvent/showEvent |
+| G6 | Polling (1 s) continues while hidden in the tray | resolved: polling runs only while the window is exposed (not hidden, minimized or off screen) |
 | G8 | Strings are in `tr()` but no translation is ever generated or loaded | resolved: added Qt Linguist pipeline and runtime loader |
 | G9 / B7 | Version hard-coded in two `main.cpp` files and CMake (§10.4) | resolved: derived from `project(VERSION)` |
 | G10 | No tray on stock GNOME without the AppIndicator extension (the app then quits on close) | — |

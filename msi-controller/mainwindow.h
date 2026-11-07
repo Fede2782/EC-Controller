@@ -56,6 +56,9 @@ protected:
     void showEvent(QShowEvent *event) override;
     void hideEvent(QHideEvent *event) override;
 
+    // Follows the native window's expose events, see updateMonitorPolling().
+    bool eventFilter(QObject *watched, QEvent *event) override;
+
     // Closing the window hides it into the tray when there is one; the
     // tray's Quit (or Quit Application) is the complete exit.
     void closeEvent(QCloseEvent *event) override;
@@ -160,6 +163,14 @@ private:
     // The tallest the window can be on its current screen, leaving room
     // for its title bar and frame.
     int maxWindowHeight() const;
+
+    // Temperatures and fan speeds are polled only while the window is on
+    // screen, which Qt reports as the native window being exposed. Hidden
+    // in the tray, minimized, on another virtual desktop or behind a locked
+    // screen, it isn't. Exposure rather than show/hide events, because on
+    // Wayland a minimized window gets no hide event: the compositor only
+    // marks it suspended, which Qt turns into "not exposed".
+    void updateMonitorPolling();
 
     // Shared by every msi-ec "mode" attribute (fan mode, shift mode, and
     // kbd backlight mode): builds a combo box with only the supported
