@@ -74,14 +74,6 @@ bool MsiControllerBackend::setAttrValue(MsiEcAttribute attr, const QString &valu
     return ok;
 }
 
-bool MsiControllerBackend::setAttrValue(MsiEcAttribute attr, bool value) {
-    return setAttrValue(attr, value ? onOffEnabledValue : onOffDisabledValue);
-}
-
-bool MsiControllerBackend::setAttrValue(MsiEcAttribute attr, int value) {
-    return setAttrValue(attr, QString::number(value));
-}
-
 bool MsiControllerBackend::setAttrValue(QString attrKey, QString value) {
     const QMetaEnum metaEnum = QMetaEnum::fromType<MsiEcAttribute>();
 

@@ -33,14 +33,6 @@ void MsiControllerBackend::setStateValue(MsiEcAttribute attr, const QString &val
     setStateValue(getGroupName(attr), getAttrName(attr), value);
 }
 
-void MsiControllerBackend::setStateValue(MsiEcAttribute attr, int value) {
-    setStateValue(getGroupName(attr), getAttrName(attr), QString::number(value));
-}
-
-void MsiControllerBackend::setStateValue(MsiEcAttribute attr, bool value) {
-    setStateValue(getGroupName(attr), getAttrName(attr), value ? onOffEnabledValue : onOffDisabledValue);
-}
-
 // -------------------------------------------------------------------------
 // Restore from settings
 // -------------------------------------------------------------------------

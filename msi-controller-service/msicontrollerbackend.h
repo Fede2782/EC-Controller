@@ -57,8 +57,6 @@ private:
     // other write path (setMode(), the public D-Bus slots, and
     // restoreState()) goes through.
     bool setAttrValue(MsiEcAttribute attr, const QString &value);
-    bool setAttrValue(MsiEcAttribute attr, bool value);
-    bool setAttrValue(MsiEcAttribute attr, int value);
 
     // Resolves which attribute a mode belongs to (fan/shift/kbd backlight),
     // then applies it through setAttrValue().
@@ -68,8 +66,6 @@ private:
     // matches what is stored.
     void setStateValue(const QString &group, const QString &key, const QString &value);
     void setStateValue(MsiEcAttribute attr, const QString &value);
-    void setStateValue(MsiEcAttribute attr, bool value);
-    void setStateValue(MsiEcAttribute attr, int value);
 
     // Re-applies every saved attribute/mode value from the config file.
     // Called once from the constructor, at service startup.
