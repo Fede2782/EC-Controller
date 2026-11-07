@@ -8,6 +8,8 @@
 
 #include <QMetaEnum>
 
+using namespace MsiControllerLib;
+
 MsiControllerBackend::MsiControllerBackend(QObject *parent)
     : QObject{parent}
 {
@@ -41,29 +43,34 @@ bool MsiControllerBackend::setAttrValue(MsiEcAttribute attr, const QString &valu
     if (attr == MsiEcAttribute::CpuFanCurve || attr == MsiEcAttribute::GpuFanCurve) {
         QString currentCurve;
         if (!getAttrValue(attr, &currentCurve)) {
-            qCritical() << Q_FUNC_INFO << "Unable to read current fan curve for" << getAttrKey(attr);
+            qCritical() << Q_FUNC_INFO << "Unable to read current fan curve for"
+                        << getAttrKey(attr);
             return false;
         }
 
         if (!isValidCurve(value, getCurveLength(currentCurve))) {
-            qCritical() << Q_FUNC_INFO << "Rejected invalid fan curve for" << getAttrKey(attr) << ":" << value;
+            qCritical() << Q_FUNC_INFO << "Rejected invalid fan curve for" << getAttrKey(attr)
+                        << ":" << value;
             return false;
         }
     } else if (attr == MsiEcAttribute::ChargeStart || attr == MsiEcAttribute::ChargeEnd) {
         bool ok = false;
         const int threshold = value.toInt(&ok);
         if (!ok || !isValidBatteryThreshold(attr, threshold)) {
-            qCritical() << Q_FUNC_INFO << "Rejected invalid battery threshold for" << getAttrKey(attr) << ":" << value;
+            qCritical() << Q_FUNC_INFO << "Rejected invalid battery threshold for" << getAttrKey(attr)
+                        << ":" << value;
             return false;
         }
     } else if (isModesAttr(attr)) {
         const MsiEcMode mode = parseModeName(value);
         if (mode == MsiEcMode::InvalidMode || !isModeSupported(mode)) {
-            qCritical() << Q_FUNC_INFO << "Rejected invalid or unsupported mode for" << getAttrKey(attr) << ":" << value;
+            qCritical() << Q_FUNC_INFO << "Rejected invalid or unsupported mode for" << getAttrKey(attr)
+                        << ":" << value;
             return false;
         }
     } else if (isBooleanAttr(attr) && !parseOnOff(value, nullptr)) {
-        qCritical() << Q_FUNC_INFO << "Rejected invalid boolean value for" << getAttrKey(attr) << ":" << value;
+        qCritical() << Q_FUNC_INFO << "Rejected invalid boolean value for" << getAttrKey(attr)
+                    << ":" << value;
         return false;
     }
 

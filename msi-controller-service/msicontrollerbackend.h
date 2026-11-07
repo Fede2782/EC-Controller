@@ -23,8 +23,6 @@
 
 #include "msicontrollerlib.h"
 
-using namespace MsiControllerLib;
-
 class MsiControllerBackend : public QObject, protected QDBusContext
 {
     Q_OBJECT
@@ -56,16 +54,16 @@ private:
     // anything is written to sysfs. This is the single choke point every
     // other write path (setMode(), the public D-Bus slots, and
     // restoreState()) goes through.
-    bool setAttrValue(MsiEcAttribute attr, const QString &value);
+    bool setAttrValue(MsiControllerLib::MsiEcAttribute attr, const QString &value);
 
     // Resolves which attribute a mode belongs to (fan/shift/kbd backlight),
     // then applies it through setAttrValue().
-    bool setMode(MsiEcMode mode);
+    bool setMode(MsiControllerLib::MsiEcMode mode);
 
     // Saves a value to the config file, skipping the write if it already
     // matches what is stored.
     void setStateValue(const QString &group, const QString &key, const QString &value);
-    void setStateValue(MsiEcAttribute attr, const QString &value);
+    void setStateValue(MsiControllerLib::MsiEcAttribute attr, const QString &value);
 
     // Re-applies every saved attribute/mode value from the config file.
     // Called once from the constructor, at service startup.

@@ -26,7 +26,8 @@ void MsiControllerBackend::setStateValue(const QString &group, const QString &ke
     settings.setValue(key, value);
     settings.endGroup();
 
-    qInfo() << Q_FUNC_INFO << "Setting" << key << "in" << group << "to" << value << "in" << MsiControllerLib::configFilePath;
+    qInfo() << Q_FUNC_INFO << "Setting" << key << "in" << group << "to" << value << "in"
+            << MsiControllerLib::configFilePath;
 }
 
 void MsiControllerBackend::setStateValue(MsiEcAttribute attr, const QString &value) {
@@ -59,6 +60,7 @@ void MsiControllerBackend::restoreState() {
         if (restored)
             qInfo() << Q_FUNC_INFO << "Restored" << getAttrKey(attr) << "to" << content;
         else
-            qInfo() << Q_FUNC_INFO << "Skipped restoring" << getAttrKey(attr) << "- invalid or unsupported saved value:" << content;
+            qInfo() << Q_FUNC_INFO << "Skipped restoring" << getAttrKey(attr)
+                    << "- invalid or unsupported saved value:" << content;
     }
 }

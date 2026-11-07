@@ -15,38 +15,40 @@
 int main(int argc, char *argv[]) {
     QCoreApplication a(argc, argv);
 
-    a.setApplicationName("ec-controller-service");
-    a.setOrganizationName("FedeLabs");
+    a.setApplicationName(QStringLiteral("ec-controller-service"));
+    a.setOrganizationName(QStringLiteral("FedeLabs"));
     a.setApplicationVersion(QStringLiteral(PROJECT_VERSION));
 
     // The service writes to sysfs and to /etc, and only root may own its
     // bus name, so it can't do anything useful as another user. Refusing
     // here gives a clear message before anything else is attempted.
     if (geteuid() != 0) {
-        qCritical() << "ec-controller-service must be run as root";
+        qCritical() << Q_FUNC_INFO << "ec-controller-service must be run as root";
         return 1;
     }
 
-    qInfo() << "Starting EC Controller Backend";
+    qInfo() << Q_FUNC_INFO << "Starting EC Controller Backend";
 
     // Restores the last saved attribute/mode values as part of construction.
     MsiControllerBackend controllerBackend;
 
+    QDBusConnection bus = QDBusConnection::systemBus();
+
     // The object is exported before the name is claimed: clients (and
     // systemd, for this Type=dbus unit) take the name appearing as "the
     // service is ready", so the object must already be there by then.
-    if (!QDBusConnection::systemBus().registerObject("/EcController", &controllerBackend,
-                                                     QDBusConnection::ExportAllSlots)) {
-        qCritical() << "Unable to register the service object on D-Bus";
+    if (!bus.registerObject(QStringLiteral("/EcController"), &controllerBackend,
+                            QDBusConnection::ExportAllSlots)) {
+        qCritical() << Q_FUNC_INFO << "Unable to register the service object on D-Bus";
         return 1;
     }
 
-    if (!QDBusConnection::systemBus().registerService("org.fedelabs.EcController")) {
-        qCritical() << QDBusConnection::systemBus().lastError().message();
+    if (!bus.registerService(QStringLiteral("org.fedelabs.EcController"))) {
+        qCritical() << Q_FUNC_INFO << bus.lastError().message();
         return 1;
     }
 
-    qInfo() << "Exported to D-Bus";
+    qInfo() << Q_FUNC_INFO << "Exported to D-Bus";
 
     return a.exec();
 }
